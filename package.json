@@ -52,7 +52,7 @@
     "access": "public"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsgo",
     "build:bun": "bun scripts/build-bun.js",
     "build:bun:all": "bun scripts/build-bun.js --all-platforms",
     "build:bun:test": "bun scripts/build-bun.js --test",
@@ -108,10 +108,11 @@
     "@types/node-notifier": "^8.0.5",
     "@types/picomatch": "^4.0.3",
     "@types/write-file-atomic": "^4.0.3",
+    "@typescript/native-preview": "7.0.0-dev.20260427.1",
     "@vitest/coverage-v8": "^4.1.5",
     "cross-env": "^10.1.0",
-    "oxfmt": "^0.46.0",
-    "oxlint": "^1.61.0",
+    "oxfmt": "^0.47.0",
+    "oxlint": "^1.62.0",
     "tsx": "^4.21.0",
     "typedoc": "^0.28.19",
     "typedoc-plugin-mermaid": "^1.12.0",
@@ -119,7 +120,7 @@
     "vitest": "^4.1.5"
   },
   "engines": {
-    "node": ">=22.0.0"
+    "node": ">=24.0.0"
   },
-  "packageManager": "pnpm@10.20.0"
+  "packageManager": "pnpm@10.33.2"
 }

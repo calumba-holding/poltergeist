@@ -3,13 +3,14 @@
   
   # Poltergeist 👻 - The ghost that keeps your builds fresh—universal hot reload & file watcher
 
-  <a href="https://nodejs.org"><img src="https://img.shields.io/badge/Node.js-22%2B-339933?style=for-the-badge&logo=node.js&logoColor=white" alt="Node.js 22+"></a>
-  <a href="https://github.com/steipete/poltergeist"><img src="https://img.shields.io/badge/platforms-macOS%20%7C%20Linux%20%7C%20Windows-blue?style=for-the-badge" alt="Platforms"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge" alt="MIT License"></a>
-  <a href="https://github.com/steipete/poltergeist/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/steipete/poltergeist/ci.yml?style=for-the-badge&logo=github&label=CI" alt="CI Status"></a>
+<a href="https://nodejs.org"><img src="https://img.shields.io/badge/Node.js-24%2B-339933?style=for-the-badge&logo=node.js&logoColor=white" alt="Node.js 24+"></a>
+<a href="https://github.com/steipete/poltergeist"><img src="https://img.shields.io/badge/platforms-macOS%20%7C%20Linux%20%7C%20Windows-blue?style=for-the-badge" alt="Platforms"></a>
+<a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge" alt="MIT License"></a>
+<a href="https://github.com/steipete/poltergeist/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/steipete/poltergeist/ci.yml?style=for-the-badge&logo=github&label=CI" alt="CI Status"></a>
 
-  **The ghost that keeps your builds fresh** 👻  
-  A universal file watcher with auto-rebuild for any language or build system
+**The ghost that keeps your builds fresh** 👻  
+ A universal file watcher with auto-rebuild for any language or build system
+
 </div>
 
 Poltergeist is an AI-friendly universal file-watcher that auto-detects any project and rebuilds them as soon as a file has been changed. Think `pnpm run dev` for native apps, with automatic configuration, notifications and a smart build queue. It stands on the shoulders of [giants](https://facebook.github.io/watchman/) and fills the glue layer that's been missing.
@@ -36,9 +37,10 @@ npm install -g @steipete/poltergeist
 ### Requirements
 
 Poltergeist requires [Watchman](https://facebook.github.io/watchman/) to be installed:
-  - **macOS**: `brew install watchman`
-  - **Linux**: [Installation guide](https://facebook.github.io/watchman/docs/install#linux)
-  - **Windows**: [Chocolatey package](https://facebook.github.io/watchman/docs/install#windows) or manual install
+
+- **macOS**: `brew install watchman`
+- **Linux**: [Installation guide](https://facebook.github.io/watchman/docs/install#linux)
+- **Windows**: [Chocolatey package](https://facebook.github.io/watchman/docs/install#windows) or manual install
 
 Poltergeist offers both a **CLI tool** for universal development and a **native macOS app** for enhanced monitoring (coming soon).
 
@@ -96,7 +98,6 @@ poltergeist status            # Check what's running
 poltergeist status --verbose  # Show detailed status with build stats
 ```
 
-
 3. **Execute Fresh Builds** - Use `polter` to ensure you never run stale code:
 
 ```bash
@@ -124,21 +125,27 @@ See [docs/panel.md](docs/panel.md) for configuration details and troubleshooting
 Poltergeist can power hot-reload loops for native apps, backends, and hybrid workspaces. The daemon handles rebuilds while `polter` relaunches binaries only after they are fresh.
 
 1. **Auto-detect your build targets**
+
    ```bash
    poltergeist init --auto
    ```
+
    Review the generated `poltergeist.config.json`. For app bundles or servers, ensure the target’s `buildCommand` compiles your artifact and the `outputPath` points at the produced binary or bundle root.
 
 2. **Keep the daemon running**
+
    ```bash
    poltergeist haunt
    ```
+
    The watcher streams filesystem changes to Watchman, debounces noisy saves, and queues builds smartly across multiple targets.
 
 3. **Launch through `polter`**
+
    ```bash
    polter my-app --some-flag
    ```
+
    `polter` waits for the daemon to finish rebuilding, then execs the binary. Rerun the command whenever you want to relaunch; builds that finish while the app is running are immediately available.
 
 4. **Wire into app-specific reload hooks (optional)**
@@ -147,6 +154,7 @@ Poltergeist can power hot-reload loops for native apps, backends, and hybrid wor
    - Mobile simulators or embedded devices: point `outputPath` at the packaged artifact and use post-build scripts to deploy.
 
 Configuration tips:
+
 - Tune `settlingDelay` and `debounceInterval` per target to avoid double rebuilds for large asset drops.
 - Inject environment variables under the target’s `environment` block (e.g., `SWIFT_HOT_RELOAD=1`) so your app enables its live-update code paths.
 - Add multiple enabled targets (UI, backend, integration tests). Poltergeist applies per-target priorities and rebuilds whichever a change touches first.
@@ -166,11 +174,13 @@ Poltergeist rebuilds in the background from the moment files change, so humans a
 ## Development
 
 ### Prerequisites
-- **Node.js 22+** for CLI development
+
+- **Node.js 24+** for CLI development
 - **Xcode 26+** for macOS app development
 - **Watchman** for file watching
 
 ### CLI Development
+
 ```bash
 # Build from source
 git clone https://github.com/steipete/poltergeist.git
@@ -184,6 +194,7 @@ pnpm run typecheck          # Type validation
 ```
 
 ### macOS App Development
+
 ```bash
 # Navigate to macOS app
 cd apps/mac
@@ -201,7 +212,7 @@ open Poltergeist.xcodeproj
 
 Our comprehensive CI/CD pipeline ensures code quality across both platforms:
 
-- **Multi-platform testing**: Node.js 22/24 on Ubuntu, macOS, and Windows
+- **Multi-platform testing**: Node.js 24 on Ubuntu, macOS, and Windows
 - **Swift 6 validation**: Strict concurrency checking and modern Swift practices
 - **Code quality**: SwiftLint, swift-format, Biome, and TypeScript checks
 - **Automated releases**: Dual-platform releases with both CLI (.tgz) and macOS app (.dmg/.zip)
@@ -211,11 +222,12 @@ Our comprehensive CI/CD pipeline ensures code quality across both platforms:
 <summary>Project structure and contributing guidelines</summary>
 
 ### Project Structure
+
 ```
 poltergeist/
 ├── src/
 │   ├── builders/           # Target-specific builders
-│   ├── cli.ts             # Command line interface  
+│   ├── cli.ts             # Command line interface
 │   ├── poltergeist.ts     # Core application logic
 │   ├── priority-engine.ts # Intelligent priority scoring
 │   ├── build-queue.ts     # Smart build queue management
@@ -226,13 +238,16 @@ poltergeist/
 ```
 
 ### Contributing
+
 Contributions welcome! Requirements:
-1. Tests pass: `npm test`
-2. Code formatted: `pnpm run format` 
+
+1. Tests pass: `pnpm test`
+2. Code formatted: `pnpm run format`
 3. Linting passes: `pnpm run lint`
 4. Types check: `pnpm run typecheck`
 
 ### Development Philosophy
+
 - **No backwards compatibility**: Clean breaks over legacy support
 - **Type safety first**: Compile-time safety over runtime flexibility
 - **Performance over features**: Optimize for large projects
@@ -257,12 +272,14 @@ Created and maintained by [Peter Steinberger](https://github.com/steipete)
 Built with these excellent open source projects:
 
 ### Core Dependencies
+
 - **[Watchman](https://facebook.github.io/watchman/)** - Facebook's efficient file watching service
 - **[Commander.js](https://github.com/tj/commander.js)** - Complete CLI framework
 - **[Zod](https://zod.dev/)** - TypeScript-first schema validation with static type inference
 - **[Winston](https://github.com/winstonjs/winston)** - Universal logging library with support for multiple transports
 
 ### Build & Development
+
 - **[TypeScript](https://www.typescriptlang.org/)** - JavaScript with syntax for types
 - **[Vitest](https://vitest.dev/)** - Blazing fast unit test framework
 - **[Biome](https://biomejs.dev/)** - Fast formatter and linter for JavaScript, TypeScript, and more
@@ -270,16 +287,19 @@ Built with these excellent open source projects:
 - **[TypeDoc](https://typedoc.org/)** - Documentation generator for TypeScript projects
 
 ### User Experience
+
 - **[Chalk](https://github.com/chalk/chalk)** - Terminal string styling done right
 - **[Ora](https://github.com/sindresorhus/ora)** - Elegant terminal spinners
 - **[Node Notifier](https://github.com/mikaelbr/node-notifier)** - Cross-platform native notifications
 
 ### Utilities
+
 - **[Picomatch](https://github.com/micromatch/picomatch)** - Blazing fast and accurate glob matcher
 - **[Write File Atomic](https://github.com/npm/write-file-atomic)** - Write files atomically and reliably
 - **[fb-watchman](https://github.com/facebook/watchman)** - JavaScript client for Facebook's Watchman service
 
 ### Special Thanks
+
 - All contributors and users who have helped shape Poltergeist
 - The open source community for creating these amazing tools
 

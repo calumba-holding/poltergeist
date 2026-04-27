@@ -2,48 +2,48 @@ name: Test Coverage
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   coverage:
     name: Generate Test Coverage Report
     runs-on: ubuntu-latest
     env:
-      POLTERGEIST_TEST_MODE: 'true'
-    
+      POLTERGEIST_TEST_MODE: "true"
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v6
-      
-    - name: Setup Node.js
-      uses: actions/setup-node@v6
-      with:
-        node-version: '22'
-        
-    - name: Enable pnpm
-      run: corepack enable pnpm
-      
-    - name: Install dependencies
-      run: pnpm install --frozen-lockfile
-      
-    - name: Build project
-      run: pnpm run build
-      
-    - name: Run tests with coverage
-      run: pnpm run test:coverage
-      
-    - name: Upload coverage reports to Codecov
-      uses: codecov/codecov-action@v5
-      with:
-        file: ./coverage/coverage-final.json
-        flags: unittests
-        name: poltergeist-coverage
-        fail_ci_if_error: false
-        
-    - name: Upload coverage artifact
-      uses: actions/upload-artifact@v6
-      with:
-        name: coverage-report
-        path: coverage/
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Enable pnpm
+        run: corepack enable pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build project
+        run: pnpm run build
+
+      - name: Run tests with coverage
+        run: pnpm run test:coverage
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          file: ./coverage/coverage-final.json
+          flags: unittests
+          name: poltergeist-coverage
+          fail_ci_if_error: false
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: coverage-report
+          path: coverage/

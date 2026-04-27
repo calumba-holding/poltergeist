@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
 
 permissions:
   contents: write
@@ -13,137 +13,137 @@ jobs:
     name: Build CLI Release
     runs-on: ubuntu-latest
     env:
-      POLTERGEIST_TEST_MODE: 'true'
-    
+      POLTERGEIST_TEST_MODE: "true"
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v6
-      
-    - name: Setup Node.js
-      uses: actions/setup-node@v6
-      with:
-        node-version: '22'
-        
-    - name: Enable pnpm
-      run: corepack enable pnpm
-      
-    - name: Install dependencies
-      run: pnpm install --frozen-lockfile
-      
-    - name: Run tests
-      run: pnpm test
-      
-    - name: Run linter
-      run: pnpm run lint
-      
-    - name: Run type check
-      run: pnpm run typecheck
-      
-    - name: Build CLI project
-      run: pnpm run build
-      
-    - name: Package for npm
-      run: pnpm pack
-      
-    - name: Upload CLI artifacts
-      uses: actions/upload-artifact@v6
-      with:
-        name: poltergeist-cli
-        path: '*.tgz'
-        
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Enable pnpm
+        run: corepack enable pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run tests
+        run: pnpm test
+
+      - name: Run linter
+        run: pnpm run lint
+
+      - name: Run type check
+        run: pnpm run typecheck
+
+      - name: Build CLI project
+        run: pnpm run build
+
+      - name: Package for npm
+        run: pnpm pack
+
+      - name: Upload CLI artifacts
+        uses: actions/upload-artifact@v6
+        with:
+          name: poltergeist-cli
+          path: "*.tgz"
+
   build-macos:
     name: Build macOS App Release
     runs-on: macos-15
     env:
-      POLTERGEIST_TEST_MODE: 'true'
-    
+      POLTERGEIST_TEST_MODE: "true"
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v6
-      
-    - name: Setup Xcode
-      uses: maxim-lobanov/setup-xcode@v1
-      with:
-        xcode-version: latest
-        
-    - name: Install SwiftLint and swift-format
-      run: |
-        brew install swiftlint swift-format
-        
-    - name: Run SwiftLint
-      run: |
-        cd apps/mac
-        ./scripts/lint.sh
-        
-    - name: Build macOS app (Release)
-      run: |
-        cd apps/mac
-        xcodebuild -project Poltergeist.xcodeproj -scheme Poltergeist -configuration Release CLEAN_BUILD=YES CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" build
-        
-    - name: Package macOS app
-      run: |
-        cd apps/mac
-        APP_PATH="build/Release/Poltergeist.app"
-        if [ ! -d "$APP_PATH" ]; then
-          echo "App not found at $APP_PATH"
-          exit 1
-        fi
-        ARCHIVE_NAME="Poltergeist-${{ github.ref_name }}-macOS.zip"
-        ditto -c -k --keepParent "$APP_PATH" "$ARCHIVE_NAME"
-        
-    - name: Upload macOS app artifacts
-      uses: actions/upload-artifact@v6
-      with:
-        name: poltergeist-macos
-        path: |
-          apps/mac/*.zip
-        
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest
+
+      - name: Install SwiftLint and swift-format
+        run: |
+          brew install swiftlint swift-format
+
+      - name: Run SwiftLint
+        run: |
+          cd apps/mac
+          ./scripts/lint.sh
+
+      - name: Build macOS app (Release)
+        run: |
+          cd apps/mac
+          xcodebuild -project Poltergeist.xcodeproj -scheme Poltergeist -configuration Release CLEAN_BUILD=YES CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" build
+
+      - name: Package macOS app
+        run: |
+          cd apps/mac
+          APP_PATH="build/Release/Poltergeist.app"
+          if [ ! -d "$APP_PATH" ]; then
+            echo "App not found at $APP_PATH"
+            exit 1
+          fi
+          ARCHIVE_NAME="Poltergeist-${{ github.ref_name }}-macOS.zip"
+          ditto -c -k --keepParent "$APP_PATH" "$ARCHIVE_NAME"
+
+      - name: Upload macOS app artifacts
+        uses: actions/upload-artifact@v6
+        with:
+          name: poltergeist-macos
+          path: |
+            apps/mac/*.zip
+
   release:
     name: Create GitHub Release
     needs: [build-cli, build-macos]
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v6
-      
-    - name: Download CLI artifacts
-      uses: actions/download-artifact@v7
-      with:
-        name: poltergeist-cli
-        path: ./cli/
-        
-    - name: Download macOS artifacts
-      uses: actions/download-artifact@v7
-      with:
-        name: poltergeist-macos
-        path: ./macos/
-        
-    - name: Create Release
-      uses: softprops/action-gh-release@v2
-      with:
-        files: |
-          cli/*.tgz
-          macos/*.zip
-        generate_release_notes: true
-        body: |
-          ## 🚀 Poltergeist ${{ github.ref_name }}
-          
-          This release includes both the CLI tool and the macOS companion app.
-          
-          ### 📦 Installation Options
-          
-          **CLI Tool (Node.js):**
-          ```bash
-          npm install -g @steipete/poltergeist
-          ```
-          
-          **macOS App:**
-          Download and install the `.dmg` or `.zip` file below.
-          
-          ### 🔧 Requirements
-          - **CLI**: Node.js 22+ 
-          - **macOS App**: macOS 12.0+ (Apple Silicon & Intel)
-          
-          ### ✨ What's New
-          See the full changelog in [CHANGELOG.md](https://github.com/steipete/poltergeist/blob/main/CHANGELOG.md)
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Download CLI artifacts
+        uses: actions/download-artifact@v7
+        with:
+          name: poltergeist-cli
+          path: ./cli/
+
+      - name: Download macOS artifacts
+        uses: actions/download-artifact@v7
+        with:
+          name: poltergeist-macos
+          path: ./macos/
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            cli/*.tgz
+            macos/*.zip
+          generate_release_notes: true
+          body: |
+            ## 🚀 Poltergeist ${{ github.ref_name }}
+
+            This release includes both the CLI tool and the macOS companion app.
+
+            ### 📦 Installation Options
+
+            **CLI Tool (Node.js):**
+            ```bash
+            npm install -g @steipete/poltergeist
+            ```
+
+            **macOS App:**
+            Download and install the `.dmg` or `.zip` file below.
+
+            ### 🔧 Requirements
+            - **CLI**: Node.js 24+ 
+            - **macOS App**: macOS 12.0+ (Apple Silicon & Intel)
+
+            ### ✨ What's New
+            See the full changelog in [CHANGELOG.md](https://github.com/steipete/poltergeist/blob/main/CHANGELOG.md)

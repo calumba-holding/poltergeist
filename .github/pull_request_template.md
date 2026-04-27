@@ -28,7 +28,7 @@ Please delete options that are not relevant.
 
 Please describe the tests that you ran to verify your changes.
 
-- [ ] Unit tests pass (`npm test`)
-- [ ] Linter passes (`npm run lint`)
-- [ ] Type checker passes (`npm run typecheck`)
+- [ ] Unit tests pass (`pnpm test`)
+- [ ] Linter passes (`pnpm run lint`)
+- [ ] Type checker passes (`pnpm run typecheck`)
 - [ ] Manual testing completed
