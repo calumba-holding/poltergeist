@@ -1,19 +1,19 @@
 // Unified state management for Poltergeist
 
-import { existsSync, mkdirSync, readFileSync, unlinkSync } from 'fs';
-import { join } from 'path';
-import type { IStateManager } from './interfaces.js';
-import type { Logger } from './logger.js';
-import type { BuildStatus, Target } from './types.js';
-import { writeFileAtomic } from './utils/atomic-write.js';
-import { FileSystemUtils } from './utils/filesystem.js';
-import { type ProcessInfo, ProcessManager } from './utils/process-manager.js';
+import { existsSync, mkdirSync, readFileSync, unlinkSync } from "fs";
+import { join } from "path";
+import type { IStateManager } from "./interfaces.js";
+import type { Logger } from "./logger.js";
+import type { BuildStatus, Target } from "./types.js";
+import { writeFileAtomic } from "./utils/atomic-write.js";
+import { FileSystemUtils } from "./utils/filesystem.js";
+import { type ProcessInfo, ProcessManager } from "./utils/process-manager.js";
 
 // Re-export ProcessInfo for compatibility
-export type { ProcessInfo } from './utils/process-manager.js';
+export type { ProcessInfo } from "./utils/process-manager.js";
 export interface PostBuildResult {
   name: string;
-  status: 'pending' | 'running' | 'success' | 'failure';
+  status: "pending" | "running" | "success" | "failure";
   summary?: string;
   lines?: string[];
   startedAt?: string;
@@ -21,7 +21,7 @@ export interface PostBuildResult {
   durationMs?: number;
   exitCode?: number;
   formatterError?: string;
-  trigger?: 'success' | 'failure';
+  trigger?: "success" | "failure";
 }
 
 export interface AppInfo {
@@ -75,7 +75,7 @@ export class StateManager implements IStateManager {
     this.processManager = new ProcessManager(
       () => this.updateHeartbeat(),
       {}, // Use default options
-      logger
+      logger,
     );
 
     // Ensure state directory exists
@@ -95,12 +95,12 @@ export class StateManager implements IStateManager {
    * Initialize state for a target
    */
   public async initializeState(target: Target): Promise<PoltergeistState> {
-    const configPath = join(this.projectRoot, '.poltergeist.json');
+    const configPath = join(this.projectRoot, ".poltergeist.json");
 
     const state: PoltergeistState = {
-      version: '1.0',
+      version: "1.0",
       projectPath: this.projectRoot,
-      projectName: this.projectRoot.split('/').pop() || 'unknown',
+      projectName: this.projectRoot.split("/").pop() || "unknown",
       target: target.name,
       targetType: target.type,
       configPath,
@@ -109,11 +109,11 @@ export class StateManager implements IStateManager {
     };
 
     // Add app info if available
-    if (target.type === 'app-bundle' && 'bundleId' in target) {
+    if (target.type === "app-bundle" && "bundleId" in target) {
       state.appInfo = {
         bundleId: target.bundleId,
       };
-    } else if (target.type === 'executable' && 'outputPath' in target) {
+    } else if (target.type === "executable" && "outputPath" in target) {
       state.appInfo = {
         outputPath: target.outputPath,
       };
@@ -144,7 +144,7 @@ export class StateManager implements IStateManager {
     state.lastBuild = buildStatus;
 
     // Update build statistics for successful builds
-    if (buildStatus.status === 'success' && (buildStatus.duration || buildStatus.buildTime)) {
+    if (buildStatus.status === "success" && (buildStatus.duration || buildStatus.buildTime)) {
       const duration = buildStatus.duration || buildStatus.buildTime || 0;
 
       if (!state.buildStats) {
@@ -168,7 +168,7 @@ export class StateManager implements IStateManager {
       // Calculate statistics
       const durations = state.buildStats.successfulBuilds.map((b) => b.duration);
       state.buildStats.averageDuration = Math.round(
-        durations.reduce((a, b) => a + b, 0) / durations.length
+        durations.reduce((a, b) => a + b, 0) / durations.length,
       );
       state.buildStats.minDuration = Math.min(...durations);
       state.buildStats.maxDuration = Math.max(...durations);
@@ -202,7 +202,7 @@ export class StateManager implements IStateManager {
       lastOutput: string[];
       command: string;
       timestamp: string;
-    }
+    },
   ): Promise<void> {
     const state = this.states.get(targetName);
     if (!state) {
@@ -218,7 +218,7 @@ export class StateManager implements IStateManager {
   public async updatePostBuildResult(
     targetName: string,
     hookName: string,
-    updates: Partial<PostBuildResult>
+    updates: Partial<PostBuildResult>,
   ): Promise<void> {
     const state = this.states.get(targetName);
     if (!state) {
@@ -232,7 +232,7 @@ export class StateManager implements IStateManager {
 
     const existing = state.postBuildResults[hookName] || {
       name: hookName,
-      status: 'pending',
+      status: "pending",
     };
 
     state.postBuildResults[hookName] = {
@@ -250,7 +250,7 @@ export class StateManager implements IStateManager {
    */
   public async forceUnlock(targetName: string): Promise<boolean> {
     const stateFile = this.getStateFilePath(targetName);
-    const lockFile = stateFile.replace('.state', '.lock');
+    const lockFile = stateFile.replace(".state", ".lock");
     let unlocked = false;
 
     if (existsSync(lockFile)) {
@@ -299,7 +299,7 @@ export class StateManager implements IStateManager {
       // with proper Windows race condition handling
       await writeFileAtomic(stateFile, JSON.stringify(state, null, 2), {
         // Ensure proper file encoding
-        encoding: 'utf8',
+        encoding: "utf8",
         // Create temp files in the same directory for atomic rename
         tmpfileCreated: (tmpfile: string) => {
           this.logger.debug(`Created temp file for ${targetName}: ${tmpfile}`);
@@ -309,11 +309,11 @@ export class StateManager implements IStateManager {
       this.logger.debug(`State updated for ${targetName}`);
     } catch (error) {
       // Handle Windows ENOENT errors during test cleanup
-      if (error instanceof Error && error.message.includes('ENOENT')) {
+      if (error instanceof Error && error.message.includes("ENOENT")) {
         // Check if this is a test cleanup race condition
         if (!existsSync(this.stateDir)) {
           this.logger.debug(
-            `State directory removed during write for ${targetName}, skipping state write`
+            `State directory removed during write for ${targetName}, skipping state write`,
           );
           return; // Skip if directory was cleaned up during write
         }
@@ -331,7 +331,7 @@ export class StateManager implements IStateManager {
    * Ensures state directory exists with Windows-specific retry logic
    */
   private async ensureStateDirectory(): Promise<void> {
-    const maxRetries = process.platform === 'win32' ? 3 : 1;
+    const maxRetries = process.platform === "win32" ? 3 : 1;
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
@@ -366,7 +366,7 @@ export class StateManager implements IStateManager {
         return null;
       }
 
-      const data = readFileSync(stateFile, 'utf-8');
+      const data = readFileSync(stateFile, "utf-8");
       const state = JSON.parse(data) as PoltergeistState;
 
       // Check if process is still active
@@ -394,12 +394,12 @@ export class StateManager implements IStateManager {
   public async isLocked(targetName: string): Promise<boolean> {
     // First check for a lock file - this takes priority over state
     const stateFile = FileSystemUtils.getStateFilePath(this.projectRoot, targetName);
-    const lockFile = stateFile.replace('.state', '.lock');
+    const lockFile = stateFile.replace(".state", ".lock");
 
     // Check if lock file exists
     if (existsSync(lockFile)) {
       try {
-        const lockData = JSON.parse(readFileSync(lockFile, 'utf-8'));
+        const lockData = JSON.parse(readFileSync(lockFile, "utf-8"));
         // Lock file exists - check if it's from our process
         if (lockData.pid === process.pid) {
           return false; // Our own lock
@@ -491,14 +491,14 @@ export class StateManager implements IStateManager {
       return states;
     }
 
-    const files = await import('fs/promises').then((fs) => fs.readdir(this.stateDir));
+    const files = await import("fs/promises").then((fs) => fs.readdir(this.stateDir));
 
     for (const file of files) {
-      if (file.endsWith('.state')) {
+      if (file.endsWith(".state")) {
         try {
-          const content = readFileSync(join(this.stateDir, file), 'utf-8');
+          const content = readFileSync(join(this.stateDir, file), "utf-8");
           const state = JSON.parse(content) as PoltergeistState;
-          const targetName = file.replace('.state', '').split('-').pop() || '';
+          const targetName = file.replace(".state", "").split("-").pop() || "";
           states[targetName] = state;
         } catch (error) {
           this.logger.debug(`Failed to read state file ${file}: ${error}`);
@@ -541,7 +541,7 @@ export class StateManager implements IStateManager {
    * List all state files in the state directory
    */
   public static async listAllStates(): Promise<string[]> {
-    const fs = await import('fs/promises');
+    const fs = await import("fs/promises");
     const stateDir = FileSystemUtils.getStateDirectory();
 
     try {
@@ -550,7 +550,7 @@ export class StateManager implements IStateManager {
       }
 
       const files = await fs.readdir(stateDir);
-      return files.filter((f) => f.endsWith('.state'));
+      return files.filter((f) => f.endsWith(".state"));
     } catch {
       return [];
     }

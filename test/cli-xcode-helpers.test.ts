@@ -1,22 +1,22 @@
-import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'fs';
-import { tmpdir } from 'os';
-import { join } from 'path';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "fs";
+import { tmpdir } from "os";
+import { join } from "path";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock the readdir function before importing the module
-vi.mock('fs/promises', async () => {
-  const actual = await vi.importActual<typeof import('fs/promises')>('fs/promises');
+vi.mock("fs/promises", async () => {
+  const actual = await vi.importActual<typeof import("fs/promises")>("fs/promises");
   return {
     ...actual,
     readdir: vi.fn(actual.readdir),
   };
 });
 
-describe('CLI Xcode Helper Functions', () => {
+describe("CLI Xcode Helper Functions", () => {
   let tempDir: string;
 
   beforeEach(() => {
-    tempDir = mkdtempSync(join(tmpdir(), 'poltergeist-cli-test-'));
+    tempDir = mkdtempSync(join(tmpdir(), "poltergeist-cli-test-"));
     process.chdir(tempDir);
   });
 
@@ -25,13 +25,13 @@ describe('CLI Xcode Helper Functions', () => {
     rmSync(tempDir, { recursive: true, force: true });
   });
 
-  describe('findXcodeProjects', () => {
+  describe("findXcodeProjects", () => {
     // Since findXcodeProjects is defined inside cli.ts, we'll test it through
     // the init command behavior. For unit testing, we'd need to extract it.
 
-    it('should find .xcodeproj files', async () => {
-      mkdirSync('MyApp.xcodeproj');
-      writeFileSync('MyApp.xcodeproj/project.pbxproj', 'mock');
+    it("should find .xcodeproj files", async () => {
+      mkdirSync("MyApp.xcodeproj");
+      writeFileSync("MyApp.xcodeproj/project.pbxproj", "mock");
 
       // This would test the extracted function
       // const projects = await findXcodeProjects(tempDir);
@@ -43,73 +43,73 @@ describe('CLI Xcode Helper Functions', () => {
       // });
 
       // For now, we verify the structure exists
-      expect(existsSync('MyApp.xcodeproj')).toBe(true);
+      expect(existsSync("MyApp.xcodeproj")).toBe(true);
     });
 
-    it('should find .xcworkspace files', async () => {
-      mkdirSync('MyApp.xcworkspace');
-      writeFileSync('MyApp.xcworkspace/contents.xcworkspacedata', 'mock');
+    it("should find .xcworkspace files", async () => {
+      mkdirSync("MyApp.xcworkspace");
+      writeFileSync("MyApp.xcworkspace/contents.xcworkspacedata", "mock");
 
-      expect(existsSync('MyApp.xcworkspace')).toBe(true);
+      expect(existsSync("MyApp.xcworkspace")).toBe(true);
     });
 
-    it('should scan subdirectories up to maxDepth', async () => {
-      mkdirSync('level1/level2/level3', { recursive: true });
-      mkdirSync('level1/MyApp.xcodeproj');
-      mkdirSync('level1/level2/DeepApp.xcodeproj');
-      mkdirSync('level1/level2/level3/TooDeep.xcodeproj');
+    it("should scan subdirectories up to maxDepth", async () => {
+      mkdirSync("level1/level2/level3", { recursive: true });
+      mkdirSync("level1/MyApp.xcodeproj");
+      mkdirSync("level1/level2/DeepApp.xcodeproj");
+      mkdirSync("level1/level2/level3/TooDeep.xcodeproj");
 
       // With maxDepth=2, should find first two but not the third
-      expect(existsSync('level1/MyApp.xcodeproj')).toBe(true);
-      expect(existsSync('level1/level2/DeepApp.xcodeproj')).toBe(true);
-      expect(existsSync('level1/level2/level3/TooDeep.xcodeproj')).toBe(true);
+      expect(existsSync("level1/MyApp.xcodeproj")).toBe(true);
+      expect(existsSync("level1/level2/DeepApp.xcodeproj")).toBe(true);
+      expect(existsSync("level1/level2/level3/TooDeep.xcodeproj")).toBe(true);
     });
 
-    it('should ignore hidden directories', async () => {
-      mkdirSync('.hidden/MyApp.xcodeproj', { recursive: true });
-      mkdirSync('visible/MyApp.xcodeproj', { recursive: true });
+    it("should ignore hidden directories", async () => {
+      mkdirSync(".hidden/MyApp.xcodeproj", { recursive: true });
+      mkdirSync("visible/MyApp.xcodeproj", { recursive: true });
 
-      expect(existsSync('.hidden/MyApp.xcodeproj')).toBe(true);
-      expect(existsSync('visible/MyApp.xcodeproj')).toBe(true);
+      expect(existsSync(".hidden/MyApp.xcodeproj")).toBe(true);
+      expect(existsSync("visible/MyApp.xcodeproj")).toBe(true);
     });
 
-    it('should ignore node_modules', async () => {
-      mkdirSync('node_modules/some-package/Example.xcodeproj', { recursive: true });
+    it("should ignore node_modules", async () => {
+      mkdirSync("node_modules/some-package/Example.xcodeproj", { recursive: true });
 
-      expect(existsSync('node_modules/some-package/Example.xcodeproj')).toBe(true);
+      expect(existsSync("node_modules/some-package/Example.xcodeproj")).toBe(true);
     });
   });
 
-  describe('guessBundleId', () => {
+  describe("guessBundleId", () => {
     // This would test the extracted guessBundleId function
 
-    it('should generate bundle ID for VibeTunnel projects', () => {
+    it("should generate bundle ID for VibeTunnel projects", () => {
       // Test cases for the guessBundleId function
       const testCases = [
         {
-          projectName: 'VibeTunnel',
-          projectPath: '/Users/test/vibetunnel/VibeTunnel.xcodeproj',
-          expected: 'sh.vibetunnel.vibetunnel',
+          projectName: "VibeTunnel",
+          projectPath: "/Users/test/vibetunnel/VibeTunnel.xcodeproj",
+          expected: "sh.vibetunnel.vibetunnel",
         },
         {
-          projectName: 'VibeTunnel-iOS',
-          projectPath: '/Users/test/vibetunnel/ios/VibeTunnel-iOS.xcodeproj',
-          expected: 'sh.vibetunnel.vibetunnel.ios',
+          projectName: "VibeTunnel-iOS",
+          projectPath: "/Users/test/vibetunnel/ios/VibeTunnel-iOS.xcodeproj",
+          expected: "sh.vibetunnel.vibetunnel.ios",
         },
         {
-          projectName: 'MyApp',
-          projectPath: '/Users/test/myapp/MyApp.xcodeproj',
-          expected: 'com.example.myapp',
+          projectName: "MyApp",
+          projectPath: "/Users/test/myapp/MyApp.xcodeproj",
+          expected: "com.example.myapp",
         },
         {
-          projectName: 'My-Complex-App',
-          projectPath: '/Users/test/apps/My-Complex-App.xcodeproj',
-          expected: 'com.example.mycomplexapp',
+          projectName: "My-Complex-App",
+          projectPath: "/Users/test/apps/My-Complex-App.xcodeproj",
+          expected: "com.example.mycomplexapp",
         },
         {
-          projectName: 'AppIOS',
-          projectPath: '/Users/test/AppIOS.xcodeproj',
-          expected: 'com.example.app',
+          projectName: "AppIOS",
+          projectPath: "/Users/test/AppIOS.xcodeproj",
+          expected: "com.example.app",
         },
       ];
 
@@ -122,117 +122,117 @@ describe('CLI Xcode Helper Functions', () => {
     });
   });
 
-  describe('Swift config generation helpers', () => {
-    it('should create proper target configuration', () => {
+  describe("Swift config generation helpers", () => {
+    it("should create proper target configuration", () => {
       // Test the target configuration structure
       const expectedTarget = {
-        name: 'myapp',
-        type: 'app-bundle',
+        name: "myapp",
+        type: "app-bundle",
         enabled: true,
-        buildCommand: expect.stringContaining('xcodebuild'),
-        bundleId: expect.stringContaining('com.example'),
+        buildCommand: expect.stringContaining("xcodebuild"),
+        bundleId: expect.stringContaining("com.example"),
         watchPaths: expect.arrayContaining([
-          expect.stringContaining('*.swift'),
-          expect.stringContaining('*.xcodeproj'),
-          expect.stringContaining('*.xcconfig'),
-          expect.stringContaining('*.entitlements'),
-          expect.stringContaining('*.plist'),
+          expect.stringContaining("*.swift"),
+          expect.stringContaining("*.xcodeproj"),
+          expect.stringContaining("*.xcconfig"),
+          expect.stringContaining("*.entitlements"),
+          expect.stringContaining("*.plist"),
         ]),
         environment: {
-          CONFIGURATION: 'Debug',
+          CONFIGURATION: "Debug",
         },
       };
 
       // This validates the expected structure
       // expectedTarget is just a matcher object, not actual config
       // settlingDelay and debounceInterval are not included in minimal configs
-      expect(expectedTarget.type).toBe('app-bundle');
+      expect(expectedTarget.type).toBe("app-bundle");
     });
 
-    it('should detect build scripts correctly', () => {
-      mkdirSync('scripts', { recursive: true });
-      writeFileSync('scripts/build.sh', '#!/bin/bash\nxcodebuild');
+    it("should detect build scripts correctly", () => {
+      mkdirSync("scripts", { recursive: true });
+      writeFileSync("scripts/build.sh", "#!/bin/bash\nxcodebuild");
 
       // Only test chmod on non-Windows platforms
-      if (process.platform !== 'win32') {
-        require('fs').chmodSync('scripts/build.sh', '755');
+      if (process.platform !== "win32") {
+        require("fs").chmodSync("scripts/build.sh", "755");
       }
 
-      expect(existsSync('scripts/build.sh')).toBe(true);
+      expect(existsSync("scripts/build.sh")).toBe(true);
 
       // Skip executable check on Windows (doesn't support Unix permissions)
-      if (process.platform !== 'win32') {
-        const stats = require('fs').statSync('scripts/build.sh');
+      if (process.platform !== "win32") {
+        const stats = require("fs").statSync("scripts/build.sh");
         const isExecutable = (stats.mode & 0o111) !== 0;
         expect(isExecutable).toBe(true);
       }
     });
 
-    it('should handle iOS detection patterns', () => {
+    it("should handle iOS detection patterns", () => {
       const iosPatterns = [
-        'MyApp-iOS.xcodeproj',
-        'MyAppiOS.xcodeproj',
-        'ios/MyApp.xcodeproj',
-        'iOS/MyApp.xcodeproj',
+        "MyApp-iOS.xcodeproj",
+        "MyAppiOS.xcodeproj",
+        "ios/MyApp.xcodeproj",
+        "iOS/MyApp.xcodeproj",
       ];
 
       iosPatterns.forEach((pattern) => {
         const isIOS =
-          pattern.toLowerCase().includes('ios') || pattern.toLowerCase().includes('/ios/');
+          pattern.toLowerCase().includes("ios") || pattern.toLowerCase().includes("/ios/");
         expect(isIOS).toBe(true);
       });
 
       const nonIosPatterns = [
-        'MyApp.xcodeproj',
-        'mac/MyApp.xcodeproj',
-        'MyAppBios.xcodeproj', // Contains 'ios' but not as a separate word
+        "MyApp.xcodeproj",
+        "mac/MyApp.xcodeproj",
+        "MyAppBios.xcodeproj", // Contains 'ios' but not as a separate word
       ];
 
       nonIosPatterns.forEach((pattern) => {
         const isIOS =
-          pattern.toLowerCase().includes('-ios') || pattern.toLowerCase().includes('/ios/');
+          pattern.toLowerCase().includes("-ios") || pattern.toLowerCase().includes("/ios/");
         expect(isIOS).toBe(false);
       });
     });
 
-    it('should generate unique target names', () => {
+    it("should generate unique target names", () => {
       // Test the name sanitization logic
       const testNames = [
-        { input: 'VibeTunnel', expected: 'vibetunnel' },
-        { input: 'My-App', expected: 'myapp' },
-        { input: 'Test_Project', expected: 'testproject' },
-        { input: 'App-iOS', expected: 'app' }, // iOS suffix removed
-        { input: '123-App', expected: '123app' },
-        { input: 'App!!!', expected: 'app' },
+        { input: "VibeTunnel", expected: "vibetunnel" },
+        { input: "My-App", expected: "myapp" },
+        { input: "Test_Project", expected: "testproject" },
+        { input: "App-iOS", expected: "app" }, // iOS suffix removed
+        { input: "123-App", expected: "123app" },
+        { input: "App!!!", expected: "app" },
       ];
 
       testNames.forEach(({ input, expected }) => {
         const sanitized =
           input
             .toLowerCase()
-            .replace(/[^a-z0-9]/g, '')
-            .replace(/ios$/, '') || 'app';
+            .replace(/[^a-z0-9]/g, "")
+            .replace(/ios$/, "") || "app";
         expect(sanitized).toBe(expected);
       });
     });
   });
 
-  describe('Comprehensive Swift config structure', () => {
-    it('should include all required config sections', () => {
+  describe("Comprehensive Swift config structure", () => {
+    it("should include all required config sections", () => {
       const expectedConfig = {
-        version: '1.0',
-        projectType: 'swift',
+        version: "1.0",
+        projectType: "swift",
         targets: expect.any(Array),
         watchman: {
           useDefaultExclusions: true,
           excludeDirs: expect.arrayContaining([
-            'node_modules',
-            'dist',
-            'build',
-            'DerivedData',
-            '.git',
+            "node_modules",
+            "dist",
+            "build",
+            "DerivedData",
+            ".git",
           ]),
-          projectType: 'swift',
+          projectType: "swift",
           maxFileEvents: 10000,
           recrawlThreshold: 5,
           settlingDelay: 1000,
@@ -251,11 +251,11 @@ describe('CLI Xcode Helper Functions', () => {
           buildStart: false,
           buildSuccess: true,
           buildFailed: true,
-          successSound: 'Glass',
-          failureSound: 'Basso',
+          successSound: "Glass",
+          failureSound: "Basso",
         },
         performance: {
-          profile: 'balanced',
+          profile: "balanced",
           autoOptimize: true,
           metrics: {
             enabled: true,
@@ -263,27 +263,27 @@ describe('CLI Xcode Helper Functions', () => {
           },
         },
         logging: {
-          level: 'info',
-          file: '.poltergeist.log',
+          level: "info",
+          file: ".poltergeist.log",
         },
       };
 
       // Validate the structure
-      expect(Object.keys(expectedConfig)).toContain('watchman');
-      expect(Object.keys(expectedConfig)).toContain('buildScheduling');
-      expect(Object.keys(expectedConfig)).toContain('notifications');
-      expect(Object.keys(expectedConfig)).toContain('performance');
-      expect(Object.keys(expectedConfig)).toContain('logging');
+      expect(Object.keys(expectedConfig)).toContain("watchman");
+      expect(Object.keys(expectedConfig)).toContain("buildScheduling");
+      expect(Object.keys(expectedConfig)).toContain("notifications");
+      expect(Object.keys(expectedConfig)).toContain("performance");
+      expect(Object.keys(expectedConfig)).toContain("logging");
     });
   });
 });
 
 // Additional test for the full init flow with mocked filesystem
-describe('CLI init command - Xcode project flow', () => {
+describe("CLI init command - Xcode project flow", () => {
   let tempDir: string;
 
   beforeEach(() => {
-    tempDir = mkdtempSync(join(tmpdir(), 'poltergeist-init-flow-'));
+    tempDir = mkdtempSync(join(tmpdir(), "poltergeist-init-flow-"));
     process.chdir(tempDir);
     vi.clearAllMocks();
   });
@@ -293,24 +293,24 @@ describe('CLI init command - Xcode project flow', () => {
     rmSync(tempDir, { recursive: true, force: true });
   });
 
-  it('should handle complex VibeTunnel-like structure', () => {
+  it("should handle complex VibeTunnel-like structure", () => {
     // Recreate VibeTunnel structure
-    mkdirSync('VibeTunnel.xcworkspace');
-    writeFileSync('VibeTunnel.xcworkspace/contents.xcworkspacedata', 'mock');
+    mkdirSync("VibeTunnel.xcworkspace");
+    writeFileSync("VibeTunnel.xcworkspace/contents.xcworkspacedata", "mock");
 
-    mkdirSync('mac/VibeTunnel.xcodeproj', { recursive: true });
-    mkdirSync('mac/scripts', { recursive: true });
-    writeFileSync('mac/VibeTunnel.xcodeproj/project.pbxproj', 'mock');
-    writeFileSync('mac/scripts/build.sh', '#!/bin/bash\nxcodebuild');
-    require('fs').chmodSync('mac/scripts/build.sh', '755');
+    mkdirSync("mac/VibeTunnel.xcodeproj", { recursive: true });
+    mkdirSync("mac/scripts", { recursive: true });
+    writeFileSync("mac/VibeTunnel.xcodeproj/project.pbxproj", "mock");
+    writeFileSync("mac/scripts/build.sh", "#!/bin/bash\nxcodebuild");
+    require("fs").chmodSync("mac/scripts/build.sh", "755");
 
-    mkdirSync('ios/VibeTunnel-iOS.xcodeproj', { recursive: true });
-    writeFileSync('ios/VibeTunnel-iOS.xcodeproj/project.pbxproj', 'mock');
+    mkdirSync("ios/VibeTunnel-iOS.xcodeproj", { recursive: true });
+    writeFileSync("ios/VibeTunnel-iOS.xcodeproj/project.pbxproj", "mock");
 
     // Verify structure
-    expect(existsSync('VibeTunnel.xcworkspace')).toBe(true);
-    expect(existsSync('mac/VibeTunnel.xcodeproj')).toBe(true);
-    expect(existsSync('mac/scripts/build.sh')).toBe(true);
-    expect(existsSync('ios/VibeTunnel-iOS.xcodeproj')).toBe(true);
+    expect(existsSync("VibeTunnel.xcworkspace")).toBe(true);
+    expect(existsSync("mac/VibeTunnel.xcodeproj")).toBe(true);
+    expect(existsSync("mac/scripts/build.sh")).toBe(true);
+    expect(existsSync("ios/VibeTunnel-iOS.xcodeproj")).toBe(true);
   });
 });

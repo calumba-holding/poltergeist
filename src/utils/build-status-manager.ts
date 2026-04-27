@@ -3,17 +3,17 @@
  * Consolidates build status validation, error handling, and result processing
  */
 
-import type { BuildStatus } from '../types.js';
+import type { BuildStatus } from "../types.js";
 
 /**
  * Standardized build status values
  */
 export enum BuildStatusType {
-  SUCCESS = 'success',
-  FAILED = 'failure',
-  BUILDING = 'building',
-  IDLE = 'idle',
-  UNKNOWN = 'unknown',
+  SUCCESS = "success",
+  FAILED = "failure",
+  BUILDING = "building",
+  IDLE = "idle",
+  UNKNOWN = "unknown",
 }
 
 export interface BuildMetrics {
@@ -27,7 +27,7 @@ export interface BuildError {
   message: string;
   summary?: string;
   exitCode?: number;
-  type?: 'compilation' | 'runtime' | 'configuration' | 'unknown';
+  type?: "compilation" | "runtime" | "configuration" | "unknown";
 }
 
 /**
@@ -48,14 +48,14 @@ export class BuildStatusManager {
       gitHash?: string;
       builder?: string;
       buildTime?: number;
-    } = {}
+    } = {},
   ): BuildStatus {
     return {
       targetName,
       status: BuildStatusType.SUCCESS,
       timestamp: new Date().toISOString(),
-      gitHash: options.gitHash || 'unknown',
-      builder: options.builder || 'unknown',
+      gitHash: options.gitHash || "unknown",
+      builder: options.builder || "unknown",
       duration: metrics.duration,
       buildTime: options.buildTime || metrics.duration / 1000,
     };
@@ -71,7 +71,7 @@ export class BuildStatusManager {
     options: {
       gitHash?: string;
       builder?: string;
-    } = {}
+    } = {},
   ): BuildStatus {
     return {
       targetName,
@@ -79,8 +79,8 @@ export class BuildStatusManager {
       timestamp: new Date().toISOString(),
       error: error.message,
       errorSummary: error.summary,
-      gitHash: options.gitHash || 'unknown',
-      builder: options.builder || 'unknown',
+      gitHash: options.gitHash || "unknown",
+      builder: options.builder || "unknown",
       duration: metrics.duration || 0,
       buildTime: metrics.duration ? metrics.duration / 1000 : 0,
     };
@@ -94,14 +94,14 @@ export class BuildStatusManager {
     options: {
       gitHash?: string;
       builder?: string;
-    } = {}
+    } = {},
   ): BuildStatus {
     return {
       targetName,
       status: BuildStatusType.BUILDING,
       timestamp: new Date().toISOString(),
-      gitHash: options.gitHash || 'unknown',
-      builder: options.builder || 'unknown',
+      gitHash: options.gitHash || "unknown",
+      builder: options.builder || "unknown",
       duration: 0,
       buildTime: 0,
     };
@@ -111,7 +111,7 @@ export class BuildStatusManager {
    * Check if a build status represents success
    */
   public static isSuccess(status: BuildStatus | string): boolean {
-    const statusValue = typeof status === 'string' ? status : status.status;
+    const statusValue = typeof status === "string" ? status : status.status;
     return statusValue === BuildStatusType.SUCCESS;
   }
 
@@ -119,7 +119,7 @@ export class BuildStatusManager {
    * Check if a build status represents failure
    */
   public static isFailure(status: BuildStatus | string): boolean {
-    const statusValue = typeof status === 'string' ? status : status.status;
+    const statusValue = typeof status === "string" ? status : status.status;
     return statusValue === BuildStatusType.FAILED;
   }
 
@@ -127,7 +127,7 @@ export class BuildStatusManager {
    * Check if a build is currently in progress
    */
   public static isBuilding(status: BuildStatus | string): boolean {
-    const statusValue = typeof status === 'string' ? status : status.status;
+    const statusValue = typeof status === "string" ? status : status.status;
     return statusValue === BuildStatusType.BUILDING;
   }
 
@@ -135,37 +135,37 @@ export class BuildStatusManager {
    * Extract error summary from build output using common patterns
    */
   public static extractErrorSummary(errorOutput: string): string {
-    if (!errorOutput) return 'Build failed';
+    if (!errorOutput) return "Build failed";
 
     const lines = errorOutput
-      .split('\n')
+      .split("\n")
       .map((line) => line.trim())
       .filter((line) => line.length > 0);
 
     // Look for common error patterns in order of priority
     for (const line of lines) {
       // TypeScript errors
-      if (line.includes('error TS')) {
+      if (line.includes("error TS")) {
         return line.trim();
       }
 
       // Swift compilation errors
-      if (line.includes('error:') && !line.includes('warning:')) {
+      if (line.includes("error:") && !line.includes("warning:")) {
         return line.trim();
       }
 
       // General compilation errors
-      if (line.toLowerCase().includes('compilation failed')) {
+      if (line.toLowerCase().includes("compilation failed")) {
         return line.trim();
       }
 
       // Generic error patterns
-      if (line.includes('Error:') || line.includes('ERROR:')) {
+      if (line.includes("Error:") || line.includes("ERROR:")) {
         return line.trim();
       }
 
       // Build tool specific errors
-      if (line.includes('error:') || line.includes('Error building')) {
+      if (line.includes("error:") || line.includes("Error building")) {
         return line.trim();
       }
     }
@@ -178,24 +178,24 @@ export class BuildStatusManager {
   /**
    * Categorize error type based on content
    */
-  public static categorizeError(errorOutput: string, _exitCode?: number): BuildError['type'] {
-    if (!errorOutput) return 'unknown';
+  public static categorizeError(errorOutput: string, _exitCode?: number): BuildError["type"] {
+    if (!errorOutput) return "unknown";
 
     const lowerOutput = errorOutput.toLowerCase();
 
-    if (lowerOutput.includes('error ts') || lowerOutput.includes('compilation failed')) {
-      return 'compilation';
+    if (lowerOutput.includes("error ts") || lowerOutput.includes("compilation failed")) {
+      return "compilation";
     }
 
-    if (lowerOutput.includes('runtime error') || lowerOutput.includes('segmentation fault')) {
-      return 'runtime';
+    if (lowerOutput.includes("runtime error") || lowerOutput.includes("segmentation fault")) {
+      return "runtime";
     }
 
-    if (lowerOutput.includes('config') || lowerOutput.includes('configuration')) {
-      return 'configuration';
+    if (lowerOutput.includes("config") || lowerOutput.includes("configuration")) {
+      return "configuration";
     }
 
-    return 'unknown';
+    return "unknown";
   }
 
   /**
@@ -204,14 +204,14 @@ export class BuildStatusManager {
   public static createError(
     errorMessage: string,
     exitCode?: number,
-    rawOutput?: string
+    rawOutput?: string,
   ): BuildError {
     const summary = BuildStatusManager.extractErrorSummary(rawOutput || errorMessage);
     const type = BuildStatusManager.categorizeError(rawOutput || errorMessage, exitCode);
 
     return {
       message: errorMessage,
-      summary: summary && summary !== 'Build failed' ? summary : undefined,
+      summary: summary && summary !== "Build failed" ? summary : undefined,
       exitCode,
       type,
     };
@@ -244,16 +244,16 @@ export class BuildStatusManager {
 
     const rawError: unknown = status.error;
 
-    if (typeof rawError === 'string' && rawError.trim()) {
+    if (typeof rawError === "string" && rawError.trim()) {
       return rawError;
     }
 
-    if (rawError && typeof rawError === 'object') {
-      if ('summary' in rawError && rawError.summary) return String(rawError.summary);
-      if ('message' in rawError && rawError.message) return String(rawError.message);
+    if (rawError && typeof rawError === "object") {
+      if ("summary" in rawError && rawError.summary) return String(rawError.summary);
+      if ("message" in rawError && rawError.message) return String(rawError.message);
     }
 
-    return 'Build failed';
+    return "Build failed";
   }
 
   /**
@@ -264,15 +264,15 @@ export class BuildStatusManager {
 
     if (BuildStatusManager.isSuccess(status)) {
       if (outputInfo) {
-        return `Built: ${outputInfo}${duration ? ` in ${duration}` : ''}`;
+        return `Built: ${outputInfo}${duration ? ` in ${duration}` : ""}`;
       } else {
-        return `Build completed${duration ? ` in ${duration}` : ''}`;
+        return `Build completed${duration ? ` in ${duration}` : ""}`;
       }
     } else if (BuildStatusManager.isFailure(status)) {
       const errorMsg = BuildStatusManager.getErrorMessage(status);
-      return `Build failed${duration ? ` after ${duration}` : ''}: ${errorMsg}`;
+      return `Build failed${duration ? ` after ${duration}` : ""}: ${errorMsg}`;
     } else {
-      return `Build status: ${status.status}${duration ? ` (${duration})` : ''}`;
+      return `Build status: ${status.status}${duration ? ` (${duration})` : ""}`;
     }
   }
 
@@ -282,19 +282,19 @@ export class BuildStatusManager {
   public static interpretExitCode(exitCode: number): string {
     switch (exitCode) {
       case 0:
-        return 'Success';
+        return "Success";
       case 1:
-        return 'General error';
+        return "General error";
       case 2:
-        return 'Misuse of shell builtins';
+        return "Misuse of shell builtins";
       case 126:
-        return 'Command invoked cannot execute';
+        return "Command invoked cannot execute";
       case 127:
-        return 'Command not found';
+        return "Command not found";
       case 128:
-        return 'Invalid argument to exit';
+        return "Invalid argument to exit";
       case 130:
-        return 'Script terminated by Ctrl+C';
+        return "Script terminated by Ctrl+C";
       default:
         if (exitCode > 128) {
           return `Terminated by signal ${exitCode - 128}`;
@@ -311,7 +311,7 @@ export class BuildStatusManager {
     endTime: number = Date.now(),
     exitCode?: number,
     output?: string,
-    outputInfo?: string
+    outputInfo?: string,
   ): BuildMetrics {
     return {
       duration: endTime - startTime,
@@ -332,21 +332,21 @@ export class BuildStatusManager {
    * Get status display color for terminal output
    */
   public static getStatusColor(
-    status: BuildStatus | string
-  ): 'green' | 'red' | 'yellow' | 'blue' | 'gray' {
-    const statusValue = typeof status === 'string' ? status : status.status;
+    status: BuildStatus | string,
+  ): "green" | "red" | "yellow" | "blue" | "gray" {
+    const statusValue = typeof status === "string" ? status : status.status;
 
     switch (statusValue) {
       case BuildStatusType.SUCCESS:
-        return 'green';
+        return "green";
       case BuildStatusType.FAILED:
-        return 'red';
+        return "red";
       case BuildStatusType.BUILDING:
-        return 'yellow';
+        return "yellow";
       case BuildStatusType.IDLE:
-        return 'blue';
+        return "blue";
       default:
-        return 'gray';
+        return "gray";
     }
   }
 }

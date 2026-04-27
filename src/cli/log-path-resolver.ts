@@ -1,8 +1,8 @@
-import { existsSync } from 'fs';
-import path from 'path';
-import type { PoltergeistConfig, Target } from '../types.js';
-import { FileSystemUtils } from '../utils/filesystem.js';
-import { DEFAULT_LOG_CHANNEL, sanitizeLogChannel } from '../utils/log-channels.js';
+import { existsSync } from "fs";
+import path from "path";
+import type { PoltergeistConfig, Target } from "../types.js";
+import { FileSystemUtils } from "../utils/filesystem.js";
+import { DEFAULT_LOG_CHANNEL, sanitizeLogChannel } from "../utils/log-channels.js";
 
 export interface ResolveLogPathOptions {
   config: PoltergeistConfig;
@@ -44,10 +44,10 @@ export const resolveLogPath = (input: ResolveLogPathOptions): ResolvedLogPath =>
 
   const resolveConfigLogPath = (): string | undefined => {
     if (!targetConfig) return undefined;
-    if ('logPath' in targetConfig && typeof (targetConfig as any).logPath === 'string') {
+    if ("logPath" in targetConfig && typeof (targetConfig as any).logPath === "string") {
       return (targetConfig as any).logPath as string;
     }
-    if ('outputPath' in targetConfig && targetConfig.outputPath)
+    if ("outputPath" in targetConfig && targetConfig.outputPath)
       return `${targetConfig.outputPath}.log`;
     return undefined;
   };
@@ -57,11 +57,11 @@ export const resolveLogPath = (input: ResolveLogPathOptions): ResolvedLogPath =>
   const targetLogPath = resolveConfigLogPath();
   if (target && targetLogPath) {
     candidateLogFiles.push(
-      targetLogPath.startsWith('~/')
-        ? targetLogPath.replace('~', process.env.HOME || '')
+      targetLogPath.startsWith("~/")
+        ? targetLogPath.replace("~", process.env.HOME || "")
         : path.isAbsolute(targetLogPath)
           ? targetLogPath
-          : path.join(projectRoot, targetLogPath)
+          : path.join(projectRoot, targetLogPath),
     );
   }
 
@@ -73,12 +73,12 @@ export const resolveLogPath = (input: ResolveLogPathOptions): ResolvedLogPath =>
 
   // Global fallbacks
   candidateLogFiles.push(
-    config.logging?.file ? path.resolve(projectRoot, config.logging.file) : undefined
+    config.logging?.file ? path.resolve(projectRoot, config.logging.file) : undefined,
   );
-  candidateLogFiles.push(path.join(projectRoot, '.poltergeist.log'));
+  candidateLogFiles.push(path.join(projectRoot, ".poltergeist.log"));
 
   const uniqueCandidates = candidateLogFiles
-    .filter((filePath): filePath is string => typeof filePath === 'string' && filePath.length > 0)
+    .filter((filePath): filePath is string => typeof filePath === "string" && filePath.length > 0)
     .filter((filePath, index, self) => self.indexOf(filePath) === index);
 
   const found = uniqueCandidates.find((file) => existsSync(file));

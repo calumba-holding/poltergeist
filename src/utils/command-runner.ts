@@ -1,4 +1,4 @@
-import { spawn } from 'child_process';
+import { spawn } from "child_process";
 
 export interface RunOptions {
   cwd?: string;
@@ -26,27 +26,27 @@ export class ChildProcessRunner implements CommandRunner {
         shell: false,
       });
 
-      let stdout = '';
-      let stderr = '';
+      let stdout = "";
+      let stderr = "";
 
-      child.stdout?.on('data', (data) => {
+      child.stdout?.on("data", (data) => {
         stdout += data.toString();
       });
 
-      child.stderr?.on('data', (data) => {
+      child.stderr?.on("data", (data) => {
         stderr += data.toString();
       });
 
-      child.on('close', (code) => {
+      child.on("close", (code) => {
         const exitCode = code ?? 0;
         if (exitCode !== 0 && !allowNonZeroExit) {
-          reject(new Error(`Command failed: ${command} ${args.join(' ')}\n${stderr}`));
+          reject(new Error(`Command failed: ${command} ${args.join(" ")}\n${stderr}`));
           return;
         }
         resolve({ stdout, stderr, exitCode });
       });
 
-      child.on('error', (error) => {
+      child.on("error", (error) => {
         reject(error);
       });
     });

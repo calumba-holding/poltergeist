@@ -1,7 +1,7 @@
-import type { IStateManager } from '../interfaces.js';
-import type { Logger } from '../logger.js';
-import type { PoltergeistState } from '../state.js';
-import type { PoltergeistConfig, Target } from '../types.js';
+import type { IStateManager } from "../interfaces.js";
+import type { Logger } from "../logger.js";
+import type { PoltergeistState } from "../state.js";
+import type { PoltergeistConfig, Target } from "../types.js";
 
 export interface StatusPresenterDeps {
   logger: Logger;
@@ -19,30 +19,30 @@ export class StatusPresenter {
         target: Target;
         watching: boolean;
         pendingFiles: Set<string>;
-        lastBuild?: PoltergeistState['lastBuild'];
+        lastBuild?: PoltergeistState["lastBuild"];
       }
-    >
+    >,
   ): Promise<Record<string, unknown>> {
     const status: Record<string, unknown> = {};
 
     const deriveStatus = (stateFile?: PoltergeistState, fallback?: string): string => {
-      if (!stateFile) return fallback ?? 'unknown';
+      if (!stateFile) return fallback ?? "unknown";
       if (stateFile.process?.isActive) {
         const start =
-          typeof stateFile.process.startTime === 'string'
+          typeof stateFile.process.startTime === "string"
             ? Date.parse(stateFile.process.startTime)
             : undefined;
         const startValid = Number.isFinite(start);
         const graceMs = 30_000;
         if (!fallback && startValid && Date.now() - (start as number) > graceMs) {
-          return 'failure';
+          return "failure";
         }
-        return fallback ?? 'running';
+        return fallback ?? "running";
       }
       if (stateFile.lastBuild?.status) {
         return stateFile.lastBuild.status;
       }
-      return fallback ?? 'stopped';
+      return fallback ?? "stopped";
     };
 
     const targetsToReport =
@@ -57,7 +57,7 @@ export class StatusPresenter {
 
       if (state && stateFile) {
         const targetStatus: Record<string, unknown> = {
-          status: 'idle',
+          status: "idle",
           enabled: target.enabled,
           type: target.type,
           process: stateFile.process,
@@ -88,7 +88,7 @@ export class StatusPresenter {
         status[target.name] = targetStatus;
       } else {
         status[target.name] = {
-          status: 'not running',
+          status: "not running",
           enabled: target.enabled,
           type: target.type,
         };

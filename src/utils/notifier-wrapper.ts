@@ -36,11 +36,11 @@ class NotifierWrapper {
     try {
       // Dynamic import of CommonJS module
       // This allows Bun to compile without the dependency
-      const module = await import('node-notifier');
+      const module = await import("node-notifier");
       this.notifierModule = module.default || module;
       return this.notifierModule;
     } catch (error) {
-      console.debug('node-notifier not available, notifications disabled:', error);
+      console.debug("node-notifier not available, notifications disabled:", error);
       return null;
     }
   }
@@ -81,7 +81,7 @@ class NotifierWrapper {
       notifier.notify(notifierOptions);
     } catch (error) {
       // Silently fail - notifications are non-critical
-      console.debug('Notification failed:', error);
+      console.debug("Notification failed:", error);
     }
   }
 

@@ -1,19 +1,19 @@
 // Base builder class for all target types
-import { type ChildProcess, execSync, spawn } from 'child_process';
-import { createWriteStream, mkdirSync } from 'fs';
-import { dirname } from 'path';
-import type { Logger } from '../logger.js';
-import type { StateManager } from '../state.js';
-import type { BuildProgress, BuildStatus, Target } from '../types.js';
-import { stripAnsi } from '../utils/ansi.js';
-import { BuildStatusManager } from '../utils/build-status-manager.js';
+import { type ChildProcess, execSync, spawn } from "child_process";
+import { createWriteStream, mkdirSync } from "fs";
+import { dirname } from "path";
+import type { Logger } from "../logger.js";
+import type { StateManager } from "../state.js";
+import type { BuildProgress, BuildStatus, Target } from "../types.js";
+import { stripAnsi } from "../utils/ansi.js";
+import { BuildStatusManager } from "../utils/build-status-manager.js";
 
 // Vitest prints aggregates like "Tests 2 failed | 5 passed | 7 total"
 export const parseVitestProgressLine = (line: string): BuildProgress | null => {
   if (!/Test(s)?\s/i.test(line)) return null;
   const numbers = line.match(/\d+/g);
   if (!numbers || numbers.length < 2) return null;
-  const total = Number.parseInt(numbers[numbers.length - 1] ?? '', 10);
+  const total = Number.parseInt(numbers[numbers.length - 1] ?? "", 10);
   if (!Number.isFinite(total) || total <= 0) return null;
   const current = numbers
     .slice(0, -1)
@@ -26,7 +26,7 @@ export const parseVitestProgressLine = (line: string): BuildProgress | null => {
     current,
     total,
     percent,
-    label: 'Vitest',
+    label: "Vitest",
     updatedAt: new Date().toISOString(),
   };
 };
@@ -60,7 +60,7 @@ export abstract class BaseBuilder<T extends Target = Target> {
     // Format file list for logging
     const fileListText = this.formatChangedFiles(changedFiles);
     this.logger.info(
-      `[${this.target.name}] Building with ${changedFiles.length} changed file(s)${fileListText}`
+      `[${this.target.name}] Building with ${changedFiles.length} changed file(s)${fileListText}`,
     );
 
     if (options.force) {
@@ -110,7 +110,7 @@ export abstract class BaseBuilder<T extends Target = Target> {
       });
 
       this.logger.info(
-        `[${this.target.name}] Build completed in ${BuildStatusManager.formatDuration(metrics.duration)}`
+        `[${this.target.name}] Build completed in ${BuildStatusManager.formatDuration(metrics.duration)}`,
       );
 
       // Update app info if available
@@ -136,7 +136,7 @@ export abstract class BaseBuilder<T extends Target = Target> {
         {
           gitHash: this.getGitHash(),
           builder: this.getBuilderName(),
-        }
+        },
       );
 
       this.logger.error(`[${this.target.name}] Build failed: ${buildError.message}`);
@@ -148,10 +148,10 @@ export abstract class BaseBuilder<T extends Target = Target> {
   }
 
   protected getExecutionCommand(): string {
-    if (this.target.type === 'test' && 'testCommand' in this.target) {
+    if (this.target.type === "test" && "testCommand" in this.target) {
       return this.target.testCommand;
     }
-    return this.target.buildCommand || '';
+    return this.target.buildCommand || "";
   }
 
   protected async executeBuild(options: BuildOptions = {}): Promise<void> {
@@ -168,7 +168,7 @@ export abstract class BaseBuilder<T extends Target = Target> {
       };
 
       // Always capture output for error diagnosis
-      const stdio: ('inherit' | 'pipe')[] = ['inherit', 'pipe', 'pipe'];
+      const stdio: ("inherit" | "pipe")[] = ["inherit", "pipe", "pipe"];
       let logStream: NodeJS.WritableStream | null = null;
       let errorBuffer: string[] = [];
       let lastOutputLines: string[] = [];
@@ -188,7 +188,7 @@ export abstract class BaseBuilder<T extends Target = Target> {
         lastProgressUpdate = now;
         const buildingStatus: BuildStatus = BuildStatusManager.createBuildingStatus(
           this.target.name,
-          { gitHash: this.getGitHash(), builder: this.getBuilderName() }
+          { gitHash: this.getGitHash(), builder: this.getBuilderName() },
         );
         buildingStatus.progress = progress;
         void this.stateManager.updateBuildStatus(this.target.name, buildingStatus);
@@ -200,7 +200,7 @@ export abstract class BaseBuilder<T extends Target = Target> {
         mkdirSync(logDir, { recursive: true });
 
         // Create write stream for log file
-        logStream = createWriteStream(options.logFile, { flags: 'w' });
+        logStream = createWriteStream(options.logFile, { flags: "w" });
       }
 
       this.currentProcess = spawn(command, {
@@ -212,12 +212,12 @@ export abstract class BaseBuilder<T extends Target = Target> {
 
       // Capture and stream output in real-time
       if (this.currentProcess.stdout && this.currentProcess.stderr) {
-        this.currentProcess.stdout.on('data', (data) => {
+        this.currentProcess.stdout.on("data", (data) => {
           const output = data.toString();
 
           // Extract build/test progress indicators like "[12/50] Compiling Foo.swift"
-          for (const raw of output.split('\n')) {
-            const line = stripAnsi(raw).replace(/\r/g, '');
+          for (const raw of output.split("\n")) {
+            const line = stripAnsi(raw).replace(/\r/g, "");
             const match = line.match(/^\[(\d+)\/(\d+)\]\s*(.*)$/);
             if (match) {
               const current = Number.parseInt(match[1], 10);
@@ -244,9 +244,9 @@ export abstract class BaseBuilder<T extends Target = Target> {
             const sanitized = line;
 
             // Heuristic test progress for XCTest output
-            if (this.target.type === 'test') {
+            if (this.target.type === "test") {
               const testResult = sanitized.match(
-                /^Test Case '(?:-\[[^ ]+ )?([^']+)' (passed|failed) \(([\d.]+) seconds\)/
+                /^Test Case '(?:-\[[^ ]+ )?([^']+)' (passed|failed) \(([\d.]+) seconds\)/,
               );
               if (testResult) {
                 testCurrent += 1;
@@ -291,7 +291,7 @@ export abstract class BaseBuilder<T extends Target = Target> {
           }
 
           // Keep recent output for error context
-          const lines = output.split('\n').filter((l: string) => l.trim());
+          const lines = output.split("\n").filter((l: string) => l.trim());
           lastOutputLines.push(...lines);
           if (lastOutputLines.length > maxOutputLines) {
             lastOutputLines = lastOutputLines.slice(-maxOutputLines);
@@ -306,11 +306,11 @@ export abstract class BaseBuilder<T extends Target = Target> {
           process.stdout.write(data);
         });
 
-        this.currentProcess.stderr.on('data', (data) => {
+        this.currentProcess.stderr.on("data", (data) => {
           const error = data.toString();
 
           // Capture error lines for diagnosis
-          const lines = error.split('\n').filter((l: string) => l.trim());
+          const lines = error.split("\n").filter((l: string) => l.trim());
           errorBuffer.push(...lines);
           if (errorBuffer.length > maxErrorLines) {
             errorBuffer = errorBuffer.slice(-maxErrorLines);
@@ -326,7 +326,7 @@ export abstract class BaseBuilder<T extends Target = Target> {
         });
       }
 
-      this.currentProcess.on('close', async (code) => {
+      this.currentProcess.on("close", async (code) => {
         if (logStream) {
           logStream.end();
         }
@@ -339,9 +339,9 @@ export abstract class BaseBuilder<T extends Target = Target> {
           let errorMessage = `Build process exited with code ${code}`;
 
           if (errorBuffer.length > 0) {
-            errorMessage += `\n\nLast error output:\n${errorBuffer.slice(-10).join('\n')}`;
+            errorMessage += `\n\nLast error output:\n${errorBuffer.slice(-10).join("\n")}`;
           } else if (lastOutputLines.length > 0) {
-            errorMessage += `\n\nLast output:\n${lastOutputLines.slice(-10).join('\n')}`;
+            errorMessage += `\n\nLast output:\n${lastOutputLines.slice(-10).join("\n")}`;
           }
 
           // Store error context in state for quick diagnosis
@@ -361,7 +361,7 @@ export abstract class BaseBuilder<T extends Target = Target> {
         }
       });
 
-      this.currentProcess.on('error', async (error) => {
+      this.currentProcess.on("error", async (error) => {
         if (logStream) {
           logStream.end();
         }
@@ -387,12 +387,12 @@ export abstract class BaseBuilder<T extends Target = Target> {
 
   protected getGitHash(): string {
     try {
-      return execSync('git rev-parse --short HEAD', {
+      return execSync("git rev-parse --short HEAD", {
         cwd: this.projectRoot,
-        encoding: 'utf-8',
+        encoding: "utf-8",
       }).trim();
     } catch {
-      return 'unknown';
+      return "unknown";
     }
   }
 
@@ -410,7 +410,7 @@ export abstract class BaseBuilder<T extends Target = Target> {
 
   private formatChangedFiles(changedFiles: string[]): string {
     if (changedFiles.length === 0) {
-      return '';
+      return "";
     }
 
     // Show up to 3 files by name for clarity
@@ -418,7 +418,7 @@ export abstract class BaseBuilder<T extends Target = Target> {
     const filesToShow = changedFiles.slice(0, maxFilesToShow);
     const remainingCount = changedFiles.length - maxFilesToShow;
 
-    let fileList = filesToShow.join(', ');
+    let fileList = filesToShow.join(", ");
 
     if (remainingCount > 0) {
       fileList += `, +${remainingCount} more`;
@@ -430,7 +430,7 @@ export abstract class BaseBuilder<T extends Target = Target> {
   public stop(): void {
     if (this.currentProcess) {
       this.logger.info(`[${this.target.name}] Stopping build process`);
-      this.currentProcess.kill('SIGTERM');
+      this.currentProcess.kill("SIGTERM");
       this.currentProcess = undefined;
     }
   }

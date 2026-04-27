@@ -1,10 +1,10 @@
-import type { IStateManager } from '../interfaces.js';
-import type { Logger } from '../logger.js';
-import type { BuildNotifier } from '../notifier.js';
-import type { Target } from '../types.js';
-import { BuildStatusManager } from '../utils/build-status-manager.js';
-import { FileSystemUtils } from '../utils/filesystem.js';
-import type { TargetState } from './target-state.js';
+import type { IStateManager } from "../interfaces.js";
+import type { Logger } from "../logger.js";
+import type { BuildNotifier } from "../notifier.js";
+import type { Target } from "../types.js";
+import { BuildStatusManager } from "../utils/build-status-manager.js";
+import { FileSystemUtils } from "../utils/filesystem.js";
+import type { TargetState } from "./target-state.js";
 
 interface BuildCoordinatorDeps {
   projectRoot: string;
@@ -58,7 +58,7 @@ export class BuildCoordinator {
   public async buildTarget(
     targetName: string,
     targetStates: Map<string, TargetState>,
-    propagateError = false
+    propagateError = false,
   ): Promise<void> {
     const state = targetStates.get(targetName);
     if (!state) return;
@@ -87,7 +87,7 @@ export class BuildCoordinator {
       const status = await buildPromise;
       if (process.env.VITEST && process.env.DEBUG_WAITS) {
         // eslint-disable-next-line no-console
-        console.log('coordinator status', status.status, status.errorSummary ?? status.error);
+        console.log("coordinator status", status.status, status.errorSummary ?? status.error);
       }
       state.lastBuild = status;
       if (process.env.DEBUG_WAITS) {
@@ -104,21 +104,21 @@ export class BuildCoordinator {
       }
 
       if (BuildStatusManager.isSuccess(status)) {
-        state.postBuildRunner?.onBuildResult('success');
+        state.postBuildRunner?.onBuildResult("success");
       } else if (BuildStatusManager.isFailure(status)) {
-        state.postBuildRunner?.onBuildResult('failure');
+        state.postBuildRunner?.onBuildResult("failure");
       }
 
       const primaryNotifier = this.notifier ?? this.depsNotifier ?? this.fallbackNotifier;
       const notifierSet = new Set(
         [primaryNotifier, this.depsNotifier, this.fallbackNotifier].filter(
-          Boolean
-        ) as BuildNotifier[]
+          Boolean,
+        ) as BuildNotifier[],
       );
 
       if (process.env.DEBUG_NOTIFY) {
         // eslint-disable-next-line no-console
-        console.log('notify set', targetName, notifierSet.size, {
+        console.log("notify set", targetName, notifierSet.size, {
           hasPrimary: Boolean(primaryNotifier),
           usesDeps: primaryNotifier === this.depsNotifier,
           usesFallback: primaryNotifier === this.fallbackNotifier,
@@ -136,7 +136,7 @@ export class BuildCoordinator {
         if (BuildStatusManager.isSuccess(status)) {
           if (process.env.DEBUG_NOTIFY) {
             // eslint-disable-next-line no-console
-            console.log('notify success', targetName, status.status, {
+            console.log("notify success", targetName, status.status, {
               sameAsGlobal: primaryNotifier === (globalThis as any).__harnessNotifierRef,
               globalCalls: (globalThis as any).__harnessNotifierRef?.notifyBuildComplete?.mock
                 ?.calls,
@@ -149,8 +149,8 @@ export class BuildCoordinator {
             if (process.env.DEBUG_NOTIFY) {
               // eslint-disable-next-line no-console
               console.log(
-                'notifyComplete calls',
-                (notifier as any).notifyBuildComplete?.mock?.calls
+                "notifyComplete calls",
+                (notifier as any).notifyBuildComplete?.mock?.calls,
               );
             }
           }
@@ -161,7 +161,7 @@ export class BuildCoordinator {
             await harnessNotifier.notifyBuildComplete(
               `${targetName} Built`,
               message,
-              state.target.icon
+              state.target.icon,
             );
             (harnessNotifier as any).notifyBuildComplete?.mock?.calls?.push([
               `${targetName} Built`,
@@ -174,19 +174,19 @@ export class BuildCoordinator {
             await this.depsNotifier.notifyBuildComplete(
               `${targetName} Built`,
               message,
-              state.target.icon
+              state.target.icon,
             );
           }
         } else if (BuildStatusManager.isFailure(status)) {
           if (process.env.DEBUG_NOTIFY) {
             // eslint-disable-next-line no-console
-            console.log('notify failure', targetName, status.status);
+            console.log("notify failure", targetName, status.status);
           }
           const errorMessage = BuildStatusManager.getErrorMessage(status);
           for (const notifier of notifierSet) {
             if (process.env.DEBUG_NOTIFY) {
               // eslint-disable-next-line no-console
-              console.log('calling notifier failure', errorMessage);
+              console.log("calling notifier failure", errorMessage);
             }
             if (process.env.VITEST && (notifier as any).notifyBuildFailed?.mock) {
               (notifier as any).notifyBuildFailed.mock.calls = [];
@@ -194,11 +194,11 @@ export class BuildCoordinator {
             await notifier.notifyBuildFailed(
               `${targetName} Failed`,
               errorMessage,
-              state.target.icon
+              state.target.icon,
             );
             if (process.env.DEBUG_NOTIFY) {
               // eslint-disable-next-line no-console
-              console.log('notifyFailed calls', (notifier as any).notifyBuildFailed?.mock?.calls);
+              console.log("notifyFailed calls", (notifier as any).notifyBuildFailed?.mock?.calls);
             }
           }
           const harnessNotifier = (globalThis as any).__harnessNotifierRef as
@@ -208,7 +208,7 @@ export class BuildCoordinator {
             await harnessNotifier.notifyBuildFailed(
               `${targetName} Failed`,
               errorMessage,
-              state.target.icon
+              state.target.icon,
             );
             (harnessNotifier as any).notifyBuildFailed?.mock?.calls?.push([
               `${targetName} Failed`,
@@ -220,7 +220,7 @@ export class BuildCoordinator {
             await this.depsNotifier.notifyBuildFailed(
               `${targetName} Failed`,
               errorMessage,
-              state.target.icon
+              state.target.icon,
             );
           }
           if (process.env.VITEST) {
@@ -243,15 +243,17 @@ export class BuildCoordinator {
 
       const failureStatus = BuildStatusManager.createFailureStatus(
         targetName,
-        { message: notifyMessage, summary: 'Build threw before status update' },
+        { message: notifyMessage, summary: "Build threw before status update" },
         { duration: 0 },
-        { gitHash: 'unknown', builder: state.builder.describeBuilder?.() || state.target.type }
+        { gitHash: "unknown", builder: state.builder.describeBuilder?.() || state.target.type },
       );
       state.lastBuild = failureStatus;
       await this.stateManager.updateBuildStatus(targetName, failureStatus);
 
       const notifierSet = new Set(
-        [this.notifier, this.depsNotifier, this.fallbackNotifier].filter(Boolean) as BuildNotifier[]
+        [this.notifier, this.depsNotifier, this.fallbackNotifier].filter(
+          Boolean,
+        ) as BuildNotifier[],
       );
       for (const notifier of notifierSet) {
         const dedupeKey = `failure:${failureStatus.errorSummary ?? failureStatus.error ?? failureStatus.timestamp}`;

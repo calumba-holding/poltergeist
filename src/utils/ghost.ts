@@ -19,32 +19,32 @@ export const ghost = {
   /**
    * @deprecated Use ghost.plain() with chalk.cyan() on your text
    */
-  brand: () => '👻',
+  brand: () => "👻",
 
   /**
    * @deprecated Use ghost.plain() with chalk.green() on your text
    */
-  success: () => '👻',
+  success: () => "👻",
 
   /**
    * @deprecated Use ghost.plain() with chalk.yellow() on your text
    */
-  warning: () => '👻',
+  warning: () => "👻",
 
   /**
    * @deprecated Use ghost.plain() with chalk.red() on your text
    */
-  error: () => '👻',
+  error: () => "👻",
 
   /**
    * @deprecated Use ghost.plain() with chalk.gray() on your text
    */
-  info: () => '👻',
+  info: () => "👻",
 
   /**
    * Plain ghost emoji - use this and color your text instead
    */
-  plain: () => '👻',
+  plain: () => "👻",
 } as const;
 
 /**

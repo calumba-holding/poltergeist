@@ -3,11 +3,11 @@
  * Consolidates path operations, state file handling, and common file operations
  */
 
-import { createHash } from 'crypto';
-import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from 'fs';
-import { tmpdir } from 'os';
-import { dirname, join, resolve as resolvePath, sep } from 'path';
-import { DEFAULT_LOG_CHANNEL, sanitizeLogChannel } from './log-channels.js';
+import { createHash } from "crypto";
+import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from "fs";
+import { tmpdir } from "os";
+import { dirname, join, resolve as resolvePath, sep } from "path";
+import { DEFAULT_LOG_CHANNEL, sanitizeLogChannel } from "./log-channels.js";
 
 /**
  * Centralized file system utilities for Poltergeist operations
@@ -22,13 +22,13 @@ export class FileSystemUtils {
    */
   public static getStateDirectory(): string {
     const windowsTemp =
-      process.env.TEMP ?? process.env.TMP ?? (process.platform === 'win32' ? tmpdir() : undefined);
+      process.env.TEMP ?? process.env.TMP ?? (process.platform === "win32" ? tmpdir() : undefined);
     const dir =
       process.env.POLTERGEIST_STATE_DIR ||
       // Explicit per-OS default to avoid per-process TMPDIR splits on macOS/Linux.
-      (process.platform === 'win32'
-        ? join(windowsTemp ?? tmpdir(), 'Poltergeist', 'state')
-        : '/tmp/poltergeist');
+      (process.platform === "win32"
+        ? join(windowsTemp ?? tmpdir(), "Poltergeist", "state")
+        : "/tmp/poltergeist");
     if (!existsSync(dir)) {
       try {
         mkdirSync(dir, { recursive: true });
@@ -46,8 +46,8 @@ export class FileSystemUtils {
    */
   public static generateStateFileName(projectRoot: string, targetName: string): string {
     // Use both Unix and Windows separators to handle cross-platform paths in tests
-    const projectName = projectRoot.split(/[/\\]/).pop() || 'unknown';
-    const projectHash = createHash('sha256').update(projectRoot).digest('hex').substring(0, 8);
+    const projectName = projectRoot.split(/[/\\]/).pop() || "unknown";
+    const projectHash = createHash("sha256").update(projectRoot).digest("hex").substring(0, 8);
     return `${projectName}-${projectHash}-${targetName}.state`;
   }
 
@@ -66,18 +66,18 @@ export class FileSystemUtils {
   public static generateLogFileName(
     projectRoot: string,
     targetName: string,
-    channel: string = DEFAULT_LOG_CHANNEL
+    channel: string = DEFAULT_LOG_CHANNEL,
   ): string {
     // Use both Unix and Windows separators to handle cross-platform paths in tests
-    const projectName = projectRoot.split(/[/\\]/).pop() || 'unknown';
-    const projectHash = createHash('sha256').update(projectRoot).digest('hex').substring(0, 8);
+    const projectName = projectRoot.split(/[/\\]/).pop() || "unknown";
+    const projectHash = createHash("sha256").update(projectRoot).digest("hex").substring(0, 8);
     const sanitizedChannel = sanitizeLogChannel(channel);
     const nameParts = [projectName, projectHash, targetName];
     // Only fan out log filenames when a non-default channel is requested to preserve existing paths.
     if (sanitizedChannel !== DEFAULT_LOG_CHANNEL) {
       nameParts.push(sanitizedChannel);
     }
-    return `${nameParts.join('-')}.log`;
+    return `${nameParts.join("-")}.log`;
   }
 
   /**
@@ -86,7 +86,7 @@ export class FileSystemUtils {
   public static getLogFilePath(
     projectRoot: string,
     targetName: string,
-    channel: string = DEFAULT_LOG_CHANNEL
+    channel: string = DEFAULT_LOG_CHANNEL,
   ): string {
     const fileName = FileSystemUtils.generateLogFileName(projectRoot, targetName, channel);
     return join(FileSystemUtils.getStateDirectory(), fileName);
@@ -96,8 +96,8 @@ export class FileSystemUtils {
    * Pause flag lives alongside state/log files so panel/daemon/CLI can flip it quickly.
    */
   public static getPauseFilePath(projectRoot: string): string {
-    const fileName = `${projectRoot.split(/[/\\]/).pop() || 'project'}-${FileSystemUtils.projectHash(
-      projectRoot
+    const fileName = `${projectRoot.split(/[/\\]/).pop() || "project"}-${FileSystemUtils.projectHash(
+      projectRoot,
     )}.paused`;
     return join(FileSystemUtils.getStateDirectory(), fileName);
   }
@@ -110,7 +110,7 @@ export class FileSystemUtils {
   public static writePauseFlag(projectRoot: string, paused: boolean): void {
     const pauseFile = FileSystemUtils.getPauseFilePath(projectRoot);
     if (paused) {
-      writeFileSync(pauseFile, 'paused', 'utf-8');
+      writeFileSync(pauseFile, "paused", "utf-8");
     } else {
       try {
         unlinkSync(pauseFile);
@@ -121,7 +121,7 @@ export class FileSystemUtils {
   }
 
   public static projectHash(projectRoot: string): string {
-    return createHash('sha256').update(projectRoot).digest('hex').substring(0, 6);
+    return createHash("sha256").update(projectRoot).digest("hex").substring(0, 6);
   }
 
   /**
@@ -132,7 +132,7 @@ export class FileSystemUtils {
       if (!existsSync(filePath)) {
         return null;
       }
-      const content = readFileSync(filePath, 'utf-8');
+      const content = readFileSync(filePath, "utf-8");
       return JSON.parse(content) as T;
     } catch {
       return null;
@@ -146,7 +146,7 @@ export class FileSystemUtils {
     if (!existsSync(filePath)) {
       return null;
     }
-    const content = readFileSync(filePath, 'utf-8');
+    const content = readFileSync(filePath, "utf-8");
     return JSON.parse(content) as T; // Will throw on invalid JSON
   }
 
@@ -156,7 +156,7 @@ export class FileSystemUtils {
   public static writeJsonFile<T>(filePath: string, data: T): boolean {
     try {
       const content = JSON.stringify(data, null, 2);
-      writeFileSync(filePath, content, 'utf-8');
+      writeFileSync(filePath, content, "utf-8");
       return true;
     } catch {
       return false;
@@ -172,7 +172,7 @@ export class FileSystemUtils {
   public static findFileUpTree(fileName: string, startDir: string = process.cwd()): string | null {
     let currentDir = resolvePath(startDir);
     const root =
-      process.platform === 'win32' ? resolvePath(currentDir.split(sep)[0] + sep) : resolvePath('/');
+      process.platform === "win32" ? resolvePath(currentDir.split(sep)[0] + sep) : resolvePath("/");
 
     while (currentDir !== root) {
       const filePath = resolvePath(currentDir, fileName);
@@ -191,7 +191,7 @@ export class FileSystemUtils {
    * Get project root directory containing the configuration file
    */
   public static findProjectRoot(startDir: string = process.cwd()): string | null {
-    const configPath = FileSystemUtils.findFileUpTree('poltergeist.config.json', startDir);
+    const configPath = FileSystemUtils.findFileUpTree("poltergeist.config.json", startDir);
     return configPath ? dirname(configPath) : null;
   }
 }

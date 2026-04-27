@@ -1,41 +1,41 @@
-import { describe, expect, it, vi } from 'vitest';
-import { Poltergeist } from '../src/poltergeist.js';
-import type { PoltergeistConfig } from '../src/types.js';
-import { createMockLogger } from './helpers.js';
+import { describe, expect, it, vi } from "vitest";
+import { Poltergeist } from "../src/poltergeist.js";
+import type { PoltergeistConfig } from "../src/types.js";
+import { createMockLogger } from "./helpers.js";
 
 const baseConfig: PoltergeistConfig = {
-  version: '1.0',
-  projectType: 'node',
+  version: "1.0",
+  projectType: "node",
   targets: [
     {
-      name: 't1',
-      type: 'executable',
+      name: "t1",
+      type: "executable",
       enabled: true,
-      buildCommand: 'echo ok',
-      outputPath: './dist/app',
-      watchPaths: ['src/**/*.ts'],
+      buildCommand: "echo ok",
+      outputPath: "./dist/app",
+      watchPaths: ["src/**/*.ts"],
       settlingDelay: 100,
     },
   ],
   watchman: {
     useDefaultExclusions: true,
     excludeDirs: [],
-    projectType: 'node',
+    projectType: "node",
     maxFileEvents: 10000,
     recrawlThreshold: 5,
     settlingDelay: 1000,
   },
 };
 
-describe('config reload refreshes watchman', () => {
-  it('invokes watchService.refreshTargets when watchman config changes', async () => {
+describe("config reload refreshes watchman", () => {
+  it("invokes watchService.refreshTargets when watchman config changes", async () => {
     const logger = createMockLogger();
     const mockWatchService = { refreshTargets: vi.fn() };
     const ensureConfigUpToDate = vi.fn();
 
     const poltergeist = new Poltergeist(
       baseConfig,
-      '/project',
+      "/project",
       logger,
       {
         stateManager: {
@@ -78,7 +78,7 @@ describe('config reload refreshes watchman', () => {
           validateWatchPattern: vi.fn(),
         },
       },
-      '/project/poltergeist.config.json'
+      "/project/poltergeist.config.json",
     );
 
     // Inject mock watch service (test-only override)

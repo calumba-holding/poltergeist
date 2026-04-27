@@ -1,9 +1,9 @@
 // Poltergeist v1.0 - Smart Watchman configuration with project detection
 
-import { promises as fs } from 'fs';
-import path from 'path';
-import type { Logger } from './logger.js';
-import type { PerformanceProfile, PoltergeistConfig, ProjectType } from './types.js';
+import { promises as fs } from "fs";
+import path from "path";
+import type { Logger } from "./logger.js";
+import type { PerformanceProfile, PoltergeistConfig, ProjectType } from "./types.js";
 
 /**
  * Project-specific exclusion sets optimized for each ecosystem
@@ -11,128 +11,128 @@ import type { PerformanceProfile, PoltergeistConfig, ProjectType } from './types
 export const PROJECT_TYPE_EXCLUSIONS = {
   swift: [
     // Swift Package Manager
-    '.build',
-    '**/.build/**',
-    'Package.resolved',
+    ".build",
+    "**/.build/**",
+    "Package.resolved",
     // Xcode
-    'DerivedData',
-    '**/DerivedData/**',
-    '*.xcworkspace/xcuserdata',
-    '*.xcodeproj/xcuserdata',
-    '*.xcworkspace/xcshareddata/xcschemes',
-    '*.xcodeproj/project.xcworkspace/xcuserdata',
+    "DerivedData",
+    "**/DerivedData/**",
+    "*.xcworkspace/xcuserdata",
+    "*.xcodeproj/xcuserdata",
+    "*.xcworkspace/xcshareddata/xcschemes",
+    "*.xcodeproj/project.xcworkspace/xcuserdata",
     // Build artifacts
-    '*.dSYM',
-    '*.framework',
-    '*.app',
-    '*.ipa',
+    "*.dSYM",
+    "*.framework",
+    "*.app",
+    "*.ipa",
     // Swift-specific
-    '*.swiftmodule',
-    '*.swiftdoc',
-    '*.swiftsourceinfo',
+    "*.swiftmodule",
+    "*.swiftdoc",
+    "*.swiftsourceinfo",
   ],
 
   node: [
     // Dependencies
-    'node_modules',
-    '**/node_modules/**',
+    "node_modules",
+    "**/node_modules/**",
     // Build outputs
-    'dist',
-    'build',
-    'out',
-    '.next',
-    '.nuxt',
-    'coverage',
+    "dist",
+    "build",
+    "out",
+    ".next",
+    ".nuxt",
+    "coverage",
     // Cache and temp
-    '.cache',
-    '.parcel-cache',
-    '.nyc_output',
-    'lib-cov',
+    ".cache",
+    ".parcel-cache",
+    ".nyc_output",
+    "lib-cov",
     // Logs
-    '*.log',
-    'logs',
-    'npm-debug.log*',
-    'yarn-debug.log*',
-    'yarn-error.log*',
+    "*.log",
+    "logs",
+    "npm-debug.log*",
+    "yarn-debug.log*",
+    "yarn-error.log*",
     // Package managers
-    'package-lock.json',
-    'yarn.lock',
-    'pnpm-lock.yaml',
+    "package-lock.json",
+    "yarn.lock",
+    "pnpm-lock.yaml",
   ],
 
   rust: [
     // Cargo
-    'target',
-    '**/target/**',
-    'Cargo.lock',
+    "target",
+    "**/target/**",
+    "Cargo.lock",
     // Build artifacts
-    '*.rlib',
-    '*.rmeta',
-    '*.crate',
+    "*.rlib",
+    "*.rmeta",
+    "*.crate",
     // IDE
-    '*.rs.bk',
+    "*.rs.bk",
   ],
 
   python: [
     // Python bytecode
-    '__pycache__',
-    '**/__pycache__/**',
-    '*.pyc',
-    '*.pyo',
-    '*.pyd',
+    "__pycache__",
+    "**/__pycache__/**",
+    "*.pyc",
+    "*.pyo",
+    "*.pyd",
     // Virtual environments
-    'venv',
-    'env',
-    '.venv',
-    '.env',
+    "venv",
+    "env",
+    ".venv",
+    ".env",
     // Testing and coverage
-    '.pytest_cache',
-    '.coverage',
-    'htmlcov',
-    '.tox',
+    ".pytest_cache",
+    ".coverage",
+    "htmlcov",
+    ".tox",
     // Type checking and linting
-    '.mypy_cache',
-    '.ruff_cache',
-    '.pylint.d',
+    ".mypy_cache",
+    ".ruff_cache",
+    ".pylint.d",
     // Distribution
-    '*.egg-info',
-    'dist',
-    'build',
+    "*.egg-info",
+    "dist",
+    "build",
   ],
 
   cmake: [
     // Build directories
-    'build',
-    '_build',
-    'out',
-    'cmake-build-*',
-    '**/CMakeFiles/**',
+    "build",
+    "_build",
+    "out",
+    "cmake-build-*",
+    "**/CMakeFiles/**",
     // CMake generated files
-    'CMakeCache.txt',
-    '**/CMakeCache.txt',
-    'cmake_install.cmake',
-    '**/cmake_install.cmake',
-    'Makefile',
-    '**/Makefile',
+    "CMakeCache.txt",
+    "**/CMakeCache.txt",
+    "cmake_install.cmake",
+    "**/cmake_install.cmake",
+    "Makefile",
+    "**/Makefile",
     // Build artifacts
-    '*.a',
-    '*.so',
-    '*.dylib',
-    '*.dll',
-    '*.lib',
-    '*.exe',
+    "*.a",
+    "*.so",
+    "*.dylib",
+    "*.dll",
+    "*.lib",
+    "*.exe",
     // IDE specific
-    '.cmake',
-    '**/.cmake/**',
+    ".cmake",
+    "**/.cmake/**",
     // CMake package directories
-    '_deps',
-    '**/_deps/**',
+    "_deps",
+    "**/_deps/**",
     // Testing directories
-    'Testing',
-    '**/Testing/**',
+    "Testing",
+    "**/Testing/**",
     // CPack generated
-    '_CPack_Packages',
-    '**/_CPack_Packages/**',
+    "_CPack_Packages",
+    "**/_CPack_Packages/**",
   ],
 
   mixed: [], // Will be populated by combining all types
@@ -143,33 +143,33 @@ export const PROJECT_TYPE_EXCLUSIONS = {
  */
 export const UNIVERSAL_EXCLUSIONS = [
   // Version control
-  '.git',
-  '.svn',
-  '.hg',
-  '.bzr',
+  ".git",
+  ".svn",
+  ".hg",
+  ".bzr",
   // OS files
-  '.DS_Store',
-  'Thumbs.db',
-  'desktop.ini',
+  ".DS_Store",
+  "Thumbs.db",
+  "desktop.ini",
   // IDE and editors
-  '.vscode',
-  '.idea',
-  '.cursor',
-  '.vs',
-  '*.swp',
-  '*.swo',
+  ".vscode",
+  ".idea",
+  ".cursor",
+  ".vs",
+  "*.swp",
+  "*.swo",
   // Temporary files
-  'tmp',
-  'temp',
-  '.tmp',
-  '*.tmp',
-  '*.temp',
+  "tmp",
+  "temp",
+  ".tmp",
+  "*.tmp",
+  "*.temp",
   // Archives
-  '*.zip',
-  '*.tar',
-  '*.gz',
-  '*.rar',
-  '*.7z',
+  "*.zip",
+  "*.tar",
+  "*.gz",
+  "*.rar",
+  "*.7z",
 ] as const;
 
 // Mixed project exclusions combining all types
@@ -192,17 +192,17 @@ const EXTENDED_PROJECT_EXCLUSIONS = {
  */
 export const PERFORMANCE_PROFILES = {
   conservative: {
-    description: 'Minimal exclusions, maximum file coverage',
+    description: "Minimal exclusions, maximum file coverage",
     excludeOnlyEssential: true,
     maxExclusions: 20,
   },
   balanced: {
-    description: 'Good balance of performance and coverage',
+    description: "Good balance of performance and coverage",
     excludeOnlyEssential: false,
     maxExclusions: 50,
   },
   aggressive: {
-    description: 'Maximum performance, minimal file coverage',
+    description: "Maximum performance, minimal file coverage",
     excludeOnlyEssential: false,
     maxExclusions: 100,
   },
@@ -215,10 +215,10 @@ export class ConfigurationError extends Error {
   constructor(
     message: string,
     public readonly suggestion?: string,
-    public readonly code?: string
+    public readonly code?: string,
   ) {
     super(message);
-    this.name = 'ConfigurationError';
+    this.name = "ConfigurationError";
   }
 }
 
@@ -234,7 +234,7 @@ export class WatchmanConfigManager {
   constructor(projectRoot: string, logger: Logger) {
     this.projectRoot = projectRoot;
     this.logger = logger;
-    this.configPath = path.join(projectRoot, '.watchmanconfig');
+    this.configPath = path.join(projectRoot, ".watchmanconfig");
   }
 
   /**
@@ -247,64 +247,64 @@ export class WatchmanConfigManager {
 
       // Check for Xcode projects first (highest priority for macOS/iOS development)
       const hasXcodeProject = files.some(
-        (f) => f.endsWith('.xcodeproj') || f.endsWith('.xcworkspace')
+        (f) => f.endsWith(".xcodeproj") || f.endsWith(".xcworkspace"),
       );
       if (hasXcodeProject) {
-        this.logger.debug('Detected Xcode project (.xcodeproj/.xcworkspace found)');
-        return 'swift';
+        this.logger.debug("Detected Xcode project (.xcodeproj/.xcworkspace found)");
+        return "swift";
       }
 
       // Check for definitive indicators in order of specificity
-      if (fileSet.has('Package.swift')) {
-        this.logger.debug('Detected Swift project (Package.swift found)');
-        return 'swift';
+      if (fileSet.has("Package.swift")) {
+        this.logger.debug("Detected Swift project (Package.swift found)");
+        return "swift";
       }
 
-      if (fileSet.has('Cargo.toml')) {
-        this.logger.debug('Detected Rust project (Cargo.toml found)');
-        return 'rust';
+      if (fileSet.has("Cargo.toml")) {
+        this.logger.debug("Detected Rust project (Cargo.toml found)");
+        return "rust";
       }
 
-      if (fileSet.has('package.json')) {
-        this.logger.debug('Detected Node.js project (package.json found)');
-        return 'node';
+      if (fileSet.has("package.json")) {
+        this.logger.debug("Detected Node.js project (package.json found)");
+        return "node";
       }
 
       if (
-        fileSet.has('pyproject.toml') ||
-        fileSet.has('requirements.txt') ||
-        fileSet.has('setup.py')
+        fileSet.has("pyproject.toml") ||
+        fileSet.has("requirements.txt") ||
+        fileSet.has("setup.py")
       ) {
-        this.logger.debug('Detected Python project (Python config files found)');
-        return 'python';
+        this.logger.debug("Detected Python project (Python config files found)");
+        return "python";
       }
 
-      if (fileSet.has('CMakeLists.txt')) {
-        this.logger.debug('Detected CMake project (CMakeLists.txt found)');
-        return 'cmake';
+      if (fileSet.has("CMakeLists.txt")) {
+        this.logger.debug("Detected CMake project (CMakeLists.txt found)");
+        return "cmake";
       }
 
       // Check for multiple project types
       const indicators = [
-        hasXcodeProject || fileSet.has('Package.swift') ? 'swift' : null,
-        fileSet.has('package.json') ? 'node' : null,
-        fileSet.has('Cargo.toml') ? 'rust' : null,
-        fileSet.has('pyproject.toml') || fileSet.has('requirements.txt') ? 'python' : null,
-        fileSet.has('CMakeLists.txt') ? 'cmake' : null,
+        hasXcodeProject || fileSet.has("Package.swift") ? "swift" : null,
+        fileSet.has("package.json") ? "node" : null,
+        fileSet.has("Cargo.toml") ? "rust" : null,
+        fileSet.has("pyproject.toml") || fileSet.has("requirements.txt") ? "python" : null,
+        fileSet.has("CMakeLists.txt") ? "cmake" : null,
       ].filter(Boolean);
 
       if (indicators.length > 1) {
         this.logger.info(
-          `Multiple project types detected: ${indicators.join(', ')}. Using 'mixed' type.`
+          `Multiple project types detected: ${indicators.join(", ")}. Using 'mixed' type.`,
         );
-        return 'mixed';
+        return "mixed";
       }
 
-      this.logger.warn('Could not detect project type. Defaulting to mixed.');
-      return 'mixed';
+      this.logger.warn("Could not detect project type. Defaulting to mixed.");
+      return "mixed";
     } catch (error) {
       this.logger.error(`Error detecting project type: ${error}`);
-      return 'mixed';
+      return "mixed";
     }
   }
 
@@ -315,8 +315,8 @@ export class WatchmanConfigManager {
    */
   getOptimizedExclusions(
     projectType: ProjectType,
-    profile: PerformanceProfile = 'balanced',
-    customExclusions: string[] = []
+    profile: PerformanceProfile = "balanced",
+    customExclusions: string[] = [],
   ): string[] {
     const universal = [...UNIVERSAL_EXCLUSIONS];
     const projectSpecific = [...EXTENDED_PROJECT_EXCLUSIONS[projectType]];
@@ -329,10 +329,10 @@ export class WatchmanConfigManager {
       // Conservative profile: keep only essential exclusions to maximize coverage
       exclusions = exclusions.filter(
         (pattern) =>
-          pattern.includes('.git') ||
-          pattern.includes('node_modules') ||
-          pattern.includes('.build') ||
-          pattern.includes('DerivedData')
+          pattern.includes(".git") ||
+          pattern.includes("node_modules") ||
+          pattern.includes(".build") ||
+          pattern.includes("DerivedData"),
       );
     }
 
@@ -340,7 +340,7 @@ export class WatchmanConfigManager {
     if (exclusions.length > profileConfig.maxExclusions) {
       this.logger.warn(
         `Exclusion count (${exclusions.length}) exceeds profile limit (${profileConfig.maxExclusions}). ` +
-          `Keeping most critical exclusions.`
+          `Keeping most critical exclusions.`,
       );
       exclusions = exclusions.slice(0, profileConfig.maxExclusions);
     }
@@ -349,7 +349,7 @@ export class WatchmanConfigManager {
     exclusions = [...new Set(exclusions)].sort();
 
     this.logger.info(
-      `Generated ${exclusions.length} exclusions for ${projectType} project with ${profile} profile`
+      `Generated ${exclusions.length} exclusions for ${projectType} project with ${profile} profile`,
     );
 
     return exclusions;
@@ -362,11 +362,11 @@ export class WatchmanConfigManager {
    * Normalize a watch pattern to be more lenient and user-friendly
    */
   normalizeWatchPattern(pattern: string): string {
-    if (!pattern || typeof pattern !== 'string') {
+    if (!pattern || typeof pattern !== "string") {
       throw new ConfigurationError(
-        'Watch pattern must be a non-empty string',
+        "Watch pattern must be a non-empty string",
         'Use glob patterns like "**/*.swift" or "src/**/*.ts"',
-        'INVALID_PATTERN'
+        "INVALID_PATTERN",
       );
     }
 
@@ -377,37 +377,37 @@ export class WatchmanConfigManager {
     if (/^\*\.[a-zA-Z0-9]+$/.test(pattern)) {
       normalized = `**/${pattern}`;
       this.logger.debug(
-        `Normalized pattern "${pattern}" to "${normalized}" for recursive matching`
+        `Normalized pattern "${pattern}" to "${normalized}" for recursive matching`,
       );
     }
     // Convert ./*.ext to **/*.ext for better matching
     else if (/^\.\/\*\.[a-zA-Z0-9]+$/.test(pattern)) {
       normalized = `**/*${pattern.substring(3)}`;
       this.logger.debug(
-        `Normalized pattern "${pattern}" to "${normalized}" for recursive matching`
+        `Normalized pattern "${pattern}" to "${normalized}" for recursive matching`,
       );
     }
     // Convert ./dir/*.ext to ./dir/**/*.ext
-    else if (/^\.\/[^/]+\/\*\.[a-zA-Z0-9]+$/.test(pattern) && !pattern.includes('**')) {
-      const parts = pattern.split('/');
+    else if (/^\.\/[^/]+\/\*\.[a-zA-Z0-9]+$/.test(pattern) && !pattern.includes("**")) {
+      const parts = pattern.split("/");
       normalized = `${parts[0]}/${parts[1]}/**/${parts[2]}`;
       this.logger.debug(
-        `Normalized pattern "${pattern}" to "${normalized}" for recursive matching`
+        `Normalized pattern "${pattern}" to "${normalized}" for recursive matching`,
       );
     }
     // Convert somedir/*.ext to somedir/**/*.ext (but not patterns already containing **)
-    else if (/^[^/]+\/\*\.[a-zA-Z0-9]+$/.test(pattern) && !pattern.includes('**')) {
-      const parts = pattern.split('/');
+    else if (/^[^/]+\/\*\.[a-zA-Z0-9]+$/.test(pattern) && !pattern.includes("**")) {
+      const parts = pattern.split("/");
       normalized = `${parts[0]}/**/${parts[1]}`;
       this.logger.debug(
-        `Normalized pattern "${pattern}" to "${normalized}" for recursive matching`
+        `Normalized pattern "${pattern}" to "${normalized}" for recursive matching`,
       );
     }
     // Remove trailing slash
-    else if (pattern.endsWith('/')) {
+    else if (pattern.endsWith("/")) {
       normalized = `${pattern.slice(0, -1)}/**`;
       this.logger.debug(
-        `Normalized pattern "${pattern}" to "${normalized}" (removed trailing slash)`
+        `Normalized pattern "${pattern}" to "${normalized}" (removed trailing slash)`,
       );
     }
 
@@ -415,20 +415,20 @@ export class WatchmanConfigManager {
   }
 
   validateWatchPattern(pattern: string): void {
-    if (!pattern || typeof pattern !== 'string') {
+    if (!pattern || typeof pattern !== "string") {
       throw new ConfigurationError(
-        'Watch pattern must be a non-empty string',
+        "Watch pattern must be a non-empty string",
         'Use glob patterns like "**/*.swift" or "src/**/*.ts"',
-        'INVALID_PATTERN'
+        "INVALID_PATTERN",
       );
     }
 
     // After normalization, only check for truly problematic patterns
-    const problematicPatterns = ['.git/**', 'node_modules/**', '.build/**'];
+    const problematicPatterns = [".git/**", "node_modules/**", ".build/**"];
     if (problematicPatterns.some((p) => pattern.includes(p))) {
       this.logger.warn(
         `Pattern "${pattern}" includes commonly excluded directory. ` +
-          `Consider if this is intentional.`
+          `Consider if this is intentional.`,
       );
     }
   }
@@ -446,20 +446,20 @@ export class WatchmanConfigManager {
       recrawlThreshold: 5,
       settlingDelay: 1000,
     };
-    const performanceProfile = config.performance?.profile || 'balanced';
+    const performanceProfile = config.performance?.profile || "balanced";
 
     // Get optimized exclusions
     const exclusions = this.getOptimizedExclusions(
       projectType,
       performanceProfile,
-      watchmanConfig.excludeDirs
+      watchmanConfig.excludeDirs,
     );
 
     // Process exclusion rules if provided
     const ruleExclusions: string[] = [];
     if (watchmanConfig.rules) {
       for (const rule of watchmanConfig.rules) {
-        if (rule.enabled !== false && rule.action === 'ignore') {
+        if (rule.enabled !== false && rule.action === "ignore") {
           ruleExclusions.push(rule.pattern);
         }
       }
@@ -470,7 +470,7 @@ export class WatchmanConfigManager {
     // Advanced Watchman configuration
     const watchmanFileConfig = {
       ignore_dirs: allExclusions,
-      ignore_vcs: ['.git', '.svn', '.hg', '.bzr'],
+      ignore_vcs: [".git", ".svn", ".hg", ".bzr"],
 
       // Performance tuning
       idle_reap_age_seconds: 300,
@@ -484,14 +484,14 @@ export class WatchmanConfigManager {
       settle: watchmanConfig.settlingDelay,
 
       // Project-specific optimizations
-      ...(projectType === 'swift' && {
+      ...(projectType === "swift" && {
         // Swift-specific optimizations
-        defer: ['*.xcodeproj/**', '*.xcworkspace/**'],
+        defer: ["*.xcodeproj/**", "*.xcworkspace/**"],
       }),
 
-      ...(projectType === 'node' && {
+      ...(projectType === "node" && {
         // Node-specific optimizations
-        defer: ['package-lock.json', 'yarn.lock'],
+        defer: ["package-lock.json", "yarn.lock"],
       }),
     };
 
@@ -516,7 +516,7 @@ export class WatchmanConfigManager {
       }
     }
 
-    this.logger.debug('✅ Configuration validation passed');
+    this.logger.debug("✅ Configuration validation passed");
   }
 
   /**
@@ -524,16 +524,16 @@ export class WatchmanConfigManager {
    */
   async writeConfig(
     watchmanConfig: Record<string, unknown>,
-    config: PoltergeistConfig
+    config: PoltergeistConfig,
   ): Promise<void> {
     try {
       const configWithMetadata = {
         ...watchmanConfig,
         // Add metadata for debugging
         _metadata: {
-          generated_by: 'poltergeist',
+          generated_by: "poltergeist",
           project_type: config.projectType,
-          performance_profile: config.performance?.profile || 'balanced',
+          performance_profile: config.performance?.profile || "balanced",
           generated_at: new Date().toISOString(),
           total_exclusions: Array.isArray(watchmanConfig.ignore_dirs)
             ? watchmanConfig.ignore_dirs.length
@@ -542,18 +542,18 @@ export class WatchmanConfigManager {
       };
 
       const content = JSON.stringify(configWithMetadata, null, 2);
-      await fs.writeFile(this.configPath, content, 'utf-8');
+      await fs.writeFile(this.configPath, content, "utf-8");
 
       this.logger.info(
         `✅ Generated .watchmanconfig with ${Array.isArray(watchmanConfig.ignore_dirs) ? watchmanConfig.ignore_dirs.length : 0} exclusions ` +
-          `(${config.projectType} project, ${config.performance?.profile || 'balanced'} profile)`
+          `(${config.projectType} project, ${config.performance?.profile || "balanced"} profile)`,
       );
     } catch (error) {
       this.logger.error(`Failed to write .watchmanconfig: ${error}`);
       throw new ConfigurationError(
-        'Failed to write Watchman configuration',
-        'Check file permissions and disk space',
-        'WRITE_FAILED'
+        "Failed to write Watchman configuration",
+        "Check file permissions and disk space",
+        "WRITE_FAILED",
       );
     }
   }
@@ -581,8 +581,8 @@ export class WatchmanConfigManager {
   createExclusionExpressions(config: PoltergeistConfig): Array<[string, string[]]> {
     const exclusions = this.getOptimizedExclusions(
       config.projectType,
-      config.performance?.profile || 'balanced',
-      config.watchman?.excludeDirs || []
+      config.performance?.profile || "balanced",
+      config.watchman?.excludeDirs || [],
     );
 
     // Limit subscription exclusions to prevent overly complex expressions
@@ -592,7 +592,7 @@ export class WatchmanConfigManager {
 
     if (exclusions.length > subscriptionLimit) {
       this.logger.info(
-        `Limiting subscription exclusions to ${subscriptionLimit} most critical (total: ${exclusions.length})`
+        `Limiting subscription exclusions to ${subscriptionLimit} most critical (total: ${exclusions.length})`,
       );
     }
 
@@ -603,17 +603,17 @@ export class WatchmanConfigManager {
 
       // If exclusion already has wildcards, use as-is
       // Otherwise, treat as directory and add /**
-      if (!pattern.includes('*') && !pattern.includes('/')) {
+      if (!pattern.includes("*") && !pattern.includes("/")) {
         pattern = `**/${pattern}/**`;
-      } else if (pattern.startsWith('**/*.')) {
+      } else if (pattern.startsWith("**/*.")) {
         // For patterns like **/*.log, use as-is
         pattern = exclusion;
-      } else if (!pattern.includes('**')) {
+      } else if (!pattern.includes("**")) {
         // Add ** prefix if missing
         pattern = `**/${exclusion}/**`;
       }
 
-      return ['not', ['match', pattern, 'wholename']] as [string, string[]];
+      return ["not", ["match", pattern, "wholename"]] as [string, string[]];
     });
   }
 
@@ -622,9 +622,9 @@ export class WatchmanConfigManager {
    */
   private logOptimizationSummary(
     config: PoltergeistConfig,
-    watchmanConfig: Record<string, unknown>
+    watchmanConfig: Record<string, unknown>,
   ): void {
-    const profile = config.performance?.profile || 'balanced';
+    const profile = config.performance?.profile || "balanced";
     const projectType = config.projectType;
     const totalExclusions = Array.isArray(watchmanConfig.ignore_dirs)
       ? watchmanConfig.ignore_dirs.length
@@ -632,7 +632,7 @@ export class WatchmanConfigManager {
     const customExclusions = config.watchman?.excludeDirs?.length || 0;
     const ruleExclusions = config.watchman?.rules?.filter((r) => r.enabled !== false).length || 0;
 
-    this.logger.info('🎯 Watchman Optimization Summary:');
+    this.logger.info("🎯 Watchman Optimization Summary:");
     this.logger.info(`  • Project Type: ${projectType}`);
     this.logger.info(`  • Performance Profile: ${profile}`);
     this.logger.info(`  • Total Exclusions: ${totalExclusions}`);
@@ -644,7 +644,7 @@ export class WatchmanConfigManager {
     this.logger.info(`  • Recrawl Threshold: ${config.watchman?.recrawlThreshold || 5}`);
 
     if (config.performance?.autoOptimize) {
-      this.logger.info('  • Auto-optimization: Enabled');
+      this.logger.info("  • Auto-optimization: Enabled");
     }
   }
 
@@ -660,7 +660,7 @@ export class WatchmanConfigManager {
       const directories = dirs.filter((d) => d.isDirectory()).map((d) => d.name);
 
       // Look for common unexcluded directories that should be excluded
-      const commonProblematic = ['coverage', 'tmp', 'logs', 'cache', 'artifacts', 'reports'];
+      const commonProblematic = ["coverage", "tmp", "logs", "cache", "artifacts", "reports"];
 
       for (const dir of commonProblematic) {
         if (directories.includes(dir)) {
@@ -670,7 +670,7 @@ export class WatchmanConfigManager {
 
       // Check for large directories that might benefit from exclusion
       for (const dir of directories) {
-        if (dir.startsWith('test_') || dir.startsWith('tmp_') || dir.includes('backup')) {
+        if (dir.startsWith("test_") || dir.startsWith("tmp_") || dir.includes("backup")) {
           suggestions.push(`Consider excluding "${dir}" (appears to be temporary/test directory)`);
         }
       }

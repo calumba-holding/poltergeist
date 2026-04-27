@@ -1,7 +1,7 @@
-import chalk from 'chalk';
-import { createReadStream, readFileSync, statSync, watchFile } from 'fs';
-import { createInterface } from 'readline';
-import { ghost } from '../utils/ghost.js';
+import chalk from "chalk";
+import { createReadStream, readFileSync, statSync, watchFile } from "fs";
+import { createInterface } from "readline";
+import { ghost } from "../utils/ghost.js";
 
 export interface LogEntry {
   timestamp: string;
@@ -29,7 +29,7 @@ export function parseLogLine(line: string, targetFilter?: string): ParsedLog {
     };
   }
 
-  if (line.startsWith('{')) {
+  if (line.startsWith("{")) {
     try {
       const entry = JSON.parse(line) as LogEntry;
       if (targetFilter && entry.target !== targetFilter) {
@@ -52,7 +52,7 @@ export async function displayLogs(
     lines: string;
     follow?: boolean;
     json?: boolean;
-  }
+  },
 ): Promise<void> {
   const maxLines = Number.parseInt(options.lines, 10);
 
@@ -68,7 +68,7 @@ export async function displayLogs(
     if (options.target) {
       console.log(chalk.yellow(`No logs found for target: ${options.target}`));
     } else {
-      console.log(chalk.yellow('No logs found'));
+      console.log(chalk.yellow("No logs found"));
     }
     return;
   }
@@ -78,7 +78,7 @@ export async function displayLogs(
     console.log(JSON.stringify(logEntries, null, 2));
   } else {
     console.log(chalk.cyan(`${ghost.brand()} Poltergeist Logs`));
-    console.log(chalk.gray('═'.repeat(50)));
+    console.log(chalk.gray("═".repeat(50)));
     logEntries.forEach(formatLogEntry);
   }
 }
@@ -87,12 +87,12 @@ export async function displayLogs(
 export async function readLogEntries(
   logFile: string,
   targetFilter?: string,
-  maxLines?: number
+  maxLines?: number,
 ): Promise<LogEntry[]> {
-  const content = readFileSync(logFile, 'utf-8');
+  const content = readFileSync(logFile, "utf-8");
   const lines = content
     .trim()
-    .split('\n')
+    .split("\n")
     .filter((line) => line.trim());
 
   const entries: LogEntry[] = [];
@@ -115,11 +115,11 @@ export async function readLogEntries(
 // Format a single log entry for display
 export function formatLogEntry(entry: LogEntry): void {
   // Handle timestamp - Pino gives us HH:mm:ss format, so use it directly
-  const timestamp = entry.timestamp.includes(':')
+  const timestamp = entry.timestamp.includes(":")
     ? entry.timestamp
     : new Date(entry.timestamp).toLocaleString();
   const level = formatLogLevel(entry.level);
-  const target = entry.target ? chalk.blue(`[${entry.target}]`) : '';
+  const target = entry.target ? chalk.blue(`[${entry.target}]`) : "";
   const message = entry.message;
 
   console.log(`${chalk.gray(timestamp)} ${level} ${target} ${message}`);
@@ -140,16 +140,16 @@ export function formatLogEntry(entry: LogEntry): void {
 // Format log level with colors
 export function formatLogLevel(level: string): string {
   switch (level.toLowerCase()) {
-    case 'error':
-      return chalk.red('ERROR');
-    case 'warn':
-      return chalk.yellow('WARN ');
-    case 'info':
-      return chalk.cyan('INFO ');
-    case 'debug':
-      return chalk.gray('DEBUG');
-    case 'success':
-      return chalk.green('SUCCESS');
+    case "error":
+      return chalk.red("ERROR");
+    case "warn":
+      return chalk.yellow("WARN ");
+    case "info":
+      return chalk.cyan("INFO ");
+    case "debug":
+      return chalk.gray("DEBUG");
+    case "success":
+      return chalk.green("SUCCESS");
     default:
       return chalk.white(level.padEnd(5).toUpperCase());
   }
@@ -159,7 +159,7 @@ export function formatLogLevel(level: string): string {
 export async function followLogs(
   logFile: string,
   targetFilter?: string,
-  jsonOutput?: boolean
+  jsonOutput?: boolean,
 ): Promise<void> {
   let fileSize = statSync(logFile).size;
 
@@ -167,7 +167,7 @@ export async function followLogs(
   if (targetFilter) {
     console.log(chalk.gray(`Target: ${targetFilter}`));
   }
-  console.log(chalk.gray('═'.repeat(50)));
+  console.log(chalk.gray("═".repeat(50)));
 
   // Display existing logs first
   const existingEntries = await readLogEntries(logFile, targetFilter, 20);
@@ -186,7 +186,7 @@ export async function followLogs(
     if (curr.size > fileSize) {
       const stream = createReadStream(logFile, {
         start: fileSize,
-        encoding: 'utf-8',
+        encoding: "utf-8",
       });
 
       const rl = createInterface({
@@ -194,7 +194,7 @@ export async function followLogs(
         crlfDelay: Number.POSITIVE_INFINITY,
       });
 
-      rl.on('line', (line) => {
+      rl.on("line", (line) => {
         if (!line.trim()) return;
 
         const { entry } = parseLogLine(line, targetFilter);

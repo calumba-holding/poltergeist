@@ -1,8 +1,8 @@
 // CMake executable builder
-import { existsSync } from 'fs';
-import { join } from 'path';
-import type { CMakeExecutableTarget } from '../types.js';
-import { CMakeBuilder } from './cmake-builder.js';
+import { existsSync } from "fs";
+import { join } from "path";
+import type { CMakeExecutableTarget } from "../types.js";
+import { CMakeBuilder } from "./cmake-builder.js";
 
 export class CMakeExecutableBuilder extends CMakeBuilder<CMakeExecutableTarget> {
   protected async postBuild(): Promise<void> {
@@ -28,7 +28,7 @@ export class CMakeExecutableBuilder extends CMakeBuilder<CMakeExecutableTarget> 
     // Common output locations for executables
     const buildType = this.getBuildType();
     const targetName = this.target.targetName;
-    const exeExt = process.platform === 'win32' ? '.exe' : '';
+    const exeExt = process.platform === "win32" ? ".exe" : "";
 
     const searchPaths = [
       // Direct build directory
@@ -36,12 +36,12 @@ export class CMakeExecutableBuilder extends CMakeBuilder<CMakeExecutableTarget> 
       // Build type subdirectory (multi-config generators)
       join(this.buildDirectory, buildType, `${targetName}${exeExt}`),
       // Common subdirectories
-      join(this.buildDirectory, 'bin', `${targetName}${exeExt}`),
-      join(this.buildDirectory, 'bin', buildType, `${targetName}${exeExt}`),
+      join(this.buildDirectory, "bin", `${targetName}${exeExt}`),
+      join(this.buildDirectory, "bin", buildType, `${targetName}${exeExt}`),
       // Source-relative paths
-      join(this.buildDirectory, 'src', `${targetName}${exeExt}`),
-      join(this.buildDirectory, 'app', `${targetName}${exeExt}`),
-      join(this.buildDirectory, 'examples', `${targetName}${exeExt}`),
+      join(this.buildDirectory, "src", `${targetName}${exeExt}`),
+      join(this.buildDirectory, "app", `${targetName}${exeExt}`),
+      join(this.buildDirectory, "examples", `${targetName}${exeExt}`),
     ];
 
     for (const path of searchPaths) {

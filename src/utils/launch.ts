@@ -1,8 +1,8 @@
-import { existsSync } from 'fs';
-import { resolve as resolvePath } from 'path';
-import type { Target } from '../types.js';
+import { existsSync } from "fs";
+import { resolve as resolvePath } from "path";
+import type { Target } from "../types.js";
 
-export type LaunchErrorCode = 'NO_OUTPUT_PATH' | 'BINARY_NOT_FOUND';
+export type LaunchErrorCode = "NO_OUTPUT_PATH" | "BINARY_NOT_FOUND";
 
 export interface LaunchInfo {
   command: string;
@@ -17,9 +17,9 @@ export class LaunchPreparationError extends Error {
 
   constructor(code: LaunchErrorCode, targetName: string, binaryPath?: string) {
     const message =
-      code === 'NO_OUTPUT_PATH'
+      code === "NO_OUTPUT_PATH"
         ? `Target '${targetName}' does not have an output path`
-        : `Binary not found: ${binaryPath ?? '<unknown>'}`;
+        : `Binary not found: ${binaryPath ?? "<unknown>"}`;
     super(message);
     this.code = code;
     this.targetName = targetName;
@@ -28,27 +28,27 @@ export class LaunchPreparationError extends Error {
 }
 
 export function prepareLaunchInfo(target: Target, projectRoot: string, args: string[]): LaunchInfo {
-  if (!('outputPath' in target) || !target.outputPath) {
-    throw new LaunchPreparationError('NO_OUTPUT_PATH', target.name);
+  if (!("outputPath" in target) || !target.outputPath) {
+    throw new LaunchPreparationError("NO_OUTPUT_PATH", target.name);
   }
 
   const binaryPath = resolvePath(projectRoot, target.outputPath);
   if (!existsSync(binaryPath)) {
-    throw new LaunchPreparationError('BINARY_NOT_FOUND', target.name, binaryPath);
+    throw new LaunchPreparationError("BINARY_NOT_FOUND", target.name, binaryPath);
   }
 
   const ext = binaryPath.toLowerCase();
   let command: string;
   let commandArgs: string[];
 
-  if (ext.endsWith('.js') || ext.endsWith('.mjs')) {
-    command = 'node';
+  if (ext.endsWith(".js") || ext.endsWith(".mjs")) {
+    command = "node";
     commandArgs = [binaryPath, ...args];
-  } else if (ext.endsWith('.py')) {
-    command = 'python';
+  } else if (ext.endsWith(".py")) {
+    command = "python";
     commandArgs = [binaryPath, ...args];
-  } else if (ext.endsWith('.sh')) {
-    command = 'sh';
+  } else if (ext.endsWith(".sh")) {
+    command = "sh";
     commandArgs = [binaryPath, ...args];
   } else {
     command = binaryPath;

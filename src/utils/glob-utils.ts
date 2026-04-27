@@ -1,14 +1,14 @@
 function splitBraceContent(content: string): string[] {
   const parts: string[] = [];
-  let current = '';
+  let current = "";
   let depth = 0;
   for (const char of content) {
-    if (char === ',' && depth === 0) {
+    if (char === "," && depth === 0) {
       parts.push(current);
-      current = '';
+      current = "";
     } else {
-      if (char === '{') depth++;
-      if (char === '}') depth--;
+      if (char === "{") depth++;
+      if (char === "}") depth--;
       current += char;
     }
   }
@@ -19,7 +19,7 @@ function splitBraceContent(content: string): string[] {
 }
 
 function expandPattern(pattern: string): string[] {
-  const braceIndex = pattern.indexOf('{');
+  const braceIndex = pattern.indexOf("{");
   if (braceIndex === -1) {
     return [pattern];
   }
@@ -28,9 +28,9 @@ function expandPattern(pattern: string): string[] {
   let endIndex = -1;
   for (let i = braceIndex; i < pattern.length; i++) {
     const char = pattern[i];
-    if (char === '{') {
+    if (char === "{") {
       depth++;
-    } else if (char === '}') {
+    } else if (char === "}") {
       depth--;
       if (depth === 0) {
         endIndex = i;

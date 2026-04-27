@@ -47,15 +47,15 @@ class WatchmanClientWrapper {
     try {
       // Dynamic import of CommonJS module
       // This allows Bun to compile without the dependency
-      const watchman = await import('fb-watchman');
+      const watchman = await import("fb-watchman");
       this.clientModule = watchman.default || watchman;
 
       // Create the watchman client
       this.client = new this.clientModule.Client();
       return this.client;
     } catch (error) {
-      console.error('fb-watchman not available:', error);
-      throw new Error('Watchman is required for file watching. Please install fb-watchman.');
+      console.error("fb-watchman not available:", error);
+      throw new Error("Watchman is required for file watching. Please install fb-watchman.");
     }
   }
 
@@ -64,7 +64,7 @@ class WatchmanClientWrapper {
    */
   async capabilityCheck(
     capabilities: WatchmanCapabilities,
-    callback: WatchmanCallback
+    callback: WatchmanCallback,
   ): Promise<void> {
     try {
       const client = await this.loadWatchman();
@@ -93,7 +93,7 @@ class WatchmanClientWrapper {
     root: string,
     name: string,
     options: WatchmanSubscribeOptions,
-    callback: WatchmanCallback
+    callback: WatchmanCallback,
   ): Promise<void> {
     try {
       const client = await this.loadWatchman();
@@ -110,7 +110,7 @@ class WatchmanClientWrapper {
       if (options.defer) sub.defer = options.defer;
       if (options.drop) sub.drop = options.drop;
 
-      client.command(['subscribe', root, name, sub], callback);
+      client.command(["subscribe", root, name, sub], callback);
     } catch (error) {
       callback(error as Error);
     }
@@ -122,7 +122,7 @@ class WatchmanClientWrapper {
   async unsubscribe(root: string, name: string, callback: WatchmanCallback): Promise<void> {
     try {
       const client = await this.loadWatchman();
-      client.command(['unsubscribe', root, name], callback);
+      client.command(["unsubscribe", root, name], callback);
     } catch (error) {
       callback(error as Error);
     }
@@ -153,7 +153,7 @@ class WatchmanClientWrapper {
           }
         })
         .catch((error) => {
-          console.error('Failed to add event listener:', error);
+          console.error("Failed to add event listener:", error);
         });
     } else {
       this.client.on(event, handler);

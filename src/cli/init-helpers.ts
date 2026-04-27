@@ -1,14 +1,14 @@
-import { existsSync } from 'fs';
-import { readdir, readFile } from 'fs/promises';
-import path, { join } from 'path';
-import type { PoltergeistConfig, ProjectType } from '../types.js';
+import { existsSync } from "fs";
+import { readdir, readFile } from "fs/promises";
+import path, { join } from "path";
+import type { PoltergeistConfig, ProjectType } from "../types.js";
 
 // Helper function to find Xcode projects in directory
 export async function findXcodeProjects(
   rootPath: string,
-  maxDepth: number = 2
-): Promise<Array<{ path: string; type: 'xcodeproj' | 'xcworkspace'; scheme?: string }>> {
-  const projects: Array<{ path: string; type: 'xcodeproj' | 'xcworkspace'; scheme?: string }> = [];
+  maxDepth: number = 2,
+): Promise<Array<{ path: string; type: "xcodeproj" | "xcworkspace"; scheme?: string }>> {
+  const projects: Array<{ path: string; type: "xcodeproj" | "xcworkspace"; scheme?: string }> = [];
 
   async function scan(dir: string, depth: number) {
     if (depth > maxDepth) return;
@@ -20,12 +20,12 @@ export async function findXcodeProjects(
         const fullPath = join(dir, entry.name);
 
         if (entry.isDirectory()) {
-          if (entry.name.endsWith('.xcworkspace')) {
-            projects.push({ path: fullPath, type: 'xcworkspace' });
-          } else if (entry.name.endsWith('.xcodeproj')) {
-            const scheme = entry.name.replace('.xcodeproj', '');
-            projects.push({ path: fullPath, type: 'xcodeproj', scheme });
-          } else if (!entry.name.startsWith('.') && entry.name !== 'node_modules') {
+          if (entry.name.endsWith(".xcworkspace")) {
+            projects.push({ path: fullPath, type: "xcworkspace" });
+          } else if (entry.name.endsWith(".xcodeproj")) {
+            const scheme = entry.name.replace(".xcodeproj", "");
+            projects.push({ path: fullPath, type: "xcodeproj", scheme });
+          } else if (!entry.name.startsWith(".") && entry.name !== "node_modules") {
             await scan(fullPath, depth + 1);
           }
         }
@@ -44,17 +44,17 @@ export function guessBundleId(projectName: string, projectPath: string): string 
   // Common patterns
   const cleanName = projectName
     .toLowerCase()
-    .replace(/[^a-z0-9]/g, '')
-    .replace(/ios$/, '');
+    .replace(/[^a-z0-9]/g, "")
+    .replace(/ios$/, "");
 
   const isIOS =
-    projectName.toLowerCase().includes('ios') || projectPath.toLowerCase().includes('/ios/');
+    projectName.toLowerCase().includes("ios") || projectPath.toLowerCase().includes("/ios/");
 
   // Try to extract from common patterns
-  if (projectPath.includes('vibetunnel')) {
-    return projectPath.includes('ios')
-      ? 'sh.vibetunnel.vibetunnel.ios'
-      : 'sh.vibetunnel.vibetunnel';
+  if (projectPath.includes("vibetunnel")) {
+    return projectPath.includes("ios")
+      ? "sh.vibetunnel.vibetunnel.ios"
+      : "sh.vibetunnel.vibetunnel";
   }
 
   return isIOS ? `com.example.${cleanName}.ios` : `com.example.${cleanName}`;
@@ -74,7 +74,7 @@ export interface AugmentOptions {
 export async function augmentConfigWithDetectedTargets(
   projectRoot: string,
   config: PoltergeistConfig,
-  options: AugmentOptions = {}
+  options: AugmentOptions = {},
 ): Promise<DetectionSummary[]> {
   const summaries: DetectionSummary[] = [];
   if (options.allowAutoAdd === false) {
@@ -92,15 +92,15 @@ export async function augmentConfigWithDetectedTargets(
 
     const resolveEntryName = (key: string): string => entryMap.get(key)?.name ?? key;
 
-    if (entryMap.has('makefile')) {
-      const makefileName = resolveEntryName('makefile');
+    if (entryMap.has("makefile")) {
+      const makefileName = resolveEntryName("makefile");
       const makefilePath = join(projectRoot, makefileName);
-      let targetName = 'app';
-      let outputPath = './app';
-      let buildCommand = 'make';
+      let targetName = "app";
+      let outputPath = "./app";
+      let buildCommand = "make";
 
       try {
-        const makefile = await readFile(makefilePath, 'utf-8');
+        const makefile = await readFile(makefilePath, "utf-8");
         const targetMatch = makefile.match(/^\s*TARGET\s*[:=]\s*([^\s]+)\s*$/m);
         if (targetMatch) {
           targetName = targetMatch[1];
@@ -113,24 +113,24 @@ export async function augmentConfigWithDetectedTargets(
 
       config.targets.push({
         name: targetName,
-        type: 'executable',
+        type: "executable",
         enabled: true,
         buildCommand,
         outputPath,
-        watchPaths: ['**/*.c', '**/*.h', 'Makefile'],
+        watchPaths: ["**/*.c", "**/*.h", "Makefile"],
       });
-      summaries.push({ name: targetName, type: 'executable', reason: 'makefile' });
+      summaries.push({ name: targetName, type: "executable", reason: "makefile" });
       return summaries;
     }
 
-    const hasGoMod = entryMap.has('go.mod');
+    const hasGoMod = entryMap.has("go.mod");
     const hasRootGoFile = dirEntries.some(
-      (entry) => entry.isFile() && entry.name.toLowerCase().endsWith('.go')
+      (entry) => entry.isFile() && entry.name.toLowerCase().endsWith(".go"),
     );
 
     if (hasGoMod || hasRootGoFile) {
       const goTargets: Array<{ name: string; packagePath: string }> = [];
-      const cmdEntry = entryMap.get('cmd');
+      const cmdEntry = entryMap.get("cmd");
 
       if (cmdEntry?.isDirectory()) {
         const cmdDirPath = join(projectRoot, cmdEntry.name);
@@ -138,7 +138,7 @@ export async function augmentConfigWithDetectedTargets(
           const cmdDirEntries = await readdir(cmdDirPath, { withFileTypes: true });
           for (const subEntry of cmdDirEntries) {
             if (!subEntry.isDirectory()) continue;
-            const mainFilePath = join(cmdDirPath, subEntry.name, 'main.go');
+            const mainFilePath = join(cmdDirPath, subEntry.name, "main.go");
             if (existsSync(mainFilePath)) {
               goTargets.push({
                 name: subEntry.name,
@@ -151,10 +151,10 @@ export async function augmentConfigWithDetectedTargets(
         }
       }
 
-      if (goTargets.length === 0 && entryMap.has('main.go')) {
+      if (goTargets.length === 0 && entryMap.has("main.go")) {
         goTargets.push({
           name: path.basename(projectRoot),
-          packagePath: '.',
+          packagePath: ".",
         });
       }
 
@@ -162,46 +162,46 @@ export async function augmentConfigWithDetectedTargets(
         for (const target of goTargets) {
           config.targets.push({
             name: target.name,
-            type: 'executable',
+            type: "executable",
             enabled: true,
             buildCommand: `mkdir -p ./dist/bin && go build -o ./dist/bin/${target.name} ${target.packagePath}`,
             outputPath: `./dist/bin/${target.name}`,
-            watchPaths: ['**/*.go', 'go.mod', 'go.sum'],
+            watchPaths: ["**/*.go", "go.mod", "go.sum"],
           });
-          summaries.push({ name: target.name, type: 'executable', reason: 'go' });
+          summaries.push({ name: target.name, type: "executable", reason: "go" });
         }
         return summaries;
       }
     }
 
     const hasPythonIndicator =
-      entryMap.has('pyproject.toml') ||
-      entryMap.has('requirements.txt') ||
-      entryMap.has('setup.py');
+      entryMap.has("pyproject.toml") ||
+      entryMap.has("requirements.txt") ||
+      entryMap.has("setup.py");
     const hasPythonDirectory = dirEntries.some(
-      (entry) => entry.isDirectory() && ['tests', 'src'].includes(entry.name.toLowerCase())
+      (entry) => entry.isDirectory() && ["tests", "src"].includes(entry.name.toLowerCase()),
     );
     const hasPythonFile = dirEntries.some(
-      (entry) => entry.isFile() && entry.name.toLowerCase().endsWith('.py')
+      (entry) => entry.isFile() && entry.name.toLowerCase().endsWith(".py"),
     );
 
     if (hasPythonIndicator || hasPythonDirectory || hasPythonFile) {
       config.targets.push({
-        name: 'tests',
-        type: 'executable',
+        name: "tests",
+        type: "executable",
         enabled: true,
         buildCommand: "python3 -m unittest discover -s tests -p '*.py' -v > test-results.txt 2>&1",
-        outputPath: './test-results.txt',
+        outputPath: "./test-results.txt",
         watchPaths: [
-          '*.py',
-          'src/**/*.py',
-          'tests/**/*.py',
-          'pyproject.toml',
-          'requirements.txt',
-          'setup.py',
+          "*.py",
+          "src/**/*.py",
+          "tests/**/*.py",
+          "pyproject.toml",
+          "requirements.txt",
+          "setup.py",
         ],
       });
-      summaries.push({ name: 'tests', type: 'executable', reason: 'python' });
+      summaries.push({ name: "tests", type: "executable", reason: "python" });
     }
   } catch {
     // Ignore detection failures; config will remain minimal
@@ -213,50 +213,50 @@ export async function augmentConfigWithDetectedTargets(
 // Helper function to generate default config for non-CMake projects
 export function generateDefaultConfig(projectType: ProjectType): PoltergeistConfig {
   const baseConfig: PoltergeistConfig = {
-    version: '1.0',
+    version: "1.0",
     projectType,
     targets: [],
   };
 
   // Add default targets based on project type
   switch (projectType) {
-    case 'node':
+    case "node":
       baseConfig.targets.push({
-        name: 'dev',
-        type: 'executable',
+        name: "dev",
+        type: "executable",
         enabled: true,
-        buildCommand: 'pnpm run build',
-        outputPath: './dist/index.js',
-        watchPaths: ['src/**/*.ts', 'src/**/*.js', 'package.json'],
+        buildCommand: "pnpm run build",
+        outputPath: "./dist/index.js",
+        watchPaths: ["src/**/*.ts", "src/**/*.js", "package.json"],
       });
       break;
-    case 'rust':
+    case "rust":
       baseConfig.targets.push({
-        name: 'debug',
-        type: 'executable',
+        name: "debug",
+        type: "executable",
         enabled: true,
-        buildCommand: 'cargo build',
-        outputPath: './target/debug/app',
-        watchPaths: ['src/**/*.rs', 'Cargo.toml'],
+        buildCommand: "cargo build",
+        outputPath: "./target/debug/app",
+        watchPaths: ["src/**/*.rs", "Cargo.toml"],
       });
       break;
-    case 'python':
+    case "python":
       baseConfig.targets.push({
-        name: 'test',
-        type: 'test',
+        name: "test",
+        type: "test",
         enabled: true,
-        testCommand: 'python -m pytest',
-        watchPaths: ['**/*.py', 'requirements.txt'],
+        testCommand: "python -m pytest",
+        watchPaths: ["**/*.py", "requirements.txt"],
       });
       break;
-    case 'swift':
+    case "swift":
       baseConfig.targets.push({
-        name: 'debug',
-        type: 'executable',
+        name: "debug",
+        type: "executable",
         enabled: true,
-        buildCommand: 'swift build',
-        outputPath: '.build/debug/App',
-        watchPaths: ['Sources/**/*.swift', 'Package.swift'],
+        buildCommand: "swift build",
+        outputPath: ".build/debug/App",
+        watchPaths: ["Sources/**/*.swift", "Package.swift"],
       });
       break;
   }

@@ -1,4 +1,4 @@
-import type { Command } from 'commander';
+import type { Command } from "commander";
 
 /**
  * Shared configuration for the polter command
@@ -29,48 +29,48 @@ export interface ParsedPolterOptions {
  */
 export const POLTER_OPTIONS: PolterOption[] = [
   {
-    flag: '-t, --timeout <ms>',
-    description: 'Build wait timeout in milliseconds',
-    defaultValue: '300000',
+    flag: "-t, --timeout <ms>",
+    description: "Build wait timeout in milliseconds",
+    defaultValue: "300000",
   },
   {
-    flag: '-f, --force',
-    description: 'Run even if build failed',
+    flag: "-f, --force",
+    description: "Run even if build failed",
     defaultValue: false,
   },
   {
-    flag: '-n, --no-wait',
+    flag: "-n, --no-wait",
     description: "Don't wait for builds, fail if building",
   },
   {
-    flag: '--verbose',
-    description: 'Show detailed status information',
+    flag: "--verbose",
+    description: "Show detailed status information",
     defaultValue: false,
   },
   {
-    flag: '--no-logs',
-    description: 'Disable build log streaming during progress',
+    flag: "--no-logs",
+    description: "Disable build log streaming during progress",
   },
   {
-    flag: '--log-lines <number>',
-    description: 'Number of log lines to show',
-    defaultValue: '5',
+    flag: "--log-lines <number>",
+    description: "Number of log lines to show",
+    defaultValue: "5",
   },
   {
-    flag: '-w, --watch',
-    description: 'Keep the process running and restart on successful rebuilds',
+    flag: "-w, --watch",
+    description: "Keep the process running and restart on successful rebuilds",
     defaultValue: false,
   },
   {
-    flag: '--restart-signal <signal>',
-    description: 'Signal used when stopping the running process before restart (default SIGINT)',
-    defaultValue: 'SIGINT',
+    flag: "--restart-signal <signal>",
+    description: "Signal used when stopping the running process before restart (default SIGINT)",
+    defaultValue: "SIGINT",
   },
   {
-    flag: '--restart-delay <ms>',
+    flag: "--restart-delay <ms>",
     description:
-      'Delay in milliseconds before relaunching after a successful rebuild (default 250)',
-    defaultValue: '250',
+      "Delay in milliseconds before relaunching after a successful rebuild (default 250)",
+    defaultValue: "250",
   },
 ];
 
@@ -79,9 +79,9 @@ export const POLTER_OPTIONS: PolterOption[] = [
  */
 export function parsePolterOptions(options: any): ParsedPolterOptions {
   const restartSignal =
-    typeof options.restartSignal === 'string' && options.restartSignal.trim() !== ''
+    typeof options.restartSignal === "string" && options.restartSignal.trim() !== ""
       ? (options.restartSignal as NodeJS.Signals)
-      : 'SIGINT';
+      : "SIGINT";
   const restartDelay = Number.parseInt(options.restartDelay, 10);
 
   return {
@@ -121,20 +121,20 @@ export function configurePolterCommand(command: Command): Command {
  * Get the command description for help text
  */
 export function getPolterDescription(): string {
-  return 'Execute fresh binaries managed by Poltergeist';
+  return "Execute fresh binaries managed by Poltergeist";
 }
 
 /**
  * Shared unhandled rejection handler for polter commands
  */
 export function setupPolterErrorHandling(): void {
-  process.on('unhandledRejection', (reason) => {
-    console.error('👻 [Poltergeist] Unhandled promise rejection:');
+  process.on("unhandledRejection", (reason) => {
+    console.error("👻 [Poltergeist] Unhandled promise rejection:");
     console.error(`   ${reason}`);
-    console.error('\n   This is likely a bug. Please report it with:');
-    console.error('   • Your poltergeist.config.json');
-    console.error('   • The command you ran');
-    console.error('   • Your environment (OS, Node version)');
+    console.error("\n   This is likely a bug. Please report it with:");
+    console.error("   • Your poltergeist.config.json");
+    console.error("   • The command you ran");
+    console.error("   • Your environment (OS, Node version)");
     process.exit(1);
   });
 }

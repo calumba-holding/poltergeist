@@ -1,4 +1,4 @@
-import { appendFileSync } from 'node:fs';
+import { appendFileSync } from "node:fs";
 import {
   type Component,
   Container,
@@ -9,13 +9,13 @@ import {
   Spacer,
   Text,
   TUI,
-} from '@mariozechner/pi-tui';
-import wrapAnsi from 'wrap-ansi';
+} from "@mariozechner/pi-tui";
+import wrapAnsi from "wrap-ansi";
 
-import type { Logger } from '../logger.js';
-import { cycleChannelIndex, DEFAULT_LOG_CHANNEL } from '../utils/log-channels.js';
-import { filterTestLogs, formatLogs, LOG_OVERHEAD_LINES } from './log-utils.js';
-import type { StatusPanelController } from './panel-controller.js';
+import type { Logger } from "../logger.js";
+import { cycleChannelIndex, DEFAULT_LOG_CHANNEL } from "../utils/log-channels.js";
+import { filterTestLogs, formatLogs, LOG_OVERHEAD_LINES } from "./log-utils.js";
+import type { StatusPanelController } from "./panel-controller.js";
 import {
   getDefaultSummaryMode,
   getRowSummaries,
@@ -25,7 +25,7 @@ import {
   getLogChannels as stateLogChannels,
   getSelectedChannel as stateSelectedChannel,
   syncLogChannelState,
-} from './panel-state.js';
+} from "./panel-state.js";
 import {
   colors,
   formatAiSummary,
@@ -34,24 +34,24 @@ import {
   formatHeader,
   formatTargets,
   splitStatusScripts,
-} from './render-utils.js';
-import { buildTargetRows, type TargetRow } from './target-tree.js';
-import { limitSummaryLines } from './text-utils.js';
-import type { PanelSnapshot, TargetPanelEntry } from './types.js';
-import { buildPanelViewState, type PanelViewState } from './view-state.js';
+} from "./render-utils.js";
+import { buildTargetRows, type TargetRow } from "./target-tree.js";
+import { limitSummaryLines } from "./text-utils.js";
+import type { PanelSnapshot, TargetPanelEntry } from "./types.js";
+import { buildPanelViewState, type PanelViewState } from "./view-state.js";
 
 const LOG_FETCH_LIMIT = 40;
 const SUMMARY_FRACTION = 0.5; // summary gets half of remaining lines when selected
 
 class PanelView extends Container {
-  private readonly header = new Text('', 0, 0);
-  private readonly targets = new Text('', 0, 0);
-  private readonly globalScripts = new Text('', 0, 0);
-  private readonly dirtyFiles = new Text('', 0, 0);
-  private readonly aiHeader = new Text('', 0, 0);
+  private readonly header = new Text("", 0, 0);
+  private readonly targets = new Text("", 0, 0);
+  private readonly globalScripts = new Text("", 0, 0);
+  private readonly dirtyFiles = new Text("", 0, 0);
+  private readonly aiHeader = new Text("", 0, 0);
   private readonly aiMarkdown = createWordWrappedMarkdown();
-  private readonly logs = new Text('', 0, 0);
-  private readonly footer = new Text('', 0, 0);
+  private readonly logs = new Text("", 0, 0);
+  private readonly footer = new Text("", 0, 0);
 
   constructor() {
     super();
@@ -89,62 +89,62 @@ class PanelView extends Container {
         state.summaryModes,
         state.summarySelected ? state.activeSummaryKey : undefined,
         snapshot,
-        globalScripts
-      )
+        globalScripts,
+      ),
     );
     const scriptBannerText = state.scriptBanner
-      ? `${colors.failure('Script')} ${state.scriptBanner}`
-      : '';
+      ? `${colors.failure("Script")} ${state.scriptBanner}`
+      : "";
     this.globalScripts.setText(scriptBannerText);
     const showSummary = state.summarySelected || Boolean(state.customSummary);
     if (showSummary) {
-      const summaryDivider = colors.line('─'.repeat(Math.max(4, state.width)));
+      const summaryDivider = colors.line("─".repeat(Math.max(4, state.width)));
       if (state.customSummary) {
         const headerText = colors.header(`\n${state.customSummary.label}:`);
         this.aiHeader.setText(`${headerText}\n${summaryDivider}`);
-        const body = state.customSummary.lines.join('\n').trim();
+        const body = state.customSummary.lines.join("\n").trim();
         const maxSummaryLines =
           state.logLimit > 0
             ? Math.max(state.logLimit, state.customSummary.maxLines ?? 50)
             : (state.customSummary.maxLines ?? 50);
-        const limitedBody = limitSummaryLines(body || colors.muted('No output'), maxSummaryLines);
-        this.dirtyFiles.setText('');
+        const limitedBody = limitSummaryLines(body || colors.muted("No output"), maxSummaryLines);
+        this.dirtyFiles.setText("");
         this.aiMarkdown.setText(limitedBody);
-      } else if (state.summaryMode === 'ai') {
+      } else if (state.summaryMode === "ai") {
         const aiSummary = formatAiSummary(snapshot.git.summary ?? []);
         if (aiSummary && aiSummary.body.trim().length > 0) {
-          this.dirtyFiles.setText('');
-          const headerText = aiSummary.header ?? colors.header('AI Summary of changed files:');
+          this.dirtyFiles.setText("");
+          const headerText = aiSummary.header ?? colors.header("AI Summary of changed files:");
           this.aiHeader.setText(`\n${headerText}\n${summaryDivider}`);
           const limitedBody = limitSummaryLines(
             aiSummary.body.trim(),
-            Math.max(1, Math.floor(state.logLimit * SUMMARY_FRACTION))
+            Math.max(1, Math.floor(state.logLimit * SUMMARY_FRACTION)),
           );
           this.aiMarkdown.setText(limitedBody);
         } else {
           const limitedDirty = limitSummaryLines(
             formatDirtyFiles(snapshot, state.width),
-            Math.max(1, Math.floor(state.logLimit * SUMMARY_FRACTION))
+            Math.max(1, Math.floor(state.logLimit * SUMMARY_FRACTION)),
           );
           this.dirtyFiles.setText(limitedDirty);
-          this.aiHeader.setText('');
-          this.aiMarkdown.setText('');
+          this.aiHeader.setText("");
+          this.aiMarkdown.setText("");
         }
       } else {
         const limitedDirty = limitSummaryLines(
           formatDirtyFiles(snapshot, state.width),
-          Math.max(1, Math.floor(state.logLimit * SUMMARY_FRACTION))
+          Math.max(1, Math.floor(state.logLimit * SUMMARY_FRACTION)),
         );
-        const dirtyBody = limitedDirty.trim().length > 0 ? limitedDirty : colors.muted('Git clean');
-        const divider = colors.line('─'.repeat(Math.max(4, state.width)));
-        this.aiHeader.setText(`${colors.header('\nGit dirty files:')}\n${divider}`);
+        const dirtyBody = limitedDirty.trim().length > 0 ? limitedDirty : colors.muted("Git clean");
+        const divider = colors.line("─".repeat(Math.max(4, state.width)));
+        this.aiHeader.setText(`${colors.header("\nGit dirty files:")}\n${divider}`);
         this.dirtyFiles.setText(`${dirtyBody}\n${summaryDivider}`);
-        this.aiMarkdown.setText('');
+        this.aiMarkdown.setText("");
       }
     } else {
-      this.dirtyFiles.setText('');
-      this.aiHeader.setText('');
-      this.aiMarkdown.setText('');
+      this.dirtyFiles.setText("");
+      this.aiHeader.setText("");
+      this.aiMarkdown.setText("");
     }
     if (state.shouldShowLogs) {
       const entry = state.rows[state.selectedRowIndex]?.target;
@@ -155,11 +155,11 @@ class PanelView extends Container {
         state.width,
         state.logLimit,
         state.logViewMode,
-        state.logBanner
+        state.logBanner,
       );
       this.logs.setText(logText);
     } else {
-      this.logs.setText('');
+      this.logs.setText("");
     }
     this.footer.setText(formatFooter(state.controlsLine, state.width));
   }
@@ -195,7 +195,7 @@ export class PanelApp {
     this.handleInput(input);
   });
   private readonly view = new PanelView();
-  private readonly debugInput = process.env.POLTERGEIST_INPUT_DEBUG === '1';
+  private readonly debugInput = process.env.POLTERGEIST_INPUT_DEBUG === "1";
   private exitPromise?: Promise<void>;
   private exitResolver?: () => void;
   private unsubscribe?: () => void;
@@ -219,9 +219,9 @@ export class PanelApp {
   // Left/right cycles through available log channels for the selected target.
   private readonly logChannelIndex = new Map<string, number>();
   // If only a single channel exists, left/right toggles between all/test-filtered logs.
-  private logViewMode: 'all' | 'tests' = 'all';
+  private logViewMode: "all" | "tests" = "all";
   // Left/right while on summary toggles AI vs Git summary.
-  private summaryMode: string = 'ai';
+  private summaryMode: string = "ai";
   // Persist last manually selected summary mode when navigating.
   private lastManualSummaryMode: string | null = null;
   // Cache flattened rows per snapshot to avoid redundant tree builds.
@@ -240,7 +240,7 @@ export class PanelApp {
     }
 
     this.invalidateTuiCache();
-    this.updateView('resize');
+    this.updateView("resize");
   };
 
   constructor(options: PanelAppOptions) {
@@ -278,7 +278,7 @@ export class PanelApp {
       this.exitResolver = resolve;
     });
 
-    this.updateView('init');
+    this.updateView("init");
 
     this.unsubscribe = this.controller.onUpdate((snapshot) => {
       this.handleSnapshot(snapshot);
@@ -287,16 +287,16 @@ export class PanelApp {
       this.queueLogRefresh();
     });
     this.unsubscribeScripts = this.controller.onScriptEvent((event) => {
-      const where = event.kind === 'summary' ? `summary (${event.placement})` : 'status';
+      const where = event.kind === "summary" ? `summary (${event.placement})` : "status";
       this.logger.warn(
-        `[Panel] Script ${where} "${event.label}" exited ${event.exitCode ?? 'null'}`
+        `[Panel] Script ${where} "${event.label}" exited ${event.exitCode ?? "null"}`,
       );
       const label =
-        where === 'status' && event.targets?.length
-          ? `${event.label} [${event.targets.join(', ')}]`
+        where === "status" && event.targets?.length
+          ? `${event.label} [${event.targets.join(", ")}]`
           : event.label;
       this.scriptBanner = {
-        text: `${label} exited ${event.exitCode ?? 'null'}`,
+        text: `${label} exited ${event.exitCode ?? "null"}`,
         created: Date.now(),
         expires: Date.now() + 15000,
         durationMs: 15000,
@@ -308,17 +308,17 @@ export class PanelApp {
       this.bannerTimeout = setTimeout(() => {
         if (this.scriptBanner && this.scriptBanner.expires <= Date.now()) {
           this.scriptBanner = undefined;
-          this.updateView('banner-expire');
+          this.updateView("banner-expire");
         }
       }, 15000);
-      this.updateView('script-event');
+      this.updateView("script-event");
     });
 
     this.tui.start();
     this.started = true;
     this.tui.requestRender();
-    if (typeof process.stdout.on === 'function') {
-      process.stdout.on('resize', this.handleTerminalResize);
+    if (typeof process.stdout.on === "function") {
+      process.stdout.on("resize", this.handleTerminalResize);
       this.resizeListenerAttached = true;
     }
     this.queueLogRefresh();
@@ -344,8 +344,8 @@ export class PanelApp {
       this.unsubscribeScripts();
       this.unsubscribeScripts = undefined;
     }
-    if (this.resizeListenerAttached && typeof process.stdout.off === 'function') {
-      process.stdout.off('resize', this.handleTerminalResize);
+    if (this.resizeListenerAttached && typeof process.stdout.off === "function") {
+      process.stdout.off("resize", this.handleTerminalResize);
       this.resizeListenerAttached = false;
     }
     if (this.bannerTimeout) {
@@ -386,7 +386,7 @@ export class PanelApp {
     this.logChannelLabel = this.getSelectedChannel(selectedEntry);
     const resolved = resolveSummaryMode(getSummaryModes(this.snapshot), this.summaryMode);
     this.summaryMode = this.lastManualSummaryMode ?? resolved;
-    this.updateView('snapshot');
+    this.updateView("snapshot");
     this.queueLogRefresh();
     this.updateLogPolling();
   }
@@ -396,11 +396,11 @@ export class PanelApp {
 
     if (this.debugInput) {
       const bytesHex = [...Buffer.from(input)]
-        .map((b) => b.toString(16).padStart(2, '0'))
-        .join(' ');
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join(" ");
       appendFileSync(
-        '/tmp/poltergeist-panel-input.log',
-        `[PanelInputDebug] ${new Date().toISOString()} bytes=${bytesHex} text=${JSON.stringify(input)}\n`
+        "/tmp/poltergeist-panel-input.log",
+        `[PanelInputDebug] ${new Date().toISOString()} bytes=${bytesHex} text=${JSON.stringify(input)}\n`,
       );
     }
 
@@ -409,19 +409,19 @@ export class PanelApp {
       const char = input[i];
 
       const lower = char.toLowerCase();
-      if (lower === 'q') {
+      if (lower === "q") {
         if (this.debugInput) {
-          appendFileSync('/tmp/poltergeist-panel-input.log', '[PanelInputDebug] exit via q\n');
+          appendFileSync("/tmp/poltergeist-panel-input.log", "[PanelInputDebug] exit via q\n");
         }
         this.dispose();
         return;
       }
-      if (lower === 'p') {
+      if (lower === "p") {
         void this.controller.pause();
         i += 1;
         continue;
       }
-      if (lower === 's') {
+      if (lower === "s") {
         // Start daemon if not running; otherwise stop it.
         if ((this.snapshot.summary?.running ?? 0) > 0) {
           void this.controller.stopDaemon();
@@ -431,12 +431,12 @@ export class PanelApp {
         i += 1;
         continue;
       }
-      if (lower === 'r') {
+      if (lower === "r") {
         if (this.snapshot.paused) {
           void this.controller.resume().then(() => {
             // Optimistically reflect resume immediately so the header updates.
             this.snapshot = { ...this.snapshot, paused: false };
-            this.updateView('resume');
+            this.updateView("resume");
           });
         } else {
           void this.controller.forceRefresh();
@@ -444,49 +444,49 @@ export class PanelApp {
         i += 1;
         continue;
       }
-      if (lower === 'b') {
-        this.setLogViewMode('all');
+      if (lower === "b") {
+        this.setLogViewMode("all");
         i += 1;
         continue;
       }
-      if (lower === 't') {
-        this.setLogViewMode('tests');
+      if (lower === "t") {
+        this.setLogViewMode("tests");
         i += 1;
         continue;
       }
-      if (lower === 'd') {
+      if (lower === "d") {
         // Dismiss script banner manually.
         this.scriptBanner = undefined;
-        this.updateView('dismiss-banner');
+        this.updateView("dismiss-banner");
         i += 1;
         continue;
       }
-      if (char === '\u0003') {
+      if (char === "\u0003") {
         if (this.debugInput) {
-          appendFileSync('/tmp/poltergeist-panel-input.log', '[PanelInputDebug] exit via Ctrl+C\n');
+          appendFileSync("/tmp/poltergeist-panel-input.log", "[PanelInputDebug] exit via Ctrl+C\n");
         }
         this.dispose();
         return;
       }
-      if (char === '\x1b' && input[i + 1] === '[') {
+      if (char === "\x1b" && input[i + 1] === "[") {
         const code = input[i + 2];
-        if (code === 'A') {
+        if (code === "A") {
           this.moveSelection(-1);
           i += 3;
           continue;
         }
-        if (code === 'B') {
+        if (code === "B") {
           this.moveSelection(1);
           i += 3;
           continue;
         }
-        if (code === 'C') {
-          this.flipLogModeOrSummary('next');
+        if (code === "C") {
+          this.flipLogModeOrSummary("next");
           i += 3;
           continue;
         }
-        if (code === 'D') {
-          this.flipLogModeOrSummary('prev');
+        if (code === "D") {
+          this.flipLogModeOrSummary("prev");
           i += 3;
           continue;
         }
@@ -496,10 +496,10 @@ export class PanelApp {
     }
   }
 
-  private setLogViewMode(mode: 'all' | 'tests'): void {
+  private setLogViewMode(mode: "all" | "tests"): void {
     if (this.logViewMode === mode) return;
     this.logViewMode = mode;
-    this.updateView('log-view-mode-key');
+    this.updateView("log-view-mode-key");
     this.queueLogRefresh();
     this.updateLogPolling();
   }
@@ -521,9 +521,9 @@ export class PanelApp {
       return;
     }
     this.selectedRowIndex = nextIndex;
-    this.logViewMode = 'all';
+    this.logViewMode = "all";
     this.logChannelLabel = this.getSelectedChannel(ordered[this.selectedRowIndex]?.target);
-    this.updateView('selection');
+    this.updateView("selection");
     this.queueLogRefresh();
     this.updateLogPolling();
   }
@@ -559,7 +559,7 @@ export class PanelApp {
 
   private shouldAttachBannerToSelected(
     targets: string[] | undefined,
-    entry: TargetPanelEntry | undefined
+    entry: TargetPanelEntry | undefined,
   ): boolean {
     if (!entry) return false;
     if (!targets || targets.length === 0) return true;
@@ -577,7 +577,7 @@ export class PanelApp {
     return rows;
   }
 
-  private updateView(_reason: string = 'update'): void {
+  private updateView(_reason: string = "update"): void {
     const width = this.terminal.columns || 80;
     const height = this.terminal.rows || 24;
     const entry = this.getCurrentRowTarget();
@@ -626,7 +626,7 @@ export class PanelApp {
       // Force a full repaint from the top to avoid stacked frames when the header changes.
       this.terminal.clearScreen();
       const tuiAny = this.tui as any;
-      if (typeof tuiAny === 'object') {
+      if (typeof tuiAny === "object") {
         tuiAny.previousWidth = fittedViewState.width;
         tuiAny.previousLines = [];
         tuiAny.cursorRow = 0;
@@ -646,7 +646,7 @@ export class PanelApp {
    */
   private invalidateTuiCache(): void {
     if (!this.tui) return;
-    if (typeof (this.tui as any).previousWidth === 'number') {
+    if (typeof (this.tui as any).previousWidth === "number") {
       (this.tui as any).previousWidth = -1;
     }
     if (Array.isArray((this.tui as any).previousLines)) {
@@ -672,27 +672,27 @@ export class PanelApp {
     if (!entry || !this.shouldShowLogs(entry)) {
       this.logLines = [];
       this.logChannelLabel = DEFAULT_LOG_CHANNEL;
-      this.updateView('logs-reset');
+      this.updateView("logs-reset");
       return;
     }
     try {
       const channel = this.getSelectedChannel(entry);
       const lines = await this.controller.getLogLines(entry.name, channel, LOG_FETCH_LIMIT);
       this.logChannelLabel = channel;
-      this.logLines = this.logViewMode === 'tests' ? filterTestLogs(lines) : lines;
+      this.logLines = this.logViewMode === "tests" ? filterTestLogs(lines) : lines;
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       this.logLines = [`Failed to read log: ${message}`];
       this.logChannelLabel = DEFAULT_LOG_CHANNEL;
       this.logger.warn(`[Panel] Failed to read logs for ${entry.name}: ${message}`);
     }
-    this.updateView('logs');
+    this.updateView("logs");
   }
 
   private updateLogPolling(): void {
     const entry = this.getCurrentRowTarget();
     const active =
-      entry?.status.lastBuild?.status === 'building' || entry?.status.status === 'building';
+      entry?.status.lastBuild?.status === "building" || entry?.status.status === "building";
     if (active && !this.logTimer) {
       this.lastActiveLogPoll = Date.now();
       if (this.logBackoff) {
@@ -720,7 +720,7 @@ export class PanelApp {
     }
   }
 
-  private flipLogModeOrSummary(direction: 'next' | 'prev'): void {
+  private flipLogModeOrSummary(direction: "next" | "prev"): void {
     const rows = buildTargetRows(this.snapshot.targets);
     const summaryIndex = hasSummaryRow(this.snapshot) ? rows.length : null;
     const viewingSummary = summaryIndex !== null && this.selectedRowIndex === summaryIndex;
@@ -732,12 +732,12 @@ export class PanelApp {
       const currentIdx = modes.findIndex((mode) => mode.key === this.summaryMode);
       const safeIdx = currentIdx === -1 ? 0 : currentIdx;
       const nextIdx =
-        direction === 'next'
+        direction === "next"
           ? (safeIdx + 1) % modes.length
           : (safeIdx - 1 + modes.length) % modes.length;
       this.summaryMode = modes[nextIdx]?.key ?? modes[0].key;
       this.lastManualSummaryMode = this.summaryMode;
-      this.updateView('summary-mode');
+      this.updateView("summary-mode");
       return;
     }
 
@@ -753,12 +753,12 @@ export class PanelApp {
       const nextIdx = cycleChannelIndex(channels, currentIdx, direction);
       this.logChannelIndex.set(entry.name, nextIdx);
       this.logChannelLabel = channels[nextIdx];
-      this.updateView('log-channel');
+      this.updateView("log-channel");
     } else {
       // Single channel: keep legacy build/test filtering behaviour for users that expect it.
-      const nextView = this.logViewMode === 'all' ? 'tests' : 'all';
+      const nextView = this.logViewMode === "all" ? "tests" : "all";
       this.logViewMode = nextView;
-      this.updateView('log-view-mode');
+      this.updateView("log-view-mode");
     }
     this.queueLogRefresh();
     this.updateLogPolling();
@@ -773,7 +773,7 @@ export class PanelApp {
   private clampToViewport(
     viewState: PanelViewState,
     width: number,
-    height: number
+    height: number,
   ): PanelViewState {
     // Fast path: render once; if it fits, keep as-is.
     this.view.update(viewState);
@@ -815,7 +815,7 @@ export class PanelApp {
 }
 
 function createWordWrappedMarkdown(): Markdown {
-  const markdown = new Markdown('', 0, 0, getPanelMarkdownTheme(), getPanelMarkdownDefaultStyle());
+  const markdown = new Markdown("", 0, 0, getPanelMarkdownTheme(), getPanelMarkdownDefaultStyle());
   enableMarkdownWordWrap(markdown);
   return markdown;
 }
@@ -856,22 +856,22 @@ function enableMarkdownWordWrap(markdown: Markdown): void {
   // Override both wrap helpers with wrap-ansi so we get word-aware wrapping even for colored lines.
   const wrap = (line: string, width: number): string[] => {
     if (line === undefined || line === null) {
-      return [''];
+      return [""];
     }
-    const segments = line.split('\n');
+    const segments = line.split("\n");
     const result: string[] = [];
     for (const segment of segments) {
-      if (segment === '') {
-        result.push('');
+      if (segment === "") {
+        result.push("");
         continue;
       }
       const wrapped = wrapAnsi(segment, Math.max(1, width), {
         hard: false,
         trim: false,
       });
-      result.push(...wrapped.split('\n'));
+      result.push(...wrapped.split("\n"));
     }
-    return result.length > 0 ? result : [''];
+    return result.length > 0 ? result : [""];
   };
   patchTarget.wrapLine = wrap;
   patchTarget.wrapSingleLine = wrap;
@@ -879,7 +879,7 @@ function enableMarkdownWordWrap(markdown: Markdown): void {
 
 function formatBannerWithCountdown(
   banner: { text: string; expires: number; created: number; durationMs: number },
-  now: number
+  now: number,
 ): string {
   const remainingMs = Math.max(0, banner.expires - now);
   const remainingSec = Math.ceil(remainingMs / 1000);

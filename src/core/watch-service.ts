@@ -1,7 +1,7 @@
-import type { IWatchmanClient, IWatchmanConfigManager } from '../interfaces.js';
-import type { Logger } from '../logger.js';
-import type { PoltergeistConfig } from '../types.js';
-import type { TargetState } from './target-state.js';
+import type { IWatchmanClient, IWatchmanConfigManager } from "../interfaces.js";
+import type { Logger } from "../logger.js";
+import type { PoltergeistConfig } from "../types.js";
+import type { TargetState } from "./target-state.js";
 
 interface WatchServiceDeps {
   projectRoot: string;
@@ -11,7 +11,7 @@ interface WatchServiceDeps {
   watchmanConfigManager: IWatchmanConfigManager;
   onFilesChanged: (
     files: Array<{ name: string; exists: boolean; type?: string }>,
-    targetNames: string[]
+    targetNames: string[],
   ) => void;
 }
 
@@ -26,7 +26,7 @@ export class WatchService {
   private readonly watchmanConfigManager: IWatchmanConfigManager;
   private readonly onFilesChanged: (
     files: Array<{ name: string; exists: boolean; type?: string }>,
-    targetNames: string[]
+    targetNames: string[],
   ) => void;
   private readonly subscriptions = new Map<string, Set<string>>(); // subscriptionName -> targets
 
@@ -69,22 +69,22 @@ export class WatchService {
         const normalizedPattern = this.watchmanConfigManager.normalizeWatchPattern(pattern);
         this.watchmanConfigManager.validateWatchPattern(normalizedPattern);
 
-        const subscriptionName = `poltergeist_${normalizedPattern.replace(/[^a-zA-Z0-9]/g, '_')}`;
+        const subscriptionName = `poltergeist_${normalizedPattern.replace(/[^a-zA-Z0-9]/g, "_")}`;
         const exclusionExpressions = this.watchmanConfigManager.createExclusionExpressions(
-          this.config
+          this.config,
         );
 
         await this.watchman.subscribe(
           this.projectRoot,
           subscriptionName,
           {
-            expression: ['match', normalizedPattern, 'wholename'],
-            fields: ['name', 'exists', 'type'],
+            expression: ["match", normalizedPattern, "wholename"],
+            fields: ["name", "exists", "type"],
           },
           (files) => {
             this.onFilesChanged(files, Array.from(targetNames));
           },
-          exclusionExpressions
+          exclusionExpressions,
         );
         this.subscriptions.set(subscriptionName, new Set(targetNames));
         targetNames.forEach((targetName) => {
@@ -101,22 +101,22 @@ export class WatchService {
 
   public async subscribeConfig(
     configPath: string | undefined,
-    onChange: (files: Array<{ name: string; exists: boolean }>) => void
+    onChange: (files: Array<{ name: string; exists: boolean }>) => void,
   ): Promise<void> {
     if (!this.watchman || !configPath) return;
 
     try {
       await this.watchman.subscribe(
         this.projectRoot,
-        'poltergeist_config',
+        "poltergeist_config",
         {
-          expression: ['match', 'poltergeist.config.json', 'wholename'],
-          fields: ['name', 'exists', 'type'],
+          expression: ["match", "poltergeist.config.json", "wholename"],
+          fields: ["name", "exists", "type"],
         },
-        (files) => onChange(files)
+        (files) => onChange(files),
       );
-      this.subscriptions.set('poltergeist_config', new Set(['config']));
-      this.logger.info('🔧 Watching configuration file for changes');
+      this.subscriptions.set("poltergeist_config", new Set(["config"]));
+      this.logger.info("🔧 Watching configuration file for changes");
     } catch (error) {
       this.logger.warn(`⚠️ Failed to watch config file: ${error}`);
     }
@@ -145,13 +145,13 @@ export class WatchService {
       for (const target of targetNames) {
         targets.delete(target);
       }
-      if (targets.size === 0 || subscription === 'poltergeist_config') {
+      if (targets.size === 0 || subscription === "poltergeist_config") {
         toRemove.push(subscription);
       }
     }
 
     for (const subscription of toRemove) {
-      if (subscription !== 'poltergeist_config') {
+      if (subscription !== "poltergeist_config") {
         try {
           await this.watchman.unsubscribe(subscription);
         } catch (error) {

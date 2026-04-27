@@ -1,7 +1,7 @@
-import { existsSync, readFileSync } from 'fs';
-import { basename, join } from 'path';
-import type { CMakeProbeError, CMakeTarget } from './cmake-analyzer.js';
-import type { CommandRunner } from './command-runner.js';
+import { existsSync, readFileSync } from "fs";
+import { basename, join } from "path";
+import type { CMakeProbeError, CMakeTarget } from "./cmake-analyzer.js";
+import type { CommandRunner } from "./command-runner.js";
 
 export interface BuildQueryResult {
   targets: CMakeTarget[];
@@ -13,16 +13,16 @@ export interface BuildQueryResult {
 export async function queryBuildSystem(
   projectRoot: string,
   runner: CommandRunner,
-  autoConfigure: boolean
+  autoConfigure: boolean,
 ): Promise<BuildQueryResult> {
   const errors: CMakeProbeError[] = [];
 
-  const buildDirs = ['build', '_build', 'cmake-build-debug', 'cmake-build-release', 'out'];
+  const buildDirs = ["build", "_build", "cmake-build-debug", "cmake-build-release", "out"];
   let buildDir: string | undefined;
 
   for (const dir of buildDirs) {
     const fullPath = join(projectRoot, dir);
-    if (existsSync(join(fullPath, 'CMakeCache.txt'))) {
+    if (existsSync(join(fullPath, "CMakeCache.txt"))) {
       buildDir = dir;
       break;
     }
@@ -30,15 +30,15 @@ export async function queryBuildSystem(
 
   if (!buildDir) {
     if (!autoConfigure) {
-      throw new Error('No build directory found and autoConfigure disabled');
+      throw new Error("No build directory found and autoConfigure disabled");
     }
-    buildDir = 'build';
+    buildDir = "build";
     try {
-      await runner.run('cmake', ['-B', buildDir, '-S', '.'], { cwd: projectRoot });
+      await runner.run("cmake", ["-B", buildDir, "-S", "."], { cwd: projectRoot });
     } catch (error) {
       errors.push({
-        stage: 'configure',
-        message: 'Failed to configure CMake project',
+        stage: "configure",
+        message: "Failed to configure CMake project",
         details: error instanceof Error ? error.message : String(error),
       });
     }
@@ -48,7 +48,7 @@ export async function queryBuildSystem(
   const generator = parseGeneratorFromCache(buildPath);
 
   try {
-    const { stdout } = await runner.run('cmake', ['--build', buildDir, '--target', 'help'], {
+    const { stdout } = await runner.run("cmake", ["--build", buildDir, "--target", "help"], {
       cwd: projectRoot,
       allowNonZeroExit: true,
     });
@@ -56,8 +56,8 @@ export async function queryBuildSystem(
     return { targets, generator, buildDirectory: buildDir, errors };
   } catch (error) {
     errors.push({
-      stage: 'query-targets',
-      message: 'Failed to list targets via CMake',
+      stage: "query-targets",
+      message: "Failed to list targets via CMake",
       details: error instanceof Error ? error.message : String(error),
     });
     const targets = await parseTargetsFromBuildFiles(buildPath);
@@ -66,31 +66,31 @@ export async function queryBuildSystem(
 }
 
 function parseGeneratorFromCache(buildPath: string): string | undefined {
-  const cacheFile = join(buildPath, 'CMakeCache.txt');
+  const cacheFile = join(buildPath, "CMakeCache.txt");
   if (!existsSync(cacheFile)) return undefined;
 
-  const content = readFileSync(cacheFile, 'utf-8');
+  const content = readFileSync(cacheFile, "utf-8");
   const match = content.match(/CMAKE_GENERATOR:INTERNAL=(.+)/);
   return match ? match[1] : undefined;
 }
 
 function parseTargetList(output: string): CMakeTarget[] {
   const targets: CMakeTarget[] = [];
-  const lines = output.split('\n');
+  const lines = output.split("\n");
   let inTargetSection = false;
 
   for (const line of lines) {
-    if (line.includes('The following are some of the valid targets')) {
+    if (line.includes("The following are some of the valid targets")) {
       inTargetSection = true;
       continue;
     }
 
-    if (inTargetSection && line.startsWith('... ')) {
+    if (inTargetSection && line.startsWith("... ")) {
       const targetName = line.substring(4).trim();
-      if (targetName && !targetName.includes('/')) {
+      if (targetName && !targetName.includes("/")) {
         targets.push({
           name: targetName,
-          type: 'custom',
+          type: "custom",
           sourceFiles: [],
           dependencies: [],
           includeDirectories: [],
@@ -104,21 +104,21 @@ function parseTargetList(output: string): CMakeTarget[] {
 
 async function parseTargetsFromBuildFiles(buildPath: string): Promise<CMakeTarget[]> {
   const targets: CMakeTarget[] = [];
-  const ninjaFile = join(buildPath, 'build.ninja');
+  const ninjaFile = join(buildPath, "build.ninja");
   if (existsSync(ninjaFile)) {
-    const content = readFileSync(ninjaFile, 'utf-8');
+    const content = readFileSync(ninjaFile, "utf-8");
     const targetMatches = content.matchAll(
-      /^build ([^:]+): (?:C|CXX)_(?:EXECUTABLE|STATIC_LIBRARY|SHARED_LIBRARY)_LINKER/gm
+      /^build ([^:]+): (?:C|CXX)_(?:EXECUTABLE|STATIC_LIBRARY|SHARED_LIBRARY)_LINKER/gm,
     );
 
     for (const match of targetMatches) {
       const outputPath = match[1].trim();
-      const name = basename(outputPath).replace(/\.(exe|a|so|dylib|lib|dll)$/, '');
+      const name = basename(outputPath).replace(/\.(exe|a|so|dylib|lib|dll)$/, "");
       const isLibrary = outputPath.match(/\.(a|so|dylib|lib|dll)$/);
 
       targets.push({
         name,
-        type: isLibrary ? 'static_library' : 'executable',
+        type: isLibrary ? "static_library" : "executable",
         outputPath,
         sourceFiles: [],
         dependencies: [],

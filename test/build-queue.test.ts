@@ -1,17 +1,17 @@
 // Build Queue Tests - Intelligent Build Queue Management
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { IntelligentBuildQueue } from '../src/build-queue.js';
-import { PriorityEngine } from '../src/priority-engine.js';
-import type { BuildSchedulingConfig, Target } from '../src/types.js';
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { IntelligentBuildQueue } from "../src/build-queue.js";
+import { PriorityEngine } from "../src/priority-engine.js";
+import type { BuildSchedulingConfig, Target } from "../src/types.js";
 import {
   createControllableMockBuilder,
   createMockBuilder,
   createMockLogger,
   waitForAsync,
-} from './helpers.js';
+} from "./helpers.js";
 
-describe('IntelligentBuildQueue', () => {
+describe("IntelligentBuildQueue", () => {
   let buildQueue: IntelligentBuildQueue;
   let priorityEngine: PriorityEngine;
   let config: BuildSchedulingConfig;
@@ -20,7 +20,7 @@ describe('IntelligentBuildQueue', () => {
 
   beforeEach(() => {
     vi.useFakeTimers();
-    vi.setSystemTime(new Date('2025-01-01T10:00:00Z'));
+    vi.setSystemTime(new Date("2025-01-01T10:00:00Z"));
 
     logger = createMockLogger();
     config = {
@@ -35,29 +35,29 @@ describe('IntelligentBuildQueue', () => {
 
     targets = [
       {
-        name: 'frontend',
-        type: 'executable',
+        name: "frontend",
+        type: "executable",
         enabled: true,
-        buildCommand: 'npm run build',
-        outputPath: './dist/frontend',
-        watchPaths: ['frontend/**/*.ts'],
+        buildCommand: "npm run build",
+        outputPath: "./dist/frontend",
+        watchPaths: ["frontend/**/*.ts"],
       },
       {
-        name: 'backend',
-        type: 'executable',
+        name: "backend",
+        type: "executable",
         enabled: true,
-        buildCommand: 'cargo build',
-        outputPath: './target/backend',
-        watchPaths: ['backend/**/*.rs'],
+        buildCommand: "cargo build",
+        outputPath: "./target/backend",
+        watchPaths: ["backend/**/*.rs"],
       },
       {
-        name: 'shared',
-        type: 'library',
+        name: "shared",
+        type: "library",
         enabled: true,
-        buildCommand: 'tsc',
-        outputPath: './lib/shared',
-        libraryType: 'static',
-        watchPaths: ['shared/**/*.ts'],
+        buildCommand: "tsc",
+        outputPath: "./lib/shared",
+        libraryType: "static",
+        watchPaths: ["shared/**/*.ts"],
       },
     ];
 
@@ -69,17 +69,17 @@ describe('IntelligentBuildQueue', () => {
     vi.useRealTimers();
   });
 
-  describe('Target Registration', () => {
-    it('should register targets with builders', () => {
-      const mockBuilder = createMockBuilder('frontend');
+  describe("Target Registration", () => {
+    it("should register targets with builders", () => {
+      const mockBuilder = createMockBuilder("frontend");
 
       buildQueue.registerTarget(targets[0], mockBuilder);
 
-      expect(logger.debug).toHaveBeenCalledWith('Registered target: frontend');
+      expect(logger.debug).toHaveBeenCalledWith("Registered target: frontend");
     });
 
-    it('should track registered targets', () => {
-      const mockBuilder = createMockBuilder('frontend');
+    it("should track registered targets", () => {
+      const mockBuilder = createMockBuilder("frontend");
 
       buildQueue.registerTarget(targets[0], mockBuilder);
 
@@ -89,31 +89,31 @@ describe('IntelligentBuildQueue', () => {
     });
   });
 
-  describe('File Change Handling', () => {
-    it('should queue builds for file changes', async () => {
-      const { builder: mockBuilder } = createControllableMockBuilder('frontend');
+  describe("File Change Handling", () => {
+    it("should queue builds for file changes", async () => {
+      const { builder: mockBuilder } = createControllableMockBuilder("frontend");
       buildQueue.registerTarget(targets[0], mockBuilder);
 
-      await buildQueue.onFileChanged(['frontend/src/app.ts'], [targets[0]]);
+      await buildQueue.onFileChanged(["frontend/src/app.ts"], [targets[0]]);
 
       // Check immediately after queueing, before build starts
       const status = buildQueue.getQueueStatus();
       if (status.running.length > 0) {
         // Build started immediately, check that it's running
         expect(status.running).toHaveLength(1);
-        expect(status.running[0].target).toBe('frontend');
+        expect(status.running[0].target).toBe("frontend");
       } else {
         // Build is still pending
         expect(status.pending).toHaveLength(1);
-        expect(status.pending[0].target).toBe('frontend');
+        expect(status.pending[0].target).toBe("frontend");
       }
     });
 
-    it('should calculate priorities for queued builds', async () => {
-      const { builder: mockBuilder } = createControllableMockBuilder('frontend');
+    it("should calculate priorities for queued builds", async () => {
+      const { builder: mockBuilder } = createControllableMockBuilder("frontend");
       buildQueue.registerTarget(targets[0], mockBuilder);
 
-      await buildQueue.onFileChanged(['frontend/src/app.ts'], [targets[0]]);
+      await buildQueue.onFileChanged(["frontend/src/app.ts"], [targets[0]]);
 
       const status = buildQueue.getQueueStatus();
       // Priority should be set whether build is pending or running
@@ -125,16 +125,16 @@ describe('IntelligentBuildQueue', () => {
       }
     });
 
-    it('should handle multiple file changes', async () => {
-      const { builder: frontendBuilder } = createControllableMockBuilder('frontend');
-      const { builder: backendBuilder } = createControllableMockBuilder('backend');
+    it("should handle multiple file changes", async () => {
+      const { builder: frontendBuilder } = createControllableMockBuilder("frontend");
+      const { builder: backendBuilder } = createControllableMockBuilder("backend");
 
       buildQueue.registerTarget(targets[0], frontendBuilder);
       buildQueue.registerTarget(targets[1], backendBuilder);
 
       await buildQueue.onFileChanged(
-        ['frontend/src/app.ts', 'backend/src/main.rs'],
-        [targets[0], targets[1]]
+        ["frontend/src/app.ts", "backend/src/main.rs"],
+        [targets[0], targets[1]],
       );
 
       const status = buildQueue.getQueueStatus();
@@ -143,15 +143,15 @@ describe('IntelligentBuildQueue', () => {
       expect(totalBuilds).toBe(2);
     });
 
-    it('should deduplicate builds for same target', async () => {
-      const { builder: mockBuilder } = createControllableMockBuilder('frontend');
+    it("should deduplicate builds for same target", async () => {
+      const { builder: mockBuilder } = createControllableMockBuilder("frontend");
       buildQueue.registerTarget(targets[0], mockBuilder);
 
       // First change
-      await buildQueue.onFileChanged(['frontend/src/app.ts'], [targets[0]]);
+      await buildQueue.onFileChanged(["frontend/src/app.ts"], [targets[0]]);
 
       // Second change for same target - should update existing entry
-      await buildQueue.onFileChanged(['frontend/src/component.ts'], [targets[0]]);
+      await buildQueue.onFileChanged(["frontend/src/component.ts"], [targets[0]]);
 
       const status = buildQueue.getQueueStatus();
       const totalBuilds = status.pending.length + status.running.length;
@@ -159,46 +159,46 @@ describe('IntelligentBuildQueue', () => {
 
       // Should be either pending or running, but only one build total
       if (status.running.length > 0) {
-        expect(status.running[0].target).toBe('frontend');
+        expect(status.running[0].target).toBe("frontend");
       } else {
-        expect(status.pending[0].target).toBe('frontend');
+        expect(status.pending[0].target).toBe("frontend");
       }
     });
 
-    it('should merge triggering files for deduplicated builds', async () => {
-      const mockBuilder = createMockBuilder('frontend');
+    it("should merge triggering files for deduplicated builds", async () => {
+      const mockBuilder = createMockBuilder("frontend");
       buildQueue.registerTarget(targets[0], mockBuilder);
 
-      await buildQueue.onFileChanged(['frontend/src/app.ts'], [targets[0]]);
-      await buildQueue.onFileChanged(['frontend/src/component.ts'], [targets[0]]);
+      await buildQueue.onFileChanged(["frontend/src/app.ts"], [targets[0]]);
+      await buildQueue.onFileChanged(["frontend/src/component.ts"], [targets[0]]);
 
       // Start processing to trigger build with merged files
       await waitForAsync(100);
 
       const status = buildQueue.getQueueStatus();
       if (status.pending.length > 0) {
-        expect(status.pending[0].target).toBe('frontend');
+        expect(status.pending[0].target).toBe("frontend");
       }
     });
   });
 
-  describe('Queue Processing', () => {
-    it('should respect parallelization limits', async () => {
+  describe("Queue Processing", () => {
+    it("should respect parallelization limits", async () => {
       config.parallelization = 1; // Serial mode
       const serialQueue = new IntelligentBuildQueue(config, logger, priorityEngine);
 
       // Create controllable builders that don't complete automatically
       const { builder: frontendBuilder, complete: completeFrontend } =
-        createControllableMockBuilder('frontend');
+        createControllableMockBuilder("frontend");
       const { builder: backendBuilder, complete: completeBackend } =
-        createControllableMockBuilder('backend');
+        createControllableMockBuilder("backend");
 
       serialQueue.registerTarget(targets[0], frontendBuilder);
       serialQueue.registerTarget(targets[1], backendBuilder);
 
       // Queue both builds
-      await serialQueue.onFileChanged(['frontend/src/app.ts'], [targets[0]]);
-      await serialQueue.onFileChanged(['backend/src/main.rs'], [targets[1]]);
+      await serialQueue.onFileChanged(["frontend/src/app.ts"], [targets[0]]);
+      await serialQueue.onFileChanged(["backend/src/main.rs"], [targets[1]]);
 
       // Wait for queue processing
       await waitForAsync(10);
@@ -214,24 +214,24 @@ describe('IntelligentBuildQueue', () => {
       completeBackend();
     });
 
-    it('should process builds in priority order', async () => {
-      const frontendBuilder = createMockBuilder('frontend');
-      const backendBuilder = createMockBuilder('backend');
+    it("should process builds in priority order", async () => {
+      const frontendBuilder = createMockBuilder("frontend");
+      const backendBuilder = createMockBuilder("backend");
 
       buildQueue.registerTarget(targets[0], frontendBuilder);
       buildQueue.registerTarget(targets[1], backendBuilder);
 
       // Create focus on frontend first
-      priorityEngine.recordChange(['frontend/src/app.ts'], targets);
-      priorityEngine.recordChange(['frontend/src/component.ts'], targets);
+      priorityEngine.recordChange(["frontend/src/app.ts"], targets);
+      priorityEngine.recordChange(["frontend/src/component.ts"], targets);
 
       // Add both to queue
-      await buildQueue.onFileChanged(['frontend/src/new.ts'], [targets[0]]);
-      await buildQueue.onFileChanged(['backend/src/main.rs'], [targets[1]]);
+      await buildQueue.onFileChanged(["frontend/src/new.ts"], [targets[0]]);
+      await buildQueue.onFileChanged(["backend/src/main.rs"], [targets[1]]);
 
       const priorityInfo = buildQueue.getPriorityInfo();
-      const frontendPriority = priorityInfo.queue.find((q) => q.target === 'frontend');
-      const backendPriority = priorityInfo.queue.find((q) => q.target === 'backend');
+      const frontendPriority = priorityInfo.queue.find((q) => q.target === "frontend");
+      const backendPriority = priorityInfo.queue.find((q) => q.target === "backend");
 
       // Frontend should have higher priority due to focus
       if (frontendPriority && backendPriority) {
@@ -239,21 +239,21 @@ describe('IntelligentBuildQueue', () => {
       }
     });
 
-    it('should handle build failures', async () => {
-      const mockBuilder = createMockBuilder('frontend');
+    it("should handle build failures", async () => {
+      const mockBuilder = createMockBuilder("frontend");
 
       // Make builder fail
       vi.mocked(mockBuilder.build).mockResolvedValue({
-        status: 'failure',
-        targetName: 'frontend',
+        status: "failure",
+        targetName: "frontend",
         timestamp: new Date().toISOString(),
         duration: 2000,
-        error: 'Build failed',
+        error: "Build failed",
       });
 
       buildQueue.registerTarget(targets[0], mockBuilder);
 
-      await buildQueue.onFileChanged(['frontend/src/app.ts'], [targets[0]]);
+      await buildQueue.onFileChanged(["frontend/src/app.ts"], [targets[0]]);
 
       await waitForAsync(100);
 
@@ -261,11 +261,11 @@ describe('IntelligentBuildQueue', () => {
       expect(status.stats.failedBuilds).toBeGreaterThanOrEqual(0);
     });
 
-    it('should track build statistics', async () => {
-      const mockBuilder = createMockBuilder('frontend');
+    it("should track build statistics", async () => {
+      const mockBuilder = createMockBuilder("frontend");
       buildQueue.registerTarget(targets[0], mockBuilder);
 
-      await buildQueue.onFileChanged(['frontend/src/app.ts'], [targets[0]]);
+      await buildQueue.onFileChanged(["frontend/src/app.ts"], [targets[0]]);
 
       await waitForAsync(100);
 
@@ -280,9 +280,9 @@ describe('IntelligentBuildQueue', () => {
     });
   });
 
-  describe('Retry Handling', () => {
-    it('should retry failed builds up to target maxRetries', async () => {
-      const controllable = createControllableMockBuilder('frontend');
+  describe("Retry Handling", () => {
+    it("should retry failed builds up to target maxRetries", async () => {
+      const controllable = createControllableMockBuilder("frontend");
       const retryTarget = {
         ...targets[0],
         maxRetries: 2,
@@ -290,10 +290,10 @@ describe('IntelligentBuildQueue', () => {
       };
 
       buildQueue.registerTarget(retryTarget, controllable.builder);
-      await buildQueue.onFileChanged(['frontend/src/app.ts'], [retryTarget]);
+      await buildQueue.onFileChanged(["frontend/src/app.ts"], [retryTarget]);
 
       // Fail first attempt
-      controllable.fail('First failure');
+      controllable.fail("First failure");
       await waitForAsync(undefined, { drainAll: false });
       expect(controllable.builder.build).toHaveBeenCalledTimes(1);
 
@@ -302,7 +302,7 @@ describe('IntelligentBuildQueue', () => {
       expect(controllable.builder.build).toHaveBeenCalledTimes(2);
 
       // Fail second attempt
-      controllable.fail('Second failure');
+      controllable.fail("Second failure");
       await waitForAsync(undefined, { drainAll: false });
 
       // Advance timers again; second retry should occur (maxRetries counts retries, not attempts)
@@ -311,9 +311,9 @@ describe('IntelligentBuildQueue', () => {
     });
   });
 
-  describe('Pending Rebuild Handling', () => {
-    it('should mark builds for rebuild when already running', async () => {
-      const mockBuilder = createMockBuilder('frontend');
+  describe("Pending Rebuild Handling", () => {
+    it("should mark builds for rebuild when already running", async () => {
+      const mockBuilder = createMockBuilder("frontend");
 
       // Make build take time
       vi.mocked(mockBuilder.build).mockImplementation(
@@ -322,25 +322,25 @@ describe('IntelligentBuildQueue', () => {
             setTimeout(
               () =>
                 resolve({
-                  status: 'success',
-                  targetName: 'frontend',
+                  status: "success",
+                  targetName: "frontend",
                   timestamp: new Date().toISOString(),
                   duration: 3000,
                 }),
-              3000
-            )
-          )
+              3000,
+            ),
+          ),
       );
 
       buildQueue.registerTarget(targets[0], mockBuilder);
 
       // Start first build
-      await buildQueue.onFileChanged(['frontend/src/app.ts'], [targets[0]]);
+      await buildQueue.onFileChanged(["frontend/src/app.ts"], [targets[0]]);
 
       await waitForAsync(50); // Let build start
 
       // Try to queue another build while first is running
-      await buildQueue.onFileChanged(['frontend/src/component.ts'], [targets[0]]);
+      await buildQueue.onFileChanged(["frontend/src/component.ts"], [targets[0]]);
 
       const status = buildQueue.getQueueStatus();
 
@@ -348,15 +348,15 @@ describe('IntelligentBuildQueue', () => {
       expect(status.running.length).toBe(1);
     });
 
-    it('should reschedule builds marked for rebuild', async () => {
-      const mockBuilder = createMockBuilder('frontend');
+    it("should reschedule builds marked for rebuild", async () => {
+      const mockBuilder = createMockBuilder("frontend");
 
       let buildCount = 0;
       vi.mocked(mockBuilder.build).mockImplementation(() => {
         buildCount++;
         return Promise.resolve({
-          status: 'success',
-          targetName: 'frontend',
+          status: "success",
+          targetName: "frontend",
           timestamp: new Date().toISOString(),
           duration: 1000,
         });
@@ -365,10 +365,10 @@ describe('IntelligentBuildQueue', () => {
       buildQueue.registerTarget(targets[0], mockBuilder);
 
       // Start first build
-      await buildQueue.onFileChanged(['frontend/src/app.ts'], [targets[0]]);
+      await buildQueue.onFileChanged(["frontend/src/app.ts"], [targets[0]]);
 
       // Queue rebuild while first is processing
-      await buildQueue.onFileChanged(['frontend/src/component.ts'], [targets[0]]);
+      await buildQueue.onFileChanged(["frontend/src/component.ts"], [targets[0]]);
 
       await waitForAsync(200);
 
@@ -377,8 +377,8 @@ describe('IntelligentBuildQueue', () => {
     });
   });
 
-  describe('Queue Management', () => {
-    it('should provide queue status information', () => {
+  describe("Queue Management", () => {
+    it("should provide queue status information", () => {
       const status = buildQueue.getQueueStatus();
 
       expect(status).toMatchObject({
@@ -394,7 +394,7 @@ describe('IntelligentBuildQueue', () => {
       });
     });
 
-    it('should provide priority information', () => {
+    it("should provide priority information", () => {
       const priorityInfo = buildQueue.getPriorityInfo();
 
       expect(priorityInfo).toMatchObject({
@@ -403,46 +403,46 @@ describe('IntelligentBuildQueue', () => {
       });
     });
 
-    it('should cancel pending builds for specific targets', async () => {
+    it("should cancel pending builds for specific targets", async () => {
       // Use serial mode to ensure builds stay pending
       config.parallelization = 1;
       const serialQueue = new IntelligentBuildQueue(config, logger, priorityEngine);
 
-      const { builder: frontendBuilder } = createControllableMockBuilder('frontend');
-      const { builder: backendBuilder } = createControllableMockBuilder('backend');
+      const { builder: frontendBuilder } = createControllableMockBuilder("frontend");
+      const { builder: backendBuilder } = createControllableMockBuilder("backend");
 
       serialQueue.registerTarget(targets[0], frontendBuilder);
       serialQueue.registerTarget(targets[1], backendBuilder);
 
       // Queue builds - first will start, second will be pending
-      await serialQueue.onFileChanged(['frontend/src/app.ts'], [targets[0]]);
-      await serialQueue.onFileChanged(['backend/src/main.rs'], [targets[1]]);
+      await serialQueue.onFileChanged(["frontend/src/app.ts"], [targets[0]]);
+      await serialQueue.onFileChanged(["backend/src/main.rs"], [targets[1]]);
 
       await waitForAsync(10);
 
-      const cancelled = serialQueue.cancelPendingBuilds('backend');
+      const cancelled = serialQueue.cancelPendingBuilds("backend");
 
       expect(cancelled).toBeGreaterThanOrEqual(0);
       // Only check for cancellation message if there were builds to cancel
       if (cancelled > 0) {
-        expect(logger.info).toHaveBeenCalledWith(expect.stringContaining('Cancelled'));
+        expect(logger.info).toHaveBeenCalledWith(expect.stringContaining("Cancelled"));
       }
     });
 
-    it('should clear entire queue', async () => {
+    it("should clear entire queue", async () => {
       // Use serial mode to ensure some builds stay pending
       config.parallelization = 1;
       const serialQueue = new IntelligentBuildQueue(config, logger, priorityEngine);
 
-      const { builder: frontendBuilder } = createControllableMockBuilder('frontend');
-      const { builder: backendBuilder } = createControllableMockBuilder('backend');
+      const { builder: frontendBuilder } = createControllableMockBuilder("frontend");
+      const { builder: backendBuilder } = createControllableMockBuilder("backend");
 
       serialQueue.registerTarget(targets[0], frontendBuilder);
       serialQueue.registerTarget(targets[1], backendBuilder);
 
       // Queue builds
-      await serialQueue.onFileChanged(['frontend/src/app.ts'], [targets[0]]);
-      await serialQueue.onFileChanged(['backend/src/main.rs'], [targets[1]]);
+      await serialQueue.onFileChanged(["frontend/src/app.ts"], [targets[0]]);
+      await serialQueue.onFileChanged(["backend/src/main.rs"], [targets[1]]);
 
       await waitForAsync(10);
 
@@ -450,12 +450,12 @@ describe('IntelligentBuildQueue', () => {
 
       const status = buildQueue.getQueueStatus();
       expect(status.pending).toHaveLength(0);
-      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining('Cleared queue'));
+      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining("Cleared queue"));
     });
   });
 
-  describe('Configuration Edge Cases', () => {
-    it('should handle maximum parallelization', async () => {
+  describe("Configuration Edge Cases", () => {
+    it("should handle maximum parallelization", async () => {
       const highParallelConfig = {
         ...config,
         parallelization: 10,
@@ -464,7 +464,7 @@ describe('IntelligentBuildQueue', () => {
       const highParallelQueue = new IntelligentBuildQueue(
         highParallelConfig,
         logger,
-        priorityEngine
+        priorityEngine,
       );
 
       // Register many targets
@@ -477,7 +477,7 @@ describe('IntelligentBuildQueue', () => {
       // Queue all builds
       await highParallelQueue.onFileChanged(
         targets.map((t) => `${t.name}/file.ts`),
-        targets
+        targets,
       );
 
       await waitForAsync(100);
@@ -488,7 +488,7 @@ describe('IntelligentBuildQueue', () => {
       expect(status.running.length).toBeLessThanOrEqual(10);
     });
 
-    it('should handle single parallelization (serial mode)', async () => {
+    it("should handle single parallelization (serial mode)", async () => {
       const serialConfig = {
         ...config,
         parallelization: 1,
@@ -505,7 +505,7 @@ describe('IntelligentBuildQueue', () => {
       // Queue all builds
       await serialQueue.onFileChanged(
         targets.map((t) => `${t.name}/file.ts`),
-        targets
+        targets,
       );
 
       await waitForAsync(100);
@@ -516,7 +516,7 @@ describe('IntelligentBuildQueue', () => {
       expect(status.running.length).toBeLessThanOrEqual(1);
     });
 
-    it('should handle disabled prioritization gracefully', async () => {
+    it("should handle disabled prioritization gracefully", async () => {
       const noPriorityConfig = {
         ...config,
         prioritization: {
@@ -527,10 +527,10 @@ describe('IntelligentBuildQueue', () => {
 
       const noPriorityQueue = new IntelligentBuildQueue(noPriorityConfig, logger, priorityEngine);
 
-      const { builder: mockBuilder } = createControllableMockBuilder('frontend');
+      const { builder: mockBuilder } = createControllableMockBuilder("frontend");
       noPriorityQueue.registerTarget(targets[0], mockBuilder);
 
-      await noPriorityQueue.onFileChanged(['frontend/src/app.ts'], [targets[0]]);
+      await noPriorityQueue.onFileChanged(["frontend/src/app.ts"], [targets[0]]);
 
       const status = noPriorityQueue.getQueueStatus();
       const totalBuilds = status.pending.length + status.running.length;
@@ -538,53 +538,53 @@ describe('IntelligentBuildQueue', () => {
     });
   });
 
-  describe('Error Handling', () => {
-    it('should handle missing builders gracefully', async () => {
+  describe("Error Handling", () => {
+    it("should handle missing builders gracefully", async () => {
       // Don't register any builders
-      await buildQueue.onFileChanged(['frontend/src/app.ts'], [targets[0]]);
+      await buildQueue.onFileChanged(["frontend/src/app.ts"], [targets[0]]);
 
       const status = buildQueue.getQueueStatus();
       expect(status.pending).toHaveLength(0);
-      expect(logger.error).toHaveBeenCalledWith('No builder registered for target: frontend');
+      expect(logger.error).toHaveBeenCalledWith("No builder registered for target: frontend");
     });
 
-    it('should handle build errors gracefully', async () => {
-      const mockBuilder = createMockBuilder('frontend');
+    it("should handle build errors gracefully", async () => {
+      const mockBuilder = createMockBuilder("frontend");
 
       // Make builder throw an error
-      vi.mocked(mockBuilder.build).mockRejectedValue(new Error('Build crashed'));
+      vi.mocked(mockBuilder.build).mockRejectedValue(new Error("Build crashed"));
 
       buildQueue.registerTarget(targets[0], mockBuilder);
 
-      await buildQueue.onFileChanged(['frontend/src/app.ts'], [targets[0]]);
+      await buildQueue.onFileChanged(["frontend/src/app.ts"], [targets[0]]);
 
       await waitForAsync(100);
 
       expect(logger.error).toHaveBeenCalledWith(
-        expect.stringContaining('Build failed for frontend')
+        expect.stringContaining("Build failed for frontend"),
       );
     });
 
-    it('should handle empty file changes', async () => {
+    it("should handle empty file changes", async () => {
       await buildQueue.onFileChanged([], targets);
 
       const status = buildQueue.getQueueStatus();
       expect(status.pending).toHaveLength(0);
     });
 
-    it('should handle empty target lists', async () => {
-      await buildQueue.onFileChanged(['some/file.ts'], []);
+    it("should handle empty target lists", async () => {
+      await buildQueue.onFileChanged(["some/file.ts"], []);
 
       const status = buildQueue.getQueueStatus();
       expect(status.pending).toHaveLength(0);
     });
 
-    it('should handle invalid priority calculations', async () => {
-      const mockBuilder = createMockBuilder('frontend');
+    it("should handle invalid priority calculations", async () => {
+      const mockBuilder = createMockBuilder("frontend");
       buildQueue.registerTarget(targets[0], mockBuilder);
 
       // This should not crash even with unusual file patterns
-      await buildQueue.onFileChanged([''], [targets[0]]);
+      await buildQueue.onFileChanged([""], [targets[0]]);
 
       const status = buildQueue.getQueueStatus();
       // Should either ignore or handle gracefully
@@ -592,9 +592,9 @@ describe('IntelligentBuildQueue', () => {
     });
   });
 
-  describe('Performance and Scalability', () => {
-    it('should handle many simultaneous file changes efficiently', async () => {
-      const { builder: mockBuilder } = createControllableMockBuilder('frontend');
+  describe("Performance and Scalability", () => {
+    it("should handle many simultaneous file changes efficiently", async () => {
+      const { builder: mockBuilder } = createControllableMockBuilder("frontend");
       buildQueue.registerTarget(targets[0], mockBuilder);
 
       const manyFiles = Array.from({ length: 100 }, (_, i) => `frontend/src/file${i}.ts`);
@@ -611,8 +611,8 @@ describe('IntelligentBuildQueue', () => {
       expect(totalBuilds).toBe(1); // Should deduplicate into single build
     });
 
-    it('should handle rapid successive changes', async () => {
-      const { builder: mockBuilder } = createControllableMockBuilder('frontend');
+    it("should handle rapid successive changes", async () => {
+      const { builder: mockBuilder } = createControllableMockBuilder("frontend");
       buildQueue.registerTarget(targets[0], mockBuilder);
 
       // Rapid fire changes

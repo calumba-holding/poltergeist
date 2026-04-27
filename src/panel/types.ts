@@ -1,7 +1,7 @@
-import type { Logger } from '../logger.js';
-import type { StatusMap, StatusObject } from '../status/types.js';
-import type { PoltergeistConfig } from '../types.js';
-import type { GitMetrics } from './git-metrics.js';
+import type { Logger } from "../logger.js";
+import type { StatusMap, StatusObject } from "../status/types.js";
+import type { PoltergeistConfig } from "../types.js";
+import type { GitMetrics } from "./git-metrics.js";
 
 export interface TargetPanelEntry {
   name: string;
@@ -53,9 +53,9 @@ export interface PanelSummaryScriptResult {
   lastRun: number;
   exitCode: number | null;
   durationMs: number;
-  placement: 'summary' | 'row';
+  placement: "summary" | "row";
   maxLines?: number;
-  formatter?: 'auto' | 'none' | 'swift' | 'ts';
+  formatter?: "auto" | "none" | "swift" | "ts";
   countLabel?: string | number | null;
 }
 
@@ -73,14 +73,14 @@ export interface PanelControllerOptions {
   configPath?: string;
   gitPollIntervalMs?: number;
   statusPollIntervalMs?: number;
-  gitSummaryMode?: 'ai' | 'list';
+  gitSummaryMode?: "ai" | "list";
 }
 
 export interface ScriptEvent {
-  kind: 'status' | 'summary';
+  kind: "status" | "summary";
   label: string;
   exitCode: number | null;
-  placement?: 'summary' | 'row';
+  placement?: "summary" | "row";
   targets?: string[];
   timestamp: number;
 }

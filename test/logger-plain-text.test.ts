@@ -1,13 +1,13 @@
 // Tests for plain text logging functionality
 
-import { mkdirSync, rmSync } from 'fs';
-import { tmpdir } from 'os';
-import { join } from 'path';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createLogger, SimpleLogger } from '../src/logger.js';
-import { FileSystemUtils } from '../src/utils/filesystem.js';
+import { mkdirSync, rmSync } from "fs";
+import { tmpdir } from "os";
+import { join } from "path";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { createLogger, SimpleLogger } from "../src/logger.js";
+import { FileSystemUtils } from "../src/utils/filesystem.js";
 
-describe('Plain Text Logging', () => {
+describe("Plain Text Logging", () => {
   let testDir: string;
   let _logFile: string;
 
@@ -28,9 +28,9 @@ describe('Plain Text Logging', () => {
     }
   });
 
-  describe('SimpleLogger', () => {
-    it('should create logger with correct properties', () => {
-      const logger = new SimpleLogger('test-target', 'info');
+  describe("SimpleLogger", () => {
+    it("should create logger with correct properties", () => {
+      const logger = new SimpleLogger("test-target", "info");
 
       expect(logger).toBeDefined();
       expect(logger.info).toBeDefined();
@@ -40,7 +40,7 @@ describe('Plain Text Logging', () => {
       expect(logger.success).toBeDefined();
     });
 
-    it('should respect log level filtering', () => {
+    it("should respect log level filtering", () => {
       // Test that log level filtering works via console spy
       const originalLog = console.log;
       const originalError = console.error;
@@ -49,12 +49,12 @@ describe('Plain Text Logging', () => {
       console.log = logSpy;
       console.error = errorSpy;
 
-      const logger = new SimpleLogger('test-target', 'error');
+      const logger = new SimpleLogger("test-target", "error");
 
-      logger.debug('Debug msg'); // Should not log
-      logger.info('Info msg'); // Should not log
-      logger.warn('Warn msg'); // Should not log
-      logger.error('Error msg'); // Should log
+      logger.debug("Debug msg"); // Should not log
+      logger.info("Info msg"); // Should not log
+      logger.warn("Warn msg"); // Should not log
+      logger.error("Error msg"); // Should log
 
       expect(logSpy).not.toHaveBeenCalled();
       expect(errorSpy).toHaveBeenCalledTimes(1);
@@ -64,10 +64,10 @@ describe('Plain Text Logging', () => {
     });
   });
 
-  describe('Log File Naming', () => {
-    it('should generate correct log file names for targets', () => {
-      const projectRoot = '/Users/test/my-project';
-      const targetName = 'debug-build';
+  describe("Log File Naming", () => {
+    it("should generate correct log file names for targets", () => {
+      const projectRoot = "/Users/test/my-project";
+      const targetName = "debug-build";
 
       const logFileName = FileSystemUtils.generateLogFileName(projectRoot, targetName);
 
@@ -75,25 +75,25 @@ describe('Plain Text Logging', () => {
       expect(logFileName).toMatch(/^my-project-[a-f0-9]{8}-debug-build\.log$/);
     });
 
-    it('should use same naming pattern as state files', () => {
-      const projectRoot = '/Users/test/my-project';
-      const targetName = 'release';
+    it("should use same naming pattern as state files", () => {
+      const projectRoot = "/Users/test/my-project";
+      const targetName = "release";
 
       const stateFileName = FileSystemUtils.generateStateFileName(projectRoot, targetName);
       const logFileName = FileSystemUtils.generateLogFileName(projectRoot, targetName);
 
       // Should have same prefix but different extension
-      const statePrefix = stateFileName.replace('.state', '');
-      const logPrefix = logFileName.replace('.log', '');
+      const statePrefix = stateFileName.replace(".state", "");
+      const logPrefix = logFileName.replace(".log", "");
 
       expect(statePrefix).toBe(logPrefix);
     });
 
-    it('should generate consistent hashes for same project', () => {
-      const projectRoot = '/Users/test/my-project';
+    it("should generate consistent hashes for same project", () => {
+      const projectRoot = "/Users/test/my-project";
 
-      const log1 = FileSystemUtils.generateLogFileName(projectRoot, 'target1');
-      const log2 = FileSystemUtils.generateLogFileName(projectRoot, 'target2');
+      const log1 = FileSystemUtils.generateLogFileName(projectRoot, "target1");
+      const log2 = FileSystemUtils.generateLogFileName(projectRoot, "target2");
 
       // Extract hashes
       const hash1 = log1.match(/-([a-f0-9]{8})-/)?.[1];
@@ -103,42 +103,42 @@ describe('Plain Text Logging', () => {
     });
   });
 
-  describe('Target-specific logging', () => {
-    it('should create separate log files per target', () => {
-      const projectRoot = '/Users/test/my-project';
+  describe("Target-specific logging", () => {
+    it("should create separate log files per target", () => {
+      const projectRoot = "/Users/test/my-project";
 
-      const logFile1 = FileSystemUtils.getLogFilePath(projectRoot, 'frontend');
-      const logFile2 = FileSystemUtils.getLogFilePath(projectRoot, 'backend');
+      const logFile1 = FileSystemUtils.getLogFilePath(projectRoot, "frontend");
+      const logFile2 = FileSystemUtils.getLogFilePath(projectRoot, "backend");
 
       expect(logFile1).not.toBe(logFile2);
-      expect(logFile1).toContain('frontend.log');
-      expect(logFile2).toContain('backend.log');
+      expect(logFile1).toContain("frontend.log");
+      expect(logFile2).toContain("backend.log");
     });
 
-    it('should format messages with target in console output', () => {
+    it("should format messages with target in console output", () => {
       const originalLog = console.log;
       const logSpy = vi.fn();
       console.log = logSpy;
 
-      const logger = new SimpleLogger('my-target', 'info');
-      logger.info('Building project');
+      const logger = new SimpleLogger("my-target", "info");
+      logger.info("Building project");
 
       expect(logSpy).toHaveBeenCalled();
       const output = logSpy.mock.calls[0][0];
-      expect(output).toContain('[my-target]');
-      expect(output).toContain('Building project');
+      expect(output).toContain("[my-target]");
+      expect(output).toContain("Building project");
 
       console.log = originalLog;
     });
   });
 
-  describe('createLogger factory', () => {
-    it('should create logger with target-specific file', () => {
-      const projectRoot = '/Users/test/my-project';
-      const targetName = 'test-target';
+  describe("createLogger factory", () => {
+    it("should create logger with target-specific file", () => {
+      const projectRoot = "/Users/test/my-project";
+      const targetName = "test-target";
       const logFile = FileSystemUtils.getLogFilePath(projectRoot, targetName);
 
-      const logger = createLogger(logFile, 'info', targetName);
+      const logger = createLogger(logFile, "info", targetName);
 
       expect(logger).toBeDefined();
       expect(logger.info).toBeDefined();
@@ -148,7 +148,7 @@ describe('Plain Text Logging', () => {
       expect(logger.success).toBeDefined();
     });
 
-    it('should respect log level settings', () => {
+    it("should respect log level settings", () => {
       // Mock console methods to test filtering
       const originalLog = console.log;
       const originalError = console.error;
@@ -161,12 +161,12 @@ describe('Plain Text Logging', () => {
       console.warn = warnSpy;
 
       // Create a SimpleLogger directly with error level
-      const logger = new SimpleLogger(undefined, 'error');
+      const logger = new SimpleLogger(undefined, "error");
 
-      logger.debug('Debug msg');
-      logger.info('Info msg');
-      logger.warn('Warn msg');
-      logger.error('Error msg');
+      logger.debug("Debug msg");
+      logger.info("Info msg");
+      logger.warn("Warn msg");
+      logger.error("Error msg");
 
       // Only error should be logged
       expect(logSpy).not.toHaveBeenCalled();

@@ -22,12 +22,12 @@ export function optimizeWatchPatterns(patterns: string[]): string[] {
 
   nonRedundant.forEach((pattern) => {
     const hasDirectoryBraces = pattern
-      .split('/')
-      .some((part) => part.includes('{') && !part.startsWith('*.{'));
+      .split("/")
+      .some((part) => part.includes("{") && !part.startsWith("*.{"));
 
     if (hasDirectoryBraces) {
       patternsWithBraces.push(pattern);
-    } else if (!pattern.includes('*')) {
+    } else if (!pattern.includes("*")) {
       nonWildcardPatterns.push(pattern);
     } else {
       wildcardPatterns.push(pattern);
@@ -41,14 +41,14 @@ export function optimizeWatchPatterns(patterns: string[]): string[] {
     if (processed.has(wildcardPatterns[i])) continue;
 
     const pattern1 = wildcardPatterns[i];
-    const parts1 = pattern1.split('/');
+    const parts1 = pattern1.split("/");
     const matches: string[] = [pattern1];
 
     for (let j = i + 1; j < wildcardPatterns.length; j++) {
       if (processed.has(wildcardPatterns[j])) continue;
 
       const pattern2 = wildcardPatterns[j];
-      const parts2 = pattern2.split('/');
+      const parts2 = pattern2.split("/");
 
       if (parts1.length !== parts2.length) continue;
 
@@ -69,19 +69,19 @@ export function optimizeWatchPatterns(patterns: string[]): string[] {
       if (
         allOthersSame &&
         diffIndex !== -1 &&
-        !parts1[diffIndex].includes('*') &&
-        !parts2[diffIndex].includes('*')
+        !parts1[diffIndex].includes("*") &&
+        !parts2[diffIndex].includes("*")
       ) {
         matches.push(pattern2);
       }
     }
 
     if (matches.length > 1) {
-      const parts = pattern1.split('/');
+      const parts = pattern1.split("/");
       let diffIndex = -1;
 
       for (let k = 0; k < parts.length; k++) {
-        const values = new Set(matches.map((m) => m.split('/')[k]));
+        const values = new Set(matches.map((m) => m.split("/")[k]));
         if (values.size > 1) {
           diffIndex = k;
           break;
@@ -89,11 +89,11 @@ export function optimizeWatchPatterns(patterns: string[]): string[] {
       }
 
       if (diffIndex !== -1) {
-        const prefix = parts.slice(0, diffIndex).join('/');
-        const suffix = parts.slice(diffIndex + 1).join('/');
+        const prefix = parts.slice(0, diffIndex).join("/");
+        const suffix = parts.slice(diffIndex + 1).join("/");
         const key = `${prefix}|${suffix}`;
 
-        groups.set(key, new Set(matches.map((m) => m.split('/')[diffIndex])));
+        groups.set(key, new Set(matches.map((m) => m.split("/")[diffIndex])));
         matches.forEach((m) => {
           processed.add(m);
         });
@@ -104,18 +104,18 @@ export function optimizeWatchPatterns(patterns: string[]): string[] {
   const result: string[] = [];
 
   groups.forEach((dirsSet, key) => {
-    const [prefix, suffix] = key.split('|');
+    const [prefix, suffix] = key.split("|");
     const dirs = Array.from(dirsSet).sort();
 
     let pattern: string;
     if (prefix && suffix) {
-      pattern = `${prefix}/{${dirs.join(',')}}/${suffix}`;
+      pattern = `${prefix}/{${dirs.join(",")}}/${suffix}`;
     } else if (prefix) {
-      pattern = `${prefix}/{${dirs.join(',')}}`;
+      pattern = `${prefix}/{${dirs.join(",")}}`;
     } else if (suffix) {
-      pattern = `{${dirs.join(',')}}/${suffix}`;
+      pattern = `{${dirs.join(",")}}/${suffix}`;
     } else {
-      pattern = `{${dirs.join(',')}}`;
+      pattern = `{${dirs.join(",")}}`;
     }
     result.push(pattern);
   });
@@ -141,7 +141,7 @@ export function isPatternRedundant(pattern1: string, pattern2: string): boolean 
   }
 
   const getPatternParts = (pattern: string) => {
-    const wildcards = ['/**/*.', '/**/*', '/**/'];
+    const wildcards = ["/**/*.", "/**/*", "/**/"];
     for (const wc of wildcards) {
       const idx = pattern.indexOf(wc);
       if (idx !== -1) {

@@ -1,8 +1,8 @@
-import { exec } from 'child_process';
-import { promisify } from 'util';
-import type { StatusScriptConfig, SummaryScriptConfig } from '../types.js';
-import { formatTestOutput } from '../utils/test-formatter.js';
-import type { PanelStatusScriptResult, PanelSummaryScriptResult } from './types.js';
+import { exec } from "child_process";
+import { promisify } from "util";
+import type { StatusScriptConfig, SummaryScriptConfig } from "../types.js";
+import { formatTestOutput } from "../utils/test-formatter.js";
+import type { PanelStatusScriptResult, PanelSummaryScriptResult } from "./types.js";
 
 const execAsync = promisify(exec);
 const DEFAULT_MAX_BUFFER = 1024 * 1024;
@@ -11,7 +11,7 @@ interface ScriptExecutionOptions {
   projectRoot: string;
   timeoutSeconds?: number;
   maxLines: number;
-  formatter?: 'auto' | 'none' | 'swift' | 'ts';
+  formatter?: "auto" | "none" | "swift" | "ts";
 }
 
 interface ScriptExecutionResult {
@@ -23,7 +23,7 @@ interface ScriptExecutionResult {
 }
 
 export function extractLines(stdout?: string, stderr?: string, maxLines: number = 1): string[] {
-  const combined = `${stdout ?? ''}\n${stderr ?? ''}`.trim();
+  const combined = `${stdout ?? ""}\n${stderr ?? ""}`.trim();
   if (!combined) {
     return [];
   }
@@ -36,14 +36,14 @@ export function extractLines(stdout?: string, stderr?: string, maxLines: number 
 
 async function executeScript(
   command: string,
-  options: ScriptExecutionOptions
+  options: ScriptExecutionOptions,
 ): Promise<ScriptExecutionResult> {
   const now = Date.now();
   const execOptions = {
     cwd: options.projectRoot,
     timeout: (options.timeoutSeconds ?? 30) * 1000,
     maxBuffer: DEFAULT_MAX_BUFFER,
-    env: { ...process.env, FORCE_COLOR: '0' },
+    env: { ...process.env, FORCE_COLOR: "0" },
   } as const;
 
   const start = Date.now();
@@ -51,7 +51,7 @@ async function executeScript(
     const { stdout, stderr } = await execAsync(command, execOptions);
     const durationMs = Date.now() - start;
     const fullLines = extractLines(stdout, stderr, 1000);
-    const formatted = formatTestOutput(fullLines, options.formatter ?? 'auto', command);
+    const formatted = formatTestOutput(fullLines, options.formatter ?? "auto", command);
     const lines = formatted.slice(0, options.maxLines);
     return {
       lines,
@@ -67,14 +67,14 @@ async function executeScript(
     if (fullLines.length === 0) {
       fullLines.push(`Error: ${execError.message}`);
     }
-    const formatted = formatTestOutput(fullLines, options.formatter ?? 'auto', command);
+    const formatted = formatTestOutput(fullLines, options.formatter ?? "auto", command);
     const lines = formatted.slice(0, options.maxLines);
     return {
       lines,
       exitCode:
-        typeof execError.code === 'number'
+        typeof execError.code === "number"
           ? execError.code
-          : typeof execError.code === 'string'
+          : typeof execError.code === "string"
             ? Number.parseInt(execError.code, 10)
             : null,
       durationMs,
@@ -86,7 +86,7 @@ async function executeScript(
 
 export async function runStatusScript(
   script: StatusScriptConfig,
-  projectRoot: string
+  projectRoot: string,
 ): Promise<PanelStatusScriptResult> {
   const result = await executeScript(script.command, {
     projectRoot,
@@ -108,7 +108,7 @@ export async function runStatusScript(
 
 export async function runSummaryScript(
   script: SummaryScriptConfig,
-  projectRoot: string
+  projectRoot: string,
 ): Promise<PanelSummaryScriptResult> {
   const result = await executeScript(script.command, {
     projectRoot,
@@ -136,7 +136,7 @@ export async function runSummaryScript(
     lastRun: result.lastRun,
     exitCode: result.exitCode,
     durationMs: result.durationMs,
-    placement: script.placement ?? 'summary',
+    placement: script.placement ?? "summary",
     maxLines: result.maxLines,
     formatter: script.formatter,
     countLabel: dynamicCount,

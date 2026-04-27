@@ -1,12 +1,12 @@
-import type { IntelligentBuildQueue } from '../build-queue.js';
-import type { IBuilderFactory, IStateManager } from '../interfaces.js';
-import type { Logger } from '../logger.js';
-import { PostBuildRunner } from '../post-build/post-build-runner.js';
-import { ExecutableRunner } from '../runners/executable-runner.js';
-import type { ExecutableTarget, Target } from '../types.js';
-import { BuildStatusManager } from '../utils/build-status-manager.js';
-import { expandGlobPatterns } from '../utils/glob-utils.js';
-import type { TargetState } from './target-state.js';
+import type { IntelligentBuildQueue } from "../build-queue.js";
+import type { IBuilderFactory, IStateManager } from "../interfaces.js";
+import type { Logger } from "../logger.js";
+import { PostBuildRunner } from "../post-build/post-build-runner.js";
+import { ExecutableRunner } from "../runners/executable-runner.js";
+import type { ExecutableTarget, Target } from "../types.js";
+import { BuildStatusManager } from "../utils/build-status-manager.js";
+import { expandGlobPatterns } from "../utils/glob-utils.js";
+import type { TargetState } from "./target-state.js";
 
 interface TargetLifecycleDeps {
   projectRoot: string;
@@ -42,7 +42,7 @@ export class TargetLifecycleManager {
         target,
         this.projectRoot,
         this.logger,
-        this.stateManager
+        this.stateManager,
       );
 
       await this.stateManager.initializeState(target);
@@ -53,9 +53,9 @@ export class TargetLifecycleManager {
         const errorMessage = error instanceof Error ? error.message : String(error);
         const failureStatus = BuildStatusManager.createFailureStatus(
           target.name,
-          { message: errorMessage, summary: 'Validation failed', type: 'configuration' },
+          { message: errorMessage, summary: "Validation failed", type: "configuration" },
           { duration: 0 },
-          { gitHash: 'validation', builder: builder.describeBuilder?.() || target.type }
+          { gitHash: "validation", builder: builder.describeBuilder?.() || target.type },
         );
         await this.stateManager.updateBuildStatus(target.name, failureStatus);
         this.logger.error(`[${target.name}] Validation failed: ${errorMessage}`);
@@ -63,7 +63,7 @@ export class TargetLifecycleManager {
       }
 
       const runner =
-        target.type === 'executable' && target.autoRun?.enabled
+        target.type === "executable" && target.autoRun?.enabled
           ? new ExecutableRunner(target as ExecutableTarget, {
               projectRoot: this.projectRoot,
               logger: this.logger,
@@ -98,7 +98,7 @@ export class TargetLifecycleManager {
 
   public async addTargets(targets: Target[], buildQueue?: IntelligentBuildQueue): Promise<void> {
     for (const target of targets) {
-      if (target.type !== 'executable') {
+      if (target.type !== "executable") {
         this.logger.info(`ℹ️ Skipping non-executable target addition: ${target.name}`);
         continue;
       }
@@ -106,7 +106,7 @@ export class TargetLifecycleManager {
         target,
         this.projectRoot,
         this.logger,
-        this.stateManager
+        this.stateManager,
       );
 
       const runner = new ExecutableRunner(target as ExecutableTarget, {
@@ -144,10 +144,10 @@ export class TargetLifecycleManager {
 
   public async updateTargets(
     modifications: Array<{ name: string; newTarget: Target }>,
-    buildQueue?: IntelligentBuildQueue
+    buildQueue?: IntelligentBuildQueue,
   ): Promise<void> {
     for (const mod of modifications) {
-      if (mod.newTarget.type !== 'executable') {
+      if (mod.newTarget.type !== "executable") {
         this.logger.info(`ℹ️ Skipping non-executable target update: ${mod.name}`);
         continue;
       }
@@ -159,7 +159,7 @@ export class TargetLifecycleManager {
             mod.newTarget,
             this.projectRoot,
             this.logger,
-            this.stateManager
+            this.stateManager,
           );
       const runner = previous?.runner
         ? previous.runner
@@ -190,7 +190,7 @@ export class TargetLifecycleManager {
         await this.stateManager.removeState(name);
       } catch (error) {
         this.logger.error(
-          `❌ Failed to remove target ${name}: ${error instanceof Error ? error.message : error}`
+          `❌ Failed to remove target ${name}: ${error instanceof Error ? error.message : error}`,
         );
       }
     }

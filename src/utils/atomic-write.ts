@@ -3,9 +3,9 @@
 //  Poltergeist
 //
 
-import * as crypto from 'node:crypto';
-import { promises as fs } from 'node:fs';
-import * as path from 'node:path';
+import * as crypto from "node:crypto";
+import { promises as fs } from "node:fs";
+import * as path from "node:path";
 
 export interface AtomicWriteOptions {
   encoding?: BufferEncoding;
@@ -25,9 +25,9 @@ export interface AtomicWriteOptions {
 export async function writeFileAtomic(
   filePath: string,
   data: string | Buffer,
-  options: AtomicWriteOptions = {}
+  options: AtomicWriteOptions = {},
 ): Promise<void> {
-  const { encoding = 'utf8', mode, tmpfileCreated } = options;
+  const { encoding = "utf8", mode, tmpfileCreated } = options;
 
   // Normalize the file path
   const normalizedPath = path.resolve(filePath);
@@ -39,7 +39,7 @@ export async function writeFileAtomic(
 
   // Generate a unique temporary filename in the same directory
   // Using the same directory ensures atomic rename works across filesystems
-  const randomBytes = crypto.randomBytes(8).toString('hex');
+  const randomBytes = crypto.randomBytes(8).toString("hex");
   const pid = process.pid;
   const tmpfile = path.join(dir, `.${basename}.${pid}.${randomBytes}.tmp`);
 
@@ -65,7 +65,7 @@ export async function writeFileAtomic(
         await fs.rename(tmpfile, normalizedPath);
         break; // Success, exit the retry loop
       } catch (error: any) {
-        if (error.code === 'EBUSY' || error.code === 'ENOTEMPTY' || error.code === 'EPERM') {
+        if (error.code === "EBUSY" || error.code === "ENOTEMPTY" || error.code === "EPERM") {
           // Windows-specific errors that might occur during rename
           retries++;
           if (retries >= maxRetries) {
@@ -96,19 +96,19 @@ export async function writeFileAtomic(
 export function writeFileAtomicSync(
   filePath: string,
   data: string | Buffer,
-  options: Omit<AtomicWriteOptions, 'tmpfileCreated'> = {}
+  options: Omit<AtomicWriteOptions, "tmpfileCreated"> = {},
 ): void {
-  const { encoding = 'utf8', mode } = options;
+  const { encoding = "utf8", mode } = options;
   const normalizedPath = path.resolve(filePath);
   const dir = path.dirname(normalizedPath);
   const basename = path.basename(normalizedPath);
 
   // Ensure directory exists
-  const fsSync = require('node:fs');
+  const fsSync = require("node:fs");
   fsSync.mkdirSync(dir, { recursive: true });
 
   // Generate temp filename
-  const randomBytes = crypto.randomBytes(8).toString('hex');
+  const randomBytes = crypto.randomBytes(8).toString("hex");
   const pid = process.pid;
   const tmpfile = path.join(dir, `.${basename}.${pid}.${randomBytes}.tmp`);
 
@@ -125,7 +125,7 @@ export function writeFileAtomicSync(
         fsSync.renameSync(tmpfile, normalizedPath);
         break;
       } catch (error: any) {
-        if (error.code === 'EBUSY' || error.code === 'ENOTEMPTY' || error.code === 'EPERM') {
+        if (error.code === "EBUSY" || error.code === "ENOTEMPTY" || error.code === "EPERM") {
           retries++;
           if (retries >= maxRetries) {
             throw error;

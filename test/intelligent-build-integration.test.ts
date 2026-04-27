@@ -1,22 +1,22 @@
 // Intelligent Build Integration Tests - End-to-End Testing
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { Poltergeist } from '../src/poltergeist.js';
-import type { PoltergeistConfig, Target } from '../src/types.js';
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { Poltergeist } from "../src/poltergeist.js";
+import type { PoltergeistConfig, Target } from "../src/types.js";
 import {
   createMockBuilder,
   createTestHarness,
   simulateFileChange,
   waitForAsync,
-} from './helpers.js';
+} from "./helpers.js";
 
-describe('Intelligent Build Integration', () => {
+describe("Intelligent Build Integration", () => {
   let poltergeist: Poltergeist;
   let harness: ReturnType<typeof createTestHarness>;
 
   beforeEach(() => {
     vi.useFakeTimers();
-    vi.setSystemTime(new Date('2025-01-01T10:00:00Z'));
+    vi.setSystemTime(new Date("2025-01-01T10:00:00Z"));
   });
 
   afterEach(async () => {
@@ -26,33 +26,33 @@ describe('Intelligent Build Integration', () => {
     vi.useRealTimers();
   });
 
-  describe('Configuration Integration', () => {
-    it('should initialize with intelligent build prioritization enabled', async () => {
+  describe("Configuration Integration", () => {
+    it("should initialize with intelligent build prioritization enabled", async () => {
       const config: PoltergeistConfig = {
-        version: '1.0',
-        projectType: 'mixed',
+        version: "1.0",
+        projectType: "mixed",
         targets: [
           {
-            name: 'frontend',
-            type: 'executable',
+            name: "frontend",
+            type: "executable",
             enabled: true,
-            buildCommand: 'npm run build',
-            outputPath: './dist/frontend',
-            watchPaths: ['frontend/**/*.ts'],
+            buildCommand: "npm run build",
+            outputPath: "./dist/frontend",
+            watchPaths: ["frontend/**/*.ts"],
           },
           {
-            name: 'backend',
-            type: 'executable',
+            name: "backend",
+            type: "executable",
             enabled: true,
-            buildCommand: 'cargo build',
-            outputPath: './target/backend',
-            watchPaths: ['backend/**/*.rs'],
+            buildCommand: "cargo build",
+            outputPath: "./target/backend",
+            watchPaths: ["backend/**/*.rs"],
           },
         ],
         watchman: {
           useDefaultExclusions: true,
           excludeDirs: [],
-          projectType: 'mixed',
+          projectType: "mixed",
           maxFileEvents: 10000,
           recrawlThreshold: 3,
           settlingDelay: 1000,
@@ -69,40 +69,40 @@ describe('Intelligent Build Integration', () => {
       };
 
       harness = createTestHarness(config);
-      poltergeist = new Poltergeist(config, '/test/project', harness.logger, harness.deps);
+      poltergeist = new Poltergeist(config, "/test/project", harness.logger, harness.deps);
 
       await poltergeist.start(undefined, { waitForInitialBuilds: true });
 
       // Should initialize without errors
       expect(harness.logger.info).toHaveBeenCalledWith(
-        expect.stringContaining('👻 [Poltergeist] Building 2 enabled target(s)')
+        expect.stringContaining("👻 [Poltergeist] Building 2 enabled target(s)"),
       );
     });
 
     it(
-      'should fall back to traditional builds when prioritization disabled',
+      "should fall back to traditional builds when prioritization disabled",
       { timeout: 10000 },
       async () => {
         // Use real timers for this test to avoid fake timer issues
         vi.useRealTimers();
 
         const config: PoltergeistConfig = {
-          version: '1.0',
-          projectType: 'node',
+          version: "1.0",
+          projectType: "node",
           targets: [
             {
-              name: 'app',
-              type: 'executable',
+              name: "app",
+              type: "executable",
               enabled: true,
-              buildCommand: 'npm run build',
-              outputPath: './dist',
-              watchPaths: ['src/**/*.ts'],
+              buildCommand: "npm run build",
+              outputPath: "./dist",
+              watchPaths: ["src/**/*.ts"],
             },
           ],
           watchman: {
             useDefaultExclusions: true,
             excludeDirs: [],
-            projectType: 'node',
+            projectType: "node",
             maxFileEvents: 10000,
             recrawlThreshold: 3,
             settlingDelay: 1000,
@@ -127,33 +127,33 @@ describe('Intelligent Build Integration', () => {
           return builder;
         });
 
-        poltergeist = new Poltergeist(config, '/test/project', harness.logger, harness.deps);
+        poltergeist = new Poltergeist(config, "/test/project", harness.logger, harness.deps);
 
         await poltergeist.start();
 
         // Test should pass just by successfully starting with traditional build path
         expect(true).toBe(true);
-      }
+      },
     );
 
-    it('should handle missing buildScheduling configuration gracefully', async () => {
+    it("should handle missing buildScheduling configuration gracefully", async () => {
       const config: PoltergeistConfig = {
-        version: '1.0',
-        projectType: 'swift',
+        version: "1.0",
+        projectType: "swift",
         targets: [
           {
-            name: 'cli-tool',
-            type: 'executable',
+            name: "cli-tool",
+            type: "executable",
             enabled: true,
-            buildCommand: 'swift build',
-            outputPath: './.build/debug/cli-tool',
-            watchPaths: ['Sources/**/*.swift'],
+            buildCommand: "swift build",
+            outputPath: "./.build/debug/cli-tool",
+            watchPaths: ["Sources/**/*.swift"],
           },
         ],
         watchman: {
           useDefaultExclusions: true,
           excludeDirs: [],
-          projectType: 'swift',
+          projectType: "swift",
           maxFileEvents: 10000,
           recrawlThreshold: 3,
           settlingDelay: 1000,
@@ -162,46 +162,46 @@ describe('Intelligent Build Integration', () => {
       };
 
       harness = createTestHarness(config);
-      poltergeist = new Poltergeist(config, '/test/project', harness.logger, harness.deps);
+      poltergeist = new Poltergeist(config, "/test/project", harness.logger, harness.deps);
 
       await poltergeist.start();
 
       // Should start successfully with defaults
       expect(harness.logger.info).toHaveBeenCalledWith(
-        expect.stringContaining('👻 [Poltergeist] Building 1 enabled target(s)')
+        expect.stringContaining("👻 [Poltergeist] Building 1 enabled target(s)"),
       );
     });
   });
 
-  describe('Priority-Based Build Scheduling', () => {
-    it('should prioritize builds based on focus patterns', async () => {
+  describe("Priority-Based Build Scheduling", () => {
+    it("should prioritize builds based on focus patterns", async () => {
       const config: PoltergeistConfig = {
-        version: '1.0',
-        projectType: 'mixed',
+        version: "1.0",
+        projectType: "mixed",
         targets: [
           {
-            name: 'frontend',
-            type: 'executable',
+            name: "frontend",
+            type: "executable",
             enabled: true,
-            buildCommand: 'npm run build',
-            outputPath: './dist/frontend',
-            watchPaths: ['frontend/**/*.ts'],
+            buildCommand: "npm run build",
+            outputPath: "./dist/frontend",
+            watchPaths: ["frontend/**/*.ts"],
             settlingDelay: 100,
           },
           {
-            name: 'backend',
-            type: 'executable',
+            name: "backend",
+            type: "executable",
             enabled: true,
-            buildCommand: 'cargo build',
-            outputPath: './target/backend',
-            watchPaths: ['backend/**/*.rs'],
+            buildCommand: "cargo build",
+            outputPath: "./target/backend",
+            watchPaths: ["backend/**/*.rs"],
             settlingDelay: 100,
           },
         ],
         watchman: {
           useDefaultExclusions: true,
           excludeDirs: [],
-          projectType: 'mixed',
+          projectType: "mixed",
           maxFileEvents: 10000,
           recrawlThreshold: 3,
           settlingDelay: 100,
@@ -218,68 +218,68 @@ describe('Intelligent Build Integration', () => {
       };
 
       harness = createTestHarness(config);
-      poltergeist = new Poltergeist(config, '/test/project', harness.logger, harness.deps);
+      poltergeist = new Poltergeist(config, "/test/project", harness.logger, harness.deps);
 
       await poltergeist.start();
 
       // Create focus on frontend by making multiple changes
-      simulateFileChange(harness.watchmanClient, ['frontend/src/app.ts'], 0);
+      simulateFileChange(harness.watchmanClient, ["frontend/src/app.ts"], 0);
       await waitForAsync(200);
 
-      simulateFileChange(harness.watchmanClient, ['frontend/src/component.ts'], 0);
+      simulateFileChange(harness.watchmanClient, ["frontend/src/component.ts"], 0);
       await waitForAsync(200);
 
       // Now trigger builds for both targets simultaneously
-      simulateFileChange(harness.watchmanClient, ['frontend/src/new.ts'], 0);
-      simulateFileChange(harness.watchmanClient, ['backend/src/main.rs'], 1);
+      simulateFileChange(harness.watchmanClient, ["frontend/src/new.ts"], 0);
+      simulateFileChange(harness.watchmanClient, ["backend/src/main.rs"], 1);
 
       await waitForAsync(300);
 
       // Frontend should have been prioritized due to focus pattern
-      const frontendBuilder = harness.builderFactory.builders.get('frontend');
-      const backendBuilder = harness.builderFactory.builders.get('backend');
+      const frontendBuilder = harness.builderFactory.builders.get("frontend");
+      const backendBuilder = harness.builderFactory.builders.get("backend");
 
       expect(frontendBuilder?.build).toHaveBeenCalled();
       expect(backendBuilder?.build).toHaveBeenCalled();
     });
 
-    it('should respect parallelization limits', async () => {
+    it("should respect parallelization limits", async () => {
       const config: PoltergeistConfig = {
-        version: '1.0',
-        projectType: 'node',
+        version: "1.0",
+        projectType: "node",
         targets: [
           {
-            name: 'web',
-            type: 'executable',
+            name: "web",
+            type: "executable",
             enabled: true,
-            buildCommand: 'npm run build:web',
-            outputPath: './dist/web',
-            watchPaths: ['web/**/*.ts'],
+            buildCommand: "npm run build:web",
+            outputPath: "./dist/web",
+            watchPaths: ["web/**/*.ts"],
             settlingDelay: 50,
           },
           {
-            name: 'api',
-            type: 'executable',
+            name: "api",
+            type: "executable",
             enabled: true,
-            buildCommand: 'npm run build:api',
-            outputPath: './dist/api',
-            watchPaths: ['api/**/*.ts'],
+            buildCommand: "npm run build:api",
+            outputPath: "./dist/api",
+            watchPaths: ["api/**/*.ts"],
             settlingDelay: 50,
           },
           {
-            name: 'worker',
-            type: 'executable',
+            name: "worker",
+            type: "executable",
             enabled: true,
-            buildCommand: 'npm run build:worker',
-            outputPath: './dist/worker',
-            watchPaths: ['worker/**/*.ts'],
+            buildCommand: "npm run build:worker",
+            outputPath: "./dist/worker",
+            watchPaths: ["worker/**/*.ts"],
             settlingDelay: 50,
           },
         ],
         watchman: {
           useDefaultExclusions: true,
           excludeDirs: [],
-          projectType: 'node',
+          projectType: "node",
           maxFileEvents: 10000,
           recrawlThreshold: 3,
           settlingDelay: 50,
@@ -298,7 +298,7 @@ describe('Intelligent Build Integration', () => {
       harness = createTestHarness(config);
 
       // Make builds take time to test concurrency
-      const _mockBuilders = ['web', 'api', 'worker'].map((name) => {
+      const _mockBuilders = ["web", "api", "worker"].map((name) => {
         const builder = harness.builderFactory.builders.get(name);
         if (builder) {
           vi.mocked(builder.build).mockImplementation(
@@ -307,27 +307,27 @@ describe('Intelligent Build Integration', () => {
                 setTimeout(
                   () =>
                     resolve({
-                      status: 'success',
+                      status: "success",
                       targetName: name,
                       timestamp: new Date().toISOString(),
                       duration: 2000,
                     }),
-                  2000
-                )
-              )
+                  2000,
+                ),
+              ),
           );
         }
         return builder;
       });
 
-      poltergeist = new Poltergeist(config, '/test/project', harness.logger, harness.deps);
+      poltergeist = new Poltergeist(config, "/test/project", harness.logger, harness.deps);
 
       await poltergeist.start();
 
       // Trigger builds for all three targets
-      simulateFileChange(harness.watchmanClient, ['web/src/app.ts'], 0);
-      simulateFileChange(harness.watchmanClient, ['api/src/server.ts'], 1);
-      simulateFileChange(harness.watchmanClient, ['worker/src/jobs.ts'], 2);
+      simulateFileChange(harness.watchmanClient, ["web/src/app.ts"], 0);
+      simulateFileChange(harness.watchmanClient, ["api/src/server.ts"], 1);
+      simulateFileChange(harness.watchmanClient, ["worker/src/jobs.ts"], 2);
 
       await waitForAsync(100);
 
@@ -338,27 +338,27 @@ describe('Intelligent Build Integration', () => {
       expect(status).toBeDefined();
     });
 
-    it('should handle build deduplication correctly', async () => {
+    it("should handle build deduplication correctly", async () => {
       vi.useFakeTimers();
       const config: PoltergeistConfig = {
-        version: '1.0',
-        projectType: 'swift',
+        version: "1.0",
+        projectType: "swift",
         targets: [
           {
-            name: 'lib',
-            type: 'library',
+            name: "lib",
+            type: "library",
             enabled: true,
-            buildCommand: 'swift build',
-            outputPath: './.build/debug/lib',
-            libraryType: 'static',
-            watchPaths: ['Sources/**/*.swift'],
+            buildCommand: "swift build",
+            outputPath: "./.build/debug/lib",
+            libraryType: "static",
+            watchPaths: ["Sources/**/*.swift"],
             settlingDelay: 50,
           },
         ],
         watchman: {
           useDefaultExclusions: true,
           excludeDirs: [],
-          projectType: 'swift',
+          projectType: "swift",
           maxFileEvents: 10000,
           recrawlThreshold: 3,
           settlingDelay: 50,
@@ -375,18 +375,18 @@ describe('Intelligent Build Integration', () => {
       };
 
       harness = createTestHarness(config);
-      poltergeist = new Poltergeist(config, '/test/project', harness.logger, harness.deps);
+      poltergeist = new Poltergeist(config, "/test/project", harness.logger, harness.deps);
 
       await poltergeist.start();
 
       // Rapid fire multiple changes to same target
-      simulateFileChange(harness.watchmanClient, ['Sources/lib.swift']);
-      simulateFileChange(harness.watchmanClient, ['Sources/utils.swift']);
-      simulateFileChange(harness.watchmanClient, ['Sources/helpers.swift']);
+      simulateFileChange(harness.watchmanClient, ["Sources/lib.swift"]);
+      simulateFileChange(harness.watchmanClient, ["Sources/utils.swift"]);
+      simulateFileChange(harness.watchmanClient, ["Sources/helpers.swift"]);
 
       await waitForAsync(200);
 
-      const libBuilder = harness.builderFactory.builders.get('lib');
+      const libBuilder = harness.builderFactory.builders.get("lib");
 
       const callCount = vi.mocked(libBuilder?.build).mock.calls.length;
       expect(callCount).toBeGreaterThanOrEqual(1);
@@ -396,26 +396,26 @@ describe('Intelligent Build Integration', () => {
     });
   });
 
-  describe('Status Reporting with Queue Information', () => {
-    it('should include build queue status in overall status', async () => {
-      process.env.ENABLE_QUEUE_FOR_TESTS = '1';
+  describe("Status Reporting with Queue Information", () => {
+    it("should include build queue status in overall status", async () => {
+      process.env.ENABLE_QUEUE_FOR_TESTS = "1";
       const config: PoltergeistConfig = {
-        version: '1.0',
-        projectType: 'rust',
+        version: "1.0",
+        projectType: "rust",
         targets: [
           {
-            name: 'server',
-            type: 'executable',
+            name: "server",
+            type: "executable",
             enabled: true,
-            buildCommand: 'cargo build',
-            outputPath: './target/debug/server',
-            watchPaths: ['src/**/*.rs'],
+            buildCommand: "cargo build",
+            outputPath: "./target/debug/server",
+            watchPaths: ["src/**/*.rs"],
           },
         ],
         watchman: {
           useDefaultExclusions: true,
           excludeDirs: [],
-          projectType: 'rust',
+          projectType: "rust",
           maxFileEvents: 10000,
           recrawlThreshold: 3,
           settlingDelay: 1000,
@@ -432,7 +432,7 @@ describe('Intelligent Build Integration', () => {
       };
 
       harness = createTestHarness(config);
-      poltergeist = new Poltergeist(config, '/test/project', harness.logger, harness.deps);
+      poltergeist = new Poltergeist(config, "/test/project", harness.logger, harness.deps);
 
       await poltergeist.start();
 
@@ -459,24 +459,24 @@ describe('Intelligent Build Integration', () => {
       });
     });
 
-    it('should show disabled status when prioritization is off', { timeout: 10000 }, async () => {
+    it("should show disabled status when prioritization is off", { timeout: 10000 }, async () => {
       const config: PoltergeistConfig = {
-        version: '1.0',
-        projectType: 'python',
+        version: "1.0",
+        projectType: "python",
         targets: [
           {
-            name: 'api',
-            type: 'executable',
+            name: "api",
+            type: "executable",
             enabled: true,
-            buildCommand: 'python -m build',
-            outputPath: './dist',
-            watchPaths: ['src/**/*.py'],
+            buildCommand: "python -m build",
+            outputPath: "./dist",
+            watchPaths: ["src/**/*.py"],
           },
         ],
         watchman: {
           useDefaultExclusions: true,
           excludeDirs: [],
-          projectType: 'python',
+          projectType: "python",
           maxFileEvents: 10000,
           recrawlThreshold: 3,
           settlingDelay: 1000,
@@ -498,7 +498,7 @@ describe('Intelligent Build Integration', () => {
       harness.builderFactory.createBuilder = vi.fn().mockImplementation((target: Target) => {
         const builder = {
           build: vi.fn().mockResolvedValue({
-            status: 'success',
+            status: "success",
             targetName: target.name,
             timestamp: new Date().toISOString(),
             duration: 100,
@@ -507,7 +507,7 @@ describe('Intelligent Build Integration', () => {
           stop: vi.fn(),
           getOutputInfo: vi.fn().mockReturnValue(`Built ${target.name}`),
           target,
-          projectRoot: '/test/project',
+          projectRoot: "/test/project",
           logger: harness.logger,
           stateManager: harness.deps.stateManager,
           currentProcess: undefined,
@@ -516,7 +516,7 @@ describe('Intelligent Build Integration', () => {
         return builder;
       });
 
-      poltergeist = new Poltergeist(config, '/test/project', harness.logger, harness.deps);
+      poltergeist = new Poltergeist(config, "/test/project", harness.logger, harness.deps);
 
       await poltergeist.start();
 
@@ -525,26 +525,26 @@ describe('Intelligent Build Integration', () => {
     });
   });
 
-  describe('Error Handling and Edge Cases', () => {
-    it('should handle build failures gracefully with queue system', async () => {
+  describe("Error Handling and Edge Cases", () => {
+    it("should handle build failures gracefully with queue system", async () => {
       const config: PoltergeistConfig = {
-        version: '1.0',
-        projectType: 'node',
+        version: "1.0",
+        projectType: "node",
         targets: [
           {
-            name: 'failing-app',
-            type: 'executable',
+            name: "failing-app",
+            type: "executable",
             enabled: true,
-            buildCommand: 'npm run build:fail',
-            outputPath: './dist',
-            watchPaths: ['src/**/*.ts'],
+            buildCommand: "npm run build:fail",
+            outputPath: "./dist",
+            watchPaths: ["src/**/*.ts"],
             settlingDelay: 50,
           },
         ],
         watchman: {
           useDefaultExclusions: true,
           excludeDirs: [],
-          projectType: 'node',
+          projectType: "node",
           maxFileEvents: 10000,
           recrawlThreshold: 3,
           settlingDelay: 50,
@@ -566,51 +566,51 @@ describe('Intelligent Build Integration', () => {
       harness.builderFactory.createBuilder = vi.fn().mockImplementation((target: Target) => {
         const builder = createMockBuilder(target.name);
         vi.mocked(builder.build).mockResolvedValue({
-          status: 'failure',
+          status: "failure",
           targetName: target.name,
           timestamp: new Date().toISOString(),
           duration: 1000,
-          error: 'Build failed with exit code 1',
+          error: "Build failed with exit code 1",
         });
         harness.builderFactory.builders.set(target.name, builder);
         return builder;
       });
 
-      poltergeist = new Poltergeist(config, '/test/project', harness.logger, harness.deps);
+      poltergeist = new Poltergeist(config, "/test/project", harness.logger, harness.deps);
 
       await poltergeist.start();
 
-      simulateFileChange(harness.watchmanClient, ['src/app.ts']);
+      simulateFileChange(harness.watchmanClient, ["src/app.ts"]);
 
       await waitForAsync(200);
 
       // Should handle failure without crashing
-      const failingBuilder = harness.builderFactory.builders.get('failing-app');
+      const failingBuilder = harness.builderFactory.builders.get("failing-app");
       expect(failingBuilder?.build).toHaveBeenCalled();
 
       const status = await poltergeist.getStatus();
       expect(status).toBeDefined();
     });
 
-    it('should handle rapid file changes efficiently', async () => {
+    it("should handle rapid file changes efficiently", async () => {
       const config: PoltergeistConfig = {
-        version: '1.0',
-        projectType: 'mixed',
+        version: "1.0",
+        projectType: "mixed",
         targets: [
           {
-            name: 'rapid-changes',
-            type: 'executable',
+            name: "rapid-changes",
+            type: "executable",
             enabled: true,
-            buildCommand: 'npm run build',
-            outputPath: './dist',
-            watchPaths: ['src/**/*.ts', 'assets/**/*'],
+            buildCommand: "npm run build",
+            outputPath: "./dist",
+            watchPaths: ["src/**/*.ts", "assets/**/*"],
             settlingDelay: 100,
           },
         ],
         watchman: {
           useDefaultExclusions: true,
           excludeDirs: [],
-          projectType: 'mixed',
+          projectType: "mixed",
           maxFileEvents: 10000,
           recrawlThreshold: 3,
           settlingDelay: 100,
@@ -627,7 +627,7 @@ describe('Intelligent Build Integration', () => {
       };
 
       harness = createTestHarness(config);
-      poltergeist = new Poltergeist(config, '/test/project', harness.logger, harness.deps);
+      poltergeist = new Poltergeist(config, "/test/project", harness.logger, harness.deps);
 
       await poltergeist.start();
 
@@ -637,7 +637,7 @@ describe('Intelligent Build Integration', () => {
 
       await waitForAsync(250);
 
-      const rapidBuilder = harness.builderFactory.builders.get('rapid-changes');
+      const rapidBuilder = harness.builderFactory.builders.get("rapid-changes");
 
       // Should efficiently deduplicate into minimal builds
       expect(rapidBuilder?.build).toHaveBeenCalled();

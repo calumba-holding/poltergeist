@@ -1,12 +1,12 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { PanelScheduler } from '../../src/panel/panel-scheduler.js';
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { PanelScheduler } from "../../src/panel/panel-scheduler.js";
 
-describe('panel-scheduler', () => {
+describe("panel-scheduler", () => {
   afterEach(() => {
     vi.useRealTimers();
   });
 
-  it('ticks status and git callbacks on intervals and stops cleanly', () => {
+  it("ticks status and git callbacks on intervals and stops cleanly", () => {
     vi.useFakeTimers();
     const onStatus = vi.fn();
     const onGit = vi.fn();

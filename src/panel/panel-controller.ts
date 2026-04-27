@@ -1,25 +1,25 @@
-import { EventEmitter } from 'events';
-import { existsSync, mkdirSync } from 'fs';
-import type { StatusObject } from '../status/types.js';
-import type { StatusScriptConfig, SummaryScriptConfig } from '../types.js';
-import { ConfigurationManager } from '../utils/config-manager.js';
-import { FileSystemUtils } from '../utils/filesystem.js';
-import { normalizeLogChannels } from '../utils/log-channels.js';
-import { GitMetricsCollector } from './git-metrics.js';
-import { LogTailReader } from './log-reader.js';
-import { PanelScheduler } from './panel-scheduler.js';
-import { PanelWatchService } from './panel-watch-service.js';
-import { createScriptEventFileSink } from './script-event-log.js';
-import { runStatusScript, runSummaryScript } from './script-runner.js';
-import { computePreferredIndex, computeSummary } from './snapshot-helpers.js';
-import { diffTargets } from './target-diff.js';
+import { EventEmitter } from "events";
+import { existsSync, mkdirSync } from "fs";
+import type { StatusObject } from "../status/types.js";
+import type { StatusScriptConfig, SummaryScriptConfig } from "../types.js";
+import { ConfigurationManager } from "../utils/config-manager.js";
+import { FileSystemUtils } from "../utils/filesystem.js";
+import { normalizeLogChannels } from "../utils/log-channels.js";
+import { GitMetricsCollector } from "./git-metrics.js";
+import { LogTailReader } from "./log-reader.js";
+import { PanelScheduler } from "./panel-scheduler.js";
+import { PanelWatchService } from "./panel-watch-service.js";
+import { createScriptEventFileSink } from "./script-event-log.js";
+import { runStatusScript, runSummaryScript } from "./script-runner.js";
+import { computePreferredIndex, computeSummary } from "./snapshot-helpers.js";
+import { diffTargets } from "./target-diff.js";
 import type {
   PanelControllerOptions,
   PanelSnapshot,
   PanelStatusScriptResult,
   PanelSummaryScriptResult,
   ScriptEvent,
-} from './types.js';
+} from "./types.js";
 
 interface UpdateEvent {
   snapshot: PanelSnapshot;
@@ -33,7 +33,7 @@ export class StatusPanelController {
   private snapshot: PanelSnapshot;
   private readonly emitter = new EventEmitter();
   private readonly gitCollector: GitMetricsCollector;
-  private readonly logReader: Pick<LogTailReader, 'read'>;
+  private readonly logReader: Pick<LogTailReader, "read">;
   private readonly stateDir: string;
   private stateFileMap: Map<string, string>;
   private watchService?: PanelWatchService;
@@ -49,7 +49,7 @@ export class StatusPanelController {
   private readonly statusPollMs: number;
   private scriptCache: Map<string, CachedStatusScript>;
   private summaryScriptCache: Map<string, CachedSummaryScript>;
-  protected readonly gitSummaryMode: 'list' | 'ai';
+  protected readonly gitSummaryMode: "list" | "ai";
   private readonly profileEnabled: boolean;
 
   constructor(private readonly options: PanelControllerOptions) {
@@ -58,10 +58,10 @@ export class StatusPanelController {
       options.config.targets.map((target) => [
         FileSystemUtils.generateStateFileName(options.projectRoot, target.name),
         target.name,
-      ])
+      ]),
     );
-    const envGitMode = (process.env.POLTERGEIST_GIT_MODE ?? '').toLowerCase();
-    const defaultGitMode: 'ai' | 'list' = envGitMode === 'list' ? 'list' : 'ai';
+    const envGitMode = (process.env.POLTERGEIST_GIT_MODE ?? "").toLowerCase();
+    const defaultGitMode: "ai" | "list" = envGitMode === "list" ? "list" : "ai";
     this.gitSummaryMode = options.gitSummaryMode ?? defaultGitMode;
     this.gitCollector = new GitMetricsCollector({
       throttleMs: options.gitPollIntervalMs ?? 5000,
@@ -75,9 +75,9 @@ export class StatusPanelController {
     this.statusPollMs = options.statusPollIntervalMs ?? 2000;
     this.scriptCache = new Map();
     this.summaryScriptCache = new Map();
-    this.profileEnabled = process.env.POLTERGEIST_PANEL_PROFILE === '1';
+    this.profileEnabled = process.env.POLTERGEIST_PANEL_PROFILE === "1";
     const sinks: Array<(e: ScriptEvent) => void> = [];
-    if (process.env.POLTERGEIST_SCRIPT_EVENT_LOG === '1') {
+    if (process.env.POLTERGEIST_SCRIPT_EVENT_LOG === "1") {
       sinks.push(
         createScriptEventFileSink({
           path: process.env.POLTERGEIST_SCRIPT_EVENT_LOG_PATH,
@@ -89,10 +89,10 @@ export class StatusPanelController {
             process.env.POLTERGEIST_SCRIPT_EVENT_LOG_BYTES !== undefined
               ? Number(process.env.POLTERGEIST_SCRIPT_EVENT_LOG_BYTES)
               : undefined,
-        })
+        }),
       );
     }
-    if (process.env.POLTERGEIST_SCRIPT_EVENT_STDOUT === '1') {
+    if (process.env.POLTERGEIST_SCRIPT_EVENT_STDOUT === "1") {
       sinks.push((event) => {
         try {
           process.stdout.write(`${JSON.stringify(event)}\n`);
@@ -113,23 +113,23 @@ export class StatusPanelController {
     }
     if (options.config.statusScripts?.length) {
       this.options.logger.debug(
-        `[Panel] Loaded ${options.config.statusScripts.length} status script(s)`
+        `[Panel] Loaded ${options.config.statusScripts.length} status script(s)`,
       );
     } else {
-      this.options.logger.debug('[Panel] No status scripts configured');
+      this.options.logger.debug("[Panel] No status scripts configured");
     }
     if (options.config.summaryScripts?.length) {
       this.options.logger.debug(
-        `[Panel] Loaded ${options.config.summaryScripts.length} summary script(s)`
+        `[Panel] Loaded ${options.config.summaryScripts.length} summary script(s)`,
       );
     } else {
-      this.options.logger.debug('[Panel] No summary scripts configured');
+      this.options.logger.debug("[Panel] No summary scripts configured");
     }
 
     this.snapshot = {
       targets: options.config.targets.map((target) => ({
         name: target.name,
-        status: { status: 'unknown' },
+        status: { status: "unknown" },
         targetType: target.type,
         enabled: target.enabled,
         group: target.group,
@@ -169,7 +169,7 @@ export class StatusPanelController {
   // Wrapper for easier spying in tests.
   protected runStatusScript(
     scriptConfig: StatusScriptConfig,
-    projectRoot: string
+    projectRoot: string,
   ): Promise<PanelStatusScriptResult> {
     return runStatusScript(scriptConfig, projectRoot);
   }
@@ -193,23 +193,23 @@ export class StatusPanelController {
 
   public onUpdate(listener: UpdateListener): () => void {
     const wrapped = ({ snapshot }: UpdateEvent) => listener(snapshot);
-    this.emitter.on('update', wrapped);
+    this.emitter.on("update", wrapped);
     return () => {
-      this.emitter.off('update', wrapped);
+      this.emitter.off("update", wrapped);
     };
   }
 
   public onLogUpdate(listener: LogListener): () => void {
-    this.emitter.on('log-update', listener);
+    this.emitter.on("log-update", listener);
     return () => {
-      this.emitter.off('log-update', listener);
+      this.emitter.off("log-update", listener);
     };
   }
 
   public onScriptEvent(listener: ScriptEventListener): () => void {
-    this.emitter.on('script-event', listener);
+    this.emitter.on("script-event", listener);
     return () => {
-      this.emitter.off('script-event', listener);
+      this.emitter.off("script-event", listener);
     };
   }
 
@@ -243,7 +243,7 @@ export class StatusPanelController {
   public async getLogLines(
     targetName: string,
     channel?: string,
-    limit?: number
+    limit?: number,
   ): Promise<string[]> {
     return this.logReader.read(targetName, channel, limit);
   }
@@ -268,7 +268,7 @@ export class StatusPanelController {
         const key = filename.toString();
         if (this.stateFileMap.has(key)) {
           void this.refreshStatus({ refreshGit: true, forceGit: true });
-        } else if (eventType === 'rename') {
+        } else if (eventType === "rename") {
           // Capture newly created files in case targets were added.
           void this.refreshStatus();
         }
@@ -312,10 +312,10 @@ export class StatusPanelController {
           nextConfig.targets.map((target) => [
             FileSystemUtils.generateStateFileName(this.options.projectRoot, target.name),
             target.name,
-          ])
+          ]),
         );
         const nextStatusKeys = new Set(
-          (nextConfig.statusScripts ?? []).map((script) => this.getScriptCacheKey(script))
+          (nextConfig.statusScripts ?? []).map((script) => this.getScriptCacheKey(script)),
         );
         for (const key of Array.from(this.scriptCache.keys())) {
           if (!nextStatusKeys.has(key)) {
@@ -323,7 +323,7 @@ export class StatusPanelController {
           }
         }
         const nextSummaryKeys = new Set(
-          (nextConfig.summaryScripts ?? []).map((script) => this.getSummaryCacheKey(script))
+          (nextConfig.summaryScripts ?? []).map((script) => this.getSummaryCacheKey(script)),
         );
         for (const key of Array.from(this.summaryScriptCache.keys())) {
           if (!nextSummaryKeys.has(key)) {
@@ -336,7 +336,7 @@ export class StatusPanelController {
           const existing = currentByName.get(target.name);
           return {
             name: target.name,
-            status: existing?.status ?? { status: 'unknown' },
+            status: existing?.status ?? { status: "unknown" },
             targetType: target.type,
             enabled: target.enabled,
             group: target.group,
@@ -346,11 +346,11 @@ export class StatusPanelController {
 
         const targetDiff = diffTargets(this.snapshot.targets, nextConfig.targets);
         if (targetDiff.added.length || targetDiff.removed.length) {
-          const added = targetDiff.added.length ? `added: ${targetDiff.added.join(', ')}` : '';
+          const added = targetDiff.added.length ? `added: ${targetDiff.added.join(", ")}` : "";
           const removed = targetDiff.removed.length
-            ? `removed: ${targetDiff.removed.join(', ')}`
-            : '';
-          const parts = [added, removed].filter(Boolean).join(' | ');
+            ? `removed: ${targetDiff.removed.join(", ")}`
+            : "";
+          const parts = [added, removed].filter(Boolean).join(" | ");
           this.options.logger.info(`[Panel] Config target diff ${parts}`);
         }
 
@@ -372,7 +372,7 @@ export class StatusPanelController {
         await this.refreshSummaryScripts(true);
       } catch (error) {
         this.options.logger.warn(
-          `[Panel] Failed to reload config: ${error instanceof Error ? error.message : error}`
+          `[Panel] Failed to reload config: ${error instanceof Error ? error.message : error}`,
         );
       } finally {
         this.configReloading = undefined;
@@ -402,7 +402,7 @@ export class StatusPanelController {
 
       const targets = this.options.config.targets.map((target) => ({
         name: target.name,
-        status: (statusMap[target.name] as StatusObject) || { status: 'unknown' },
+        status: (statusMap[target.name] as StatusObject) || { status: "unknown" },
         targetType: target.type,
         enabled: target.enabled,
         group: target.group,
@@ -437,13 +437,13 @@ export class StatusPanelController {
       };
 
       this.emitSnapshot();
-      this.emitter.emit('log-update');
+      this.emitter.emit("log-update");
       const emitMs = Date.now() - emitStart;
 
       const totalMs = Date.now() - totalStart;
       if (this.profileEnabled) {
         this.options.logger.info(
-          `[PanelProfile] refreshStatus total=${totalMs}ms fetch=${fetchMs}ms git=${gitMs}ms emit=${emitMs}ms`
+          `[PanelProfile] refreshStatus total=${totalMs}ms fetch=${fetchMs}ms git=${gitMs}ms emit=${emitMs}ms`,
         );
       }
 
@@ -467,7 +467,7 @@ export class StatusPanelController {
       git,
       lastUpdated: Date.now(),
     };
-    this.emitter.emit('update', { snapshot: this.snapshot });
+    this.emitter.emit("update", { snapshot: this.snapshot });
   }
 
   private async refreshStatusScripts(force?: boolean): Promise<void> {
@@ -523,10 +523,10 @@ export class StatusPanelController {
         if ((result.exitCode ?? 0) !== 0) {
           scriptFailures += 1;
           this.options.logger.warn(
-            `[Panel] Status script "${scriptConfig.label}" exited ${result.exitCode}`
+            `[Panel] Status script "${scriptConfig.label}" exited ${result.exitCode}`,
           );
           this.emitScriptEvent({
-            kind: 'status',
+            kind: "status",
             label: scriptConfig.label,
             targets: scriptConfig.targets,
             placement: undefined,
@@ -536,7 +536,7 @@ export class StatusPanelController {
         }
         if (this.profileEnabled) {
           this.options.logger.info(
-            `[PanelProfile] script ${scriptConfig.label ?? scriptConfig.command} ran in ${scriptMs}ms (exit ${result.exitCode ?? 0})`
+            `[PanelProfile] script ${scriptConfig.label ?? scriptConfig.command} ran in ${scriptMs}ms (exit ${result.exitCode ?? 0})`,
           );
         }
         this.scriptCache.set(cacheKey, { lastRun: result.lastRun, result });
@@ -556,7 +556,7 @@ export class StatusPanelController {
 
       if (this.profileEnabled) {
         this.options.logger.info(
-          `[PanelProfile] refreshStatusScripts total=${Date.now() - totalStart}ms scripts=${configs.length}`
+          `[PanelProfile] refreshStatusScripts total=${Date.now() - totalStart}ms scripts=${configs.length}`,
         );
       }
     })()
@@ -606,7 +606,7 @@ export class StatusPanelController {
           lastUpdated: Date.now(),
         };
         this.emitSnapshot();
-        this.emitter.emit('log-update');
+        this.emitter.emit("log-update");
       }
 
       const jobs = configs.map(async (scriptConfig) => {
@@ -622,15 +622,15 @@ export class StatusPanelController {
         const scriptMs = Date.now() - scriptStart;
         if (this.profileEnabled) {
           this.options.logger.info(
-            `[PanelProfile] summary ${scriptConfig.label} ran in ${scriptMs}ms (exit ${result.exitCode ?? 0})`
+            `[PanelProfile] summary ${scriptConfig.label} ran in ${scriptMs}ms (exit ${result.exitCode ?? 0})`,
           );
         }
         if ((result.exitCode ?? 0) !== 0) {
           this.options.logger.warn(
-            `[Panel] Summary script "${scriptConfig.label}" exited ${result.exitCode}`
+            `[Panel] Summary script "${scriptConfig.label}" exited ${result.exitCode}`,
           );
           this.emitScriptEvent({
-            kind: 'summary',
+            kind: "summary",
             label: scriptConfig.label,
             placement: result.placement,
             exitCode: result.exitCode,
@@ -646,7 +646,7 @@ export class StatusPanelController {
           lastUpdated: Date.now(),
         };
         this.emitSnapshot();
-        this.emitter.emit('log-update');
+        this.emitter.emit("log-update");
         return result;
       });
 
@@ -654,7 +654,7 @@ export class StatusPanelController {
 
       if (this.profileEnabled) {
         this.options.logger.info(
-          `[PanelProfile] refreshSummaryScripts total=${Date.now() - totalStart}ms scripts=${configs.length}`
+          `[PanelProfile] refreshSummaryScripts total=${Date.now() - totalStart}ms scripts=${configs.length}`,
         );
       }
     })()
@@ -673,12 +673,12 @@ export class StatusPanelController {
   }
 
   private getScriptCacheKey(script: StatusScriptConfig): string {
-    const targetsKey = script.targets?.slice().sort().join(',') ?? '';
+    const targetsKey = script.targets?.slice().sort().join(",") ?? "";
     return `${script.label}::${script.command}::${targetsKey}`;
   }
 
   private getSummaryCacheKey(script: SummaryScriptConfig): string {
-    return `${script.label}::${script.command}::${script.placement ?? 'summary'}`;
+    return `${script.label}::${script.command}::${script.placement ?? "summary"}`;
   }
 
   private mergeScriptResult(result: PanelStatusScriptResult): PanelStatusScriptResult[] {
@@ -690,7 +690,7 @@ export class StatusPanelController {
   private mergeSummaryResult(result: PanelSummaryScriptResult): PanelSummaryScriptResult[] {
     const current = this.snapshot.summaryScripts ?? [];
     const filtered = current.filter(
-      (r) => !(r.label === result.label && r.placement === result.placement)
+      (r) => !(r.label === result.label && r.placement === result.placement),
     );
     return [...filtered, result];
   }
@@ -698,11 +698,11 @@ export class StatusPanelController {
   private emitSnapshot(): void {
     // Shallow-freeze the snapshot to guard against accidental listener mutation.
     const frozen = Object.freeze({ ...this.snapshot }) as PanelSnapshot;
-    this.emitter.emit('update', { snapshot: frozen });
+    this.emitter.emit("update", { snapshot: frozen });
   }
 
   private emitScriptEvent(event: ScriptEvent): void {
-    this.emitter.emit('script-event', event);
+    this.emitter.emit("script-event", event);
     this.options.scriptEventSink?.(event);
   }
 }

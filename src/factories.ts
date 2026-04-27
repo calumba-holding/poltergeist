@@ -1,18 +1,18 @@
 // Factory functions for easier testing and initialization
 
-import { BuilderFactory } from './builders/index.js';
+import { BuilderFactory } from "./builders/index.js";
 import type {
   IBuilderFactory,
   IStateManager,
   IWatchmanClient,
   PoltergeistDependencies,
-} from './interfaces.js';
-import { createLogger, type Logger } from './logger.js';
-import { BuildNotifier } from './notifier.js';
-import { Poltergeist } from './poltergeist.js';
-import { StateManager } from './state.js';
-import type { PoltergeistConfig } from './types.js';
-import { WatchmanClient } from './watchman.js';
+} from "./interfaces.js";
+import { createLogger, type Logger } from "./logger.js";
+import { BuildNotifier } from "./notifier.js";
+import { Poltergeist } from "./poltergeist.js";
+import { StateManager } from "./state.js";
+import type { PoltergeistConfig } from "./types.js";
+import { WatchmanClient } from "./watchman.js";
 
 /**
  * Create a Poltergeist instance with default dependencies
@@ -21,7 +21,7 @@ export function createPoltergeist(
   config: PoltergeistConfig,
   projectRoot: string,
   logger?: Logger,
-  configPath?: string
+  configPath?: string,
 ): Poltergeist {
   const actualLogger = logger || createLogger();
   const deps = createDefaultDependencies(projectRoot, actualLogger);
@@ -36,7 +36,7 @@ export function createPoltergeistWithDeps(
   projectRoot: string,
   deps: PoltergeistDependencies,
   logger: Logger,
-  configPath?: string
+  configPath?: string,
 ): Poltergeist {
   return new Poltergeist(config, projectRoot, logger, deps, configPath);
 }
@@ -46,7 +46,7 @@ export function createPoltergeistWithDeps(
  */
 export function createDefaultDependencies(
   projectRoot: string,
-  logger: Logger
+  logger: Logger,
 ): PoltergeistDependencies {
   return {
     stateManager: new StateManager(projectRoot, logger),
@@ -60,9 +60,9 @@ export function createDefaultDependencies(
  * Create mock dependencies for testing
  */
 export function createMockDependencies(): PoltergeistDependencies {
-  const vi = (globalThis as { vi?: typeof import('vitest').vi }).vi;
+  const vi = (globalThis as { vi?: typeof import("vitest").vi }).vi;
   if (!vi) {
-    throw new Error('This function requires Vitest. Import it in your test file.');
+    throw new Error("This function requires Vitest. Import it in your test file.");
   }
 
   const stateManager: IStateManager = {
@@ -83,8 +83,8 @@ export function createMockDependencies(): PoltergeistDependencies {
   const builderFactory: IBuilderFactory = {
     createBuilder: vi.fn().mockReturnValue({
       build: vi.fn().mockResolvedValue({
-        status: 'success',
-        targetName: 'test',
+        status: "success",
+        targetName: "test",
         timestamp: new Date().toISOString(),
       }),
       validate: vi.fn().mockResolvedValue(undefined),
@@ -126,7 +126,7 @@ export interface TestHarness {
 
 export function createTestHarness(
   config: PoltergeistConfig,
-  projectRoot = '/test/project'
+  projectRoot = "/test/project",
 ): TestHarness {
   const logger = createLogger();
   const mocks = createMockDependencies();

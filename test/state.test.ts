@@ -1,12 +1,12 @@
 // Tests for unified state management
 
-import { existsSync, rmSync } from 'fs';
-import { join } from 'path';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { Logger } from '../src/logger.js';
-import { StateManager } from '../src/state.js';
-import type { BaseTarget } from '../src/types.js';
-import { FileSystemUtils } from '../src/utils/filesystem.js';
+import { existsSync, rmSync } from "fs";
+import { join } from "path";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { Logger } from "../src/logger.js";
+import { StateManager } from "../src/state.js";
+import type { BaseTarget } from "../src/types.js";
+import { FileSystemUtils } from "../src/utils/filesystem.js";
 
 // Mock logger
 const mockLogger: Logger = {
@@ -17,9 +17,9 @@ const mockLogger: Logger = {
   success: vi.fn(),
 };
 
-describe('StateManager', () => {
-  const projectRoot = '/Users/test/Projects/test-app';
-  const stateDir = '/tmp/poltergeist';
+describe("StateManager", () => {
+  const projectRoot = "/Users/test/Projects/test-app";
+  const stateDir = "/tmp/poltergeist";
   let stateManager: StateManager;
 
   beforeEach(() => {
@@ -31,7 +31,7 @@ describe('StateManager', () => {
     stateManager.stopHeartbeat();
     const stateFiles = await StateManager.listAllStates();
     for (const file of stateFiles) {
-      if (file.includes('test-app')) {
+      if (file.includes("test-app")) {
         try {
           rmSync(join(stateDir, file));
         } catch {}
@@ -39,18 +39,18 @@ describe('StateManager', () => {
     }
   });
 
-  describe('State File Naming', () => {
-    it('should generate unique state file names', () => {
-      const fileName1 = FileSystemUtils.generateStateFileName(projectRoot, 'cli');
-      const fileName2 = FileSystemUtils.generateStateFileName(projectRoot, 'macApp');
+  describe("State File Naming", () => {
+    it("should generate unique state file names", () => {
+      const fileName1 = FileSystemUtils.generateStateFileName(projectRoot, "cli");
+      const fileName2 = FileSystemUtils.generateStateFileName(projectRoot, "macApp");
 
       // Extract just the filename if it's a full path (cross-platform compatibility)
       const baseName1 =
-        fileName1.includes('/') || fileName1.includes('\\')
+        fileName1.includes("/") || fileName1.includes("\\")
           ? fileName1.split(/[/\\]/).pop() || fileName1
           : fileName1;
       const baseName2 =
-        fileName2.includes('/') || fileName2.includes('\\')
+        fileName2.includes("/") || fileName2.includes("\\")
           ? fileName2.split(/[/\\]/).pop() || fileName2
           : fileName2;
 
@@ -59,103 +59,103 @@ describe('StateManager', () => {
       expect(fileName1).not.toBe(fileName2);
     });
 
-    it('should use consistent hash for same project', () => {
-      const fileName1 = FileSystemUtils.generateStateFileName(projectRoot, 'cli');
-      const fileName2 = FileSystemUtils.generateStateFileName(projectRoot, 'cli');
+    it("should use consistent hash for same project", () => {
+      const fileName1 = FileSystemUtils.generateStateFileName(projectRoot, "cli");
+      const fileName2 = FileSystemUtils.generateStateFileName(projectRoot, "cli");
 
       expect(fileName1).toBe(fileName2);
     });
   });
 
-  describe('State Initialization', () => {
-    it('should initialize state for executable target', async () => {
+  describe("State Initialization", () => {
+    it("should initialize state for executable target", async () => {
       const target: BaseTarget = {
-        name: 'cli',
-        type: 'executable',
+        name: "cli",
+        type: "executable",
         enabled: true,
-        buildCommand: 'npm run build',
-        watchPaths: ['src/**/*.ts'],
-        icon: 'assets/cli-icon.png',
+        buildCommand: "npm run build",
+        watchPaths: ["src/**/*.ts"],
+        icon: "assets/cli-icon.png",
       };
 
       const state = await stateManager.initializeState(target);
 
-      expect(state.version).toBe('1.0');
+      expect(state.version).toBe("1.0");
       expect(state.projectPath).toBe(projectRoot);
-      expect(state.projectName).toBe('test-app');
-      expect(state.target).toBe('cli');
-      expect(state.targetType).toBe('executable');
+      expect(state.projectName).toBe("test-app");
+      expect(state.target).toBe("cli");
+      expect(state.targetType).toBe("executable");
       expect(state.process.pid).toBe(process.pid);
       expect(state.process.isActive).toBe(true);
-      expect(state.appInfo?.iconPath).toBe('assets/cli-icon.png');
+      expect(state.appInfo?.iconPath).toBe("assets/cli-icon.png");
     });
 
-    it('should create state file on disk', async () => {
+    it("should create state file on disk", async () => {
       const target: BaseTarget = {
-        name: 'cli',
-        type: 'executable',
+        name: "cli",
+        type: "executable",
         enabled: true,
-        buildCommand: 'npm run build',
-        watchPaths: ['src/**/*.ts'],
+        buildCommand: "npm run build",
+        watchPaths: ["src/**/*.ts"],
       };
 
       await stateManager.initializeState(target);
 
-      const stateFile = stateManager.getStateFilePath('cli');
+      const stateFile = stateManager.getStateFilePath("cli");
       expect(existsSync(stateFile)).toBe(true);
     });
   });
 
-  describe('Build Status Updates', () => {
-    it('should update build status', async () => {
+  describe("Build Status Updates", () => {
+    it("should update build status", async () => {
       const target: BaseTarget = {
-        name: 'cli',
-        type: 'executable',
+        name: "cli",
+        type: "executable",
         enabled: true,
-        buildCommand: 'npm run build',
-        watchPaths: ['src/**/*.ts'],
+        buildCommand: "npm run build",
+        watchPaths: ["src/**/*.ts"],
       };
 
       await stateManager.initializeState(target);
 
       const buildStatus = {
-        targetName: 'cli',
-        status: 'success' as const,
+        targetName: "cli",
+        status: "success" as const,
         timestamp: new Date().toISOString(),
         duration: 1234,
         buildTime: 1.234,
       };
 
-      await stateManager.updateBuildStatus('cli', buildStatus);
+      await stateManager.updateBuildStatus("cli", buildStatus);
 
-      const state = await stateManager.readState('cli');
+      const state = await stateManager.readState("cli");
       expect(state?.lastBuild).toEqual(buildStatus);
     });
   });
 
-  describe('Lock Detection', () => {
-    it('should not be locked for same process', async () => {
+  describe("Lock Detection", () => {
+    it("should not be locked for same process", async () => {
       const target: BaseTarget = {
-        name: 'cli',
-        type: 'executable',
+        name: "cli",
+        type: "executable",
         enabled: true,
-        buildCommand: 'npm run build',
-        watchPaths: ['src/**/*.ts'],
+        buildCommand: "npm run build",
+        watchPaths: ["src/**/*.ts"],
       };
 
       await stateManager.initializeState(target);
 
-      const isLocked = await stateManager.isLocked('cli');
+      const isLocked = await stateManager.isLocked("cli");
       expect(isLocked).toBe(false);
     });
 
-    it('should detect stale locks', async () => {
+    it("should detect stale locks", async () => {
       const target: BaseTarget = {
-        name: 'cli',
-        type: 'executable',
+        name: "cli",
+        type: "executable",
         enabled: true,
-        buildCommand: 'npm run build',
-        watchPaths: ['src/**/*.ts'],
+        buildCommand: "npm run build",
+        watchPaths: ["src/**/*.ts"],
       };
 
       const state = await stateManager.initializeState(target);
@@ -163,25 +163,25 @@ describe('StateManager', () => {
       // Manually make the heartbeat old
       state.process.lastHeartbeat = new Date(Date.now() - 10 * 60 * 1000).toISOString();
       state.process.pid = 99999; // Different PID
-      await stateManager.writeState('cli');
+      await stateManager.writeState("cli");
 
-      const isLocked = await stateManager.isLocked('cli');
+      const isLocked = await stateManager.isLocked("cli");
       expect(isLocked).toBe(false);
     });
   });
 
-  describe('Heartbeat Mechanism', () => {
-    it('should update heartbeat periodically', async () => {
+  describe("Heartbeat Mechanism", () => {
+    it("should update heartbeat periodically", async () => {
       const target: BaseTarget = {
-        name: 'cli',
-        type: 'executable',
+        name: "cli",
+        type: "executable",
         enabled: true,
-        buildCommand: 'npm run build',
-        watchPaths: ['src/**/*.ts'],
+        buildCommand: "npm run build",
+        watchPaths: ["src/**/*.ts"],
       };
 
       await stateManager.initializeState(target);
-      const initialState = await stateManager.readState('cli');
+      const initialState = await stateManager.readState("cli");
       const initialHeartbeat = initialState?.process.lastHeartbeat;
 
       // Start heartbeat
@@ -191,14 +191,14 @@ describe('StateManager', () => {
       await new Promise((resolve) => setTimeout(resolve, 50));
 
       // Manually trigger a write to update heartbeat
-      await stateManager.updateBuildStatus('cli', {
-        targetName: 'cli',
-        status: 'idle',
+      await stateManager.updateBuildStatus("cli", {
+        targetName: "cli",
+        status: "idle",
         timestamp: new Date().toISOString(),
         duration: 0,
       });
 
-      const updatedState = await stateManager.readState('cli');
+      const updatedState = await stateManager.readState("cli");
       const updatedHeartbeat = updatedState?.process.lastHeartbeat;
 
       expect(updatedHeartbeat).not.toBe(initialHeartbeat);
@@ -206,58 +206,58 @@ describe('StateManager', () => {
     });
   });
 
-  describe('Cleanup', () => {
-    it('should mark process as inactive on cleanup', async () => {
+  describe("Cleanup", () => {
+    it("should mark process as inactive on cleanup", async () => {
       const target: BaseTarget = {
-        name: 'cli',
-        type: 'executable',
+        name: "cli",
+        type: "executable",
         enabled: true,
-        buildCommand: 'npm run build',
-        watchPaths: ['src/**/*.ts'],
+        buildCommand: "npm run build",
+        watchPaths: ["src/**/*.ts"],
       };
 
       await stateManager.initializeState(target);
       await stateManager.cleanup();
 
-      const state = await stateManager.readState('cli');
+      const state = await stateManager.readState("cli");
       expect(state?.process.isActive).toBe(false);
     });
 
-    it('should remove state file', async () => {
+    it("should remove state file", async () => {
       const target: BaseTarget = {
-        name: 'cli',
-        type: 'executable',
+        name: "cli",
+        type: "executable",
         enabled: true,
-        buildCommand: 'npm run build',
-        watchPaths: ['src/**/*.ts'],
+        buildCommand: "npm run build",
+        watchPaths: ["src/**/*.ts"],
       };
 
       await stateManager.initializeState(target);
-      const stateFile = stateManager.getStateFilePath('cli');
+      const stateFile = stateManager.getStateFilePath("cli");
 
-      await stateManager.removeState('cli');
+      await stateManager.removeState("cli");
 
       expect(existsSync(stateFile)).toBe(false);
     });
   });
 
-  describe('State Discovery', () => {
-    it('should list all state files', async () => {
+  describe("State Discovery", () => {
+    it("should list all state files", async () => {
       const target: BaseTarget = {
-        name: 'cli',
-        type: 'executable',
+        name: "cli",
+        type: "executable",
         enabled: true,
-        buildCommand: 'npm run build',
-        watchPaths: ['src/**/*.ts'],
+        buildCommand: "npm run build",
+        watchPaths: ["src/**/*.ts"],
       };
 
       await stateManager.initializeState(target);
 
       const stateFiles = await StateManager.listAllStates();
-      const cliStates = stateFiles.filter((f) => f.includes('cli'));
+      const cliStates = stateFiles.filter((f) => f.includes("cli"));
 
       expect(cliStates.length).toBeGreaterThan(0);
-      expect(cliStates.some((file) => file.endsWith('-cli.state'))).toBe(true);
+      expect(cliStates.some((file) => file.endsWith("-cli.state"))).toBe(true);
     });
   });
 });

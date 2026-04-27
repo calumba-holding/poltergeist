@@ -1,6 +1,6 @@
-import type { TargetPanelEntry } from './types.js';
+import type { TargetPanelEntry } from "./types.js";
 
-export type TargetRowConnector = 'root' | 'single' | 'middle' | 'last';
+export type TargetRowConnector = "root" | "single" | "middle" | "last";
 
 export interface TargetRow {
   target: TargetPanelEntry;
@@ -64,7 +64,7 @@ export const buildTargetRows = (targets: TargetPanelEntry[]): TargetRow[] => {
     rows.push({
       target,
       depth: 0,
-      connector: 'root',
+      connector: "root",
     });
   });
 
@@ -74,14 +74,14 @@ export const buildTargetRows = (targets: TargetPanelEntry[]): TargetRow[] => {
     .forEach(([, bucket]) => {
       const header = bucket.header ?? bucket.children[0];
       if (header) {
-        rows.push({ target: header, depth: 0, connector: 'root' });
+        rows.push({ target: header, depth: 0, connector: "root" });
       }
       const children = header
         ? bucket.children.filter((child) => child !== header)
         : bucket.children;
       children.forEach((child, idx) => {
         const connector: TargetRowConnector =
-          children.length === 1 ? 'single' : idx === children.length - 1 ? 'last' : 'middle';
+          children.length === 1 ? "single" : idx === children.length - 1 ? "last" : "middle";
         rows.push({ target: child, depth: 1, connector });
       });
     });

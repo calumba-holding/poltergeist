@@ -1,10 +1,10 @@
-import { type ChildProcess, spawn } from 'child_process';
-import path from 'path';
-import type { IStateManager } from '../interfaces.js';
-import type { Logger } from '../logger.js';
-import type { PostBuildCommandConfig } from '../types.js';
+import { type ChildProcess, spawn } from "child_process";
+import path from "path";
+import type { IStateManager } from "../interfaces.js";
+import type { Logger } from "../logger.js";
+import type { PostBuildCommandConfig } from "../types.js";
 
-type Trigger = 'success' | 'failure';
+type Trigger = "success" | "failure";
 
 interface PostBuildRunnerOptions {
   targetName: string;
@@ -22,7 +22,7 @@ interface QueueEntry {
 interface FormattedResult {
   summary?: string;
   lines?: string[];
-  status?: 'success' | 'failure';
+  status?: "success" | "failure";
 }
 
 export class PostBuildRunner {
@@ -49,22 +49,22 @@ export class PostBuildRunner {
       this.timeoutHandle = undefined;
     }
     if (this.currentChild) {
-      this.currentChild.kill('SIGTERM');
+      this.currentChild.kill("SIGTERM");
     }
   }
 
   private shouldRun(hook: PostBuildCommandConfig, status: Trigger): boolean {
     const runOn = hook.runOn;
     if (!runOn) {
-      return status === 'success';
+      return status === "success";
     }
     if (Array.isArray(runOn)) {
-      if (runOn.includes('always')) {
+      if (runOn.includes("always")) {
         return true;
       }
       return runOn.includes(status);
     }
-    if (runOn === 'always') {
+    if (runOn === "always") {
       return true;
     }
     return runOn === status;
@@ -86,7 +86,7 @@ export class PostBuildRunner {
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         this.options.logger.warn(
-          `[PostBuild] ${this.options.targetName}/${job.hook.name} failed: ${message}`
+          `[PostBuild] ${this.options.targetName}/${job.hook.name} failed: ${message}`,
         );
       }
     }
@@ -98,7 +98,7 @@ export class PostBuildRunner {
     const { hook, trigger } = job;
     const startedAt = new Date();
     await this.options.stateManager.updatePostBuildResult(this.options.targetName, hook.name, {
-      status: 'running',
+      status: "running",
       summary: `${hook.name} running after ${trigger}`,
       startedAt: startedAt.toISOString(),
       trigger,
@@ -107,7 +107,7 @@ export class PostBuildRunner {
     const result = await this.executeCommand(hook);
     const formatted = await this.formatResult(hook, result.stdout, result.stderr, result.exitCode);
     const success = result.exitCode === 0;
-    const finalStatus = formatted?.status ?? (success ? 'success' : 'failure');
+    const finalStatus = formatted?.status ?? (success ? "success" : "failure");
     const durationMs = Date.now() - startedAt.getTime();
     const maxLines = hook.maxLines ?? 5;
     const fallbackLines = this.tailLines(`${result.stdout}\n${result.stderr}`, maxLines);
@@ -117,7 +117,7 @@ export class PostBuildRunner {
       status: finalStatus,
       summary:
         formatted?.summary ??
-        `${hook.name}: ${success ? 'passed' : 'failed'} (exit ${result.exitCode ?? -1})`,
+        `${hook.name}: ${success ? "passed" : "failed"} (exit ${result.exitCode ?? -1})`,
       lines: resolvedLines.length ? resolvedLines : undefined,
       completedAt: new Date().toISOString(),
       durationMs,
@@ -153,17 +153,17 @@ export class PostBuildRunner {
         cwd,
         env,
         shell: true,
-        stdio: ['ignore', 'pipe', 'pipe'],
+        stdio: ["ignore", "pipe", "pipe"],
       });
 
       this.currentChild = child;
       const stdoutChunks: string[] = [];
       const stderrChunks: string[] = [];
 
-      child.stdout?.on('data', (chunk) => {
+      child.stdout?.on("data", (chunk) => {
         stdoutChunks.push(chunk.toString());
       });
-      child.stderr?.on('data', (chunk) => {
+      child.stderr?.on("data", (chunk) => {
         stderrChunks.push(chunk.toString());
       });
 
@@ -171,21 +171,21 @@ export class PostBuildRunner {
       if (hook.timeoutSeconds && hook.timeoutSeconds > 0) {
         this.timeoutHandle = setTimeout(() => {
           timedOut = true;
-          child.kill('SIGKILL');
+          child.kill("SIGKILL");
         }, hook.timeoutSeconds * 1000);
       }
 
-      child.on('close', (code) => {
+      child.on("close", (code) => {
         if (this.timeoutHandle) {
           clearTimeout(this.timeoutHandle);
           this.timeoutHandle = undefined;
         }
         this.currentChild = undefined;
         resolve({
-          stdout: stdoutChunks.join(''),
-          stderr: stderrChunks.join(''),
+          stdout: stdoutChunks.join(""),
+          stderr: stderrChunks.join(""),
           exitCode: timedOut ? -1 : code,
-          executionNote: timedOut ? 'timeout' : undefined,
+          executionNote: timedOut ? "timeout" : undefined,
         });
       });
     });
@@ -195,7 +195,7 @@ export class PostBuildRunner {
     hook: PostBuildCommandConfig,
     stdout: string,
     stderr: string,
-    exitCode: number | null
+    exitCode: number | null,
   ): Promise<FormattedResult | undefined> {
     let parsed = this.tryParseJsonResult(stdout);
 
@@ -223,17 +223,17 @@ export class PostBuildRunner {
     const lines = trimmed.split(/\r?\n/).map((line) => line.trim());
 
     for (const line of [...lines].reverse()) {
-      if (line.startsWith('POLTERGEIST_POSTBUILD_RESULT:')) {
-        candidates.unshift(line.replace('POLTERGEIST_POSTBUILD_RESULT:', '').trim());
+      if (line.startsWith("POLTERGEIST_POSTBUILD_RESULT:")) {
+        candidates.unshift(line.replace("POLTERGEIST_POSTBUILD_RESULT:", "").trim());
         break;
       }
-      if (line.startsWith('{') || line.startsWith('[')) {
+      if (line.startsWith("{") || line.startsWith("[")) {
         candidates.unshift(line);
         break;
       }
     }
 
-    if (candidates.length === 0 && (trimmed.startsWith('{') || trimmed.startsWith('['))) {
+    if (candidates.length === 0 && (trimmed.startsWith("{") || trimmed.startsWith("["))) {
       candidates.push(trimmed);
     }
 
@@ -243,14 +243,14 @@ export class PostBuildRunner {
         if (Array.isArray(parsed)) {
           return { lines: parsed.map((value) => String(value)) };
         }
-        if (typeof parsed === 'object' && parsed) {
+        if (typeof parsed === "object" && parsed) {
           return {
-            summary: typeof parsed.summary === 'string' ? parsed.summary : undefined,
+            summary: typeof parsed.summary === "string" ? parsed.summary : undefined,
             lines: Array.isArray(parsed.lines)
               ? parsed.lines.map((value: unknown) => String(value))
               : undefined,
             status:
-              parsed.status === 'success' || parsed.status === 'failure'
+              parsed.status === "success" || parsed.status === "failure"
                 ? parsed.status
                 : undefined,
           };
@@ -267,7 +267,7 @@ export class PostBuildRunner {
     hook: PostBuildCommandConfig,
     stdout: string,
     stderr: string,
-    exitCode: number
+    exitCode: number,
   ): Promise<FormattedResult | undefined> {
     return new Promise((resolve) => {
       const formatter = spawn(hook.formatter as string, {
@@ -279,18 +279,18 @@ export class PostBuildRunner {
           POLTERGEIST_POSTBUILD_STDERR: stderr,
         },
         shell: true,
-        stdio: ['pipe', 'pipe', 'pipe'],
+        stdio: ["pipe", "pipe", "pipe"],
       });
 
-      let output = '';
-      formatter.stdout?.on('data', (chunk) => {
+      let output = "";
+      formatter.stdout?.on("data", (chunk) => {
         output += chunk.toString();
       });
 
       formatter.stdin?.write(stdout);
       formatter.stdin?.end();
 
-      formatter.on('close', (code) => {
+      formatter.on("close", (code) => {
         if (code !== 0) {
           resolve(undefined);
           return;
@@ -299,12 +299,12 @@ export class PostBuildRunner {
           const parsed = JSON.parse(output.trim());
           if (parsed) {
             resolve({
-              summary: typeof parsed.summary === 'string' ? parsed.summary : undefined,
+              summary: typeof parsed.summary === "string" ? parsed.summary : undefined,
               lines: Array.isArray(parsed.lines)
                 ? parsed.lines.map((value: unknown) => String(value))
                 : undefined,
               status:
-                parsed.status === 'success' || parsed.status === 'failure'
+                parsed.status === "success" || parsed.status === "failure"
                   ? parsed.status
                   : undefined,
             });

@@ -1,23 +1,23 @@
-import { homedir } from 'node:os';
-import chalk from 'chalk';
-import wrapAnsi from 'wrap-ansi';
-import type { SummaryModeOption } from './panel-state.js';
-import type { TargetRow } from './target-tree.js';
-import { centerText, pad, truncateVisible, visibleWidth } from './text-utils.js';
-import type { PanelSnapshot, PanelStatusScriptResult, PanelSummaryScriptResult } from './types.js';
+import { homedir } from "node:os";
+import chalk from "chalk";
+import wrapAnsi from "wrap-ansi";
+import type { SummaryModeOption } from "./panel-state.js";
+import type { TargetRow } from "./target-tree.js";
+import { centerText, pad, truncateVisible, visibleWidth } from "./text-utils.js";
+import type { PanelSnapshot, PanelStatusScriptResult, PanelSummaryScriptResult } from "./types.js";
 
-const mono = process.env.POLTERGEIST_MONOCHROME === '1';
+const mono = process.env.POLTERGEIST_MONOCHROME === "1";
 
 const palette = {
-  accent: '#8BE9FD',
-  header: '#2EE6FF',
-  text: '#F8F8F2',
-  muted: '#8E95B3',
-  line: '#5C6080',
-  success: '#50FA7B',
-  failure: '#FF5555',
-  warning: '#F1FA8C',
-  info: '#AEB1C2',
+  accent: "#8BE9FD",
+  header: "#2EE6FF",
+  text: "#F8F8F2",
+  muted: "#8E95B3",
+  line: "#5C6080",
+  success: "#50FA7B",
+  failure: "#FF5555",
+  warning: "#F1FA8C",
+  info: "#AEB1C2",
 };
 
 export const colors = {
@@ -32,19 +32,19 @@ export const colors = {
   info: (value: string) => (mono ? value : chalk.hex(palette.info)(value)),
 };
 
-type HeaderMode = 'full' | 'compact' | 'narrow';
+type HeaderMode = "full" | "compact" | "narrow";
 
 function getHeaderMode(width?: number): HeaderMode {
-  if (!width) return 'full';
-  if (width < 70) return 'narrow';
-  if (width < 90) return 'compact';
-  return 'full';
+  if (!width) return "full";
+  if (width < 70) return "narrow";
+  if (width < 90) return "compact";
+  return "full";
 }
 
 export function formatHeader(snapshot: PanelSnapshot, width?: number): string {
   const widthValue = Math.max(1, width ?? 80);
   const mode = getHeaderMode(widthValue);
-  const branch = snapshot.git.branch ?? 'unknown';
+  const branch = snapshot.git.branch ?? "unknown";
   const dirtyFiles = snapshot.git.hasRepo ? snapshot.git.dirtyFiles : Number.NaN;
   const insertions = snapshot.git.hasRepo ? snapshot.git.insertions : Number.NaN;
   const deletions = snapshot.git.hasRepo ? snapshot.git.deletions : Number.NaN;
@@ -52,12 +52,12 @@ export function formatHeader(snapshot: PanelSnapshot, width?: number): string {
   const insertColor = !snapshot.git.hasRepo || insertions === 0 ? colors.info : colors.success;
   const deleteColor = !snapshot.git.hasRepo || deletions === 0 ? colors.info : colors.failure;
 
-  const projectRoot = snapshot.projectRoot.replace(homedir(), '~');
+  const projectRoot = snapshot.projectRoot.replace(homedir(), "~");
   const submoduleLabel = snapshot.git.isSubmodule
     ? colors.warning(
         snapshot.git.superprojectRoot
-          ? `submodule of ${snapshot.git.superprojectRoot.replace(homedir(), '~')}`
-          : 'submodule'
+          ? `submodule of ${snapshot.git.superprojectRoot.replace(homedir(), "~")}`
+          : "submodule",
       )
     : undefined;
   const projectName = snapshot.git.isSubmodule
@@ -65,29 +65,29 @@ export function formatHeader(snapshot: PanelSnapshot, width?: number): string {
     : snapshot.projectName;
   const projectLineSegments = [colors.text(projectName)];
   if (submoduleLabel) {
-    projectLineSegments.push(colors.muted('·'), submoduleLabel);
+    projectLineSegments.push(colors.muted("·"), submoduleLabel);
   }
-  const projectLine = `${projectLineSegments.join(' ')} — ${colors.muted(projectRoot)}`;
-  const branchLabel = 'Branch:';
-  const dirtyLabel = mode === 'full' ? 'dirty files:' : 'dirty:';
-  const deltaLabel = mode === 'full' ? 'ΔLOC:' : 'Δ:';
+  const projectLine = `${projectLineSegments.join(" ")} — ${colors.muted(projectRoot)}`;
+  const branchLabel = "Branch:";
+  const dirtyLabel = mode === "full" ? "dirty files:" : "dirty:";
+  const deltaLabel = mode === "full" ? "ΔLOC:" : "Δ:";
   const separator =
-    mode === 'narrow'
-      ? colors.muted('·')
-      : mode === 'compact'
-        ? colors.muted(' · ')
-        : colors.muted(' | ');
+    mode === "narrow"
+      ? colors.muted("·")
+      : mode === "compact"
+        ? colors.muted(" · ")
+        : colors.muted(" | ");
   const upstreamBadge = formatUpstreamBadge(snapshot.git, mode);
   const branchSegments = [
     `${colors.muted(branchLabel)} ${colors.text(branch)}`,
     upstreamBadge,
     `${colors.muted(dirtyLabel)} ${
-      snapshot.git.hasRepo ? dirtyColor(String(dirtyFiles)) : colors.info('n/a')
+      snapshot.git.hasRepo ? dirtyColor(String(dirtyFiles)) : colors.info("n/a")
     }`,
     `${colors.muted(deltaLabel)} ${
       snapshot.git.hasRepo
         ? `${insertColor(String(insertions))} / ${deleteColor(String(deletions))}`
-        : colors.info('n/a')
+        : colors.info("n/a")
     }`,
   ].filter(Boolean);
   const branchLine = branchSegments.join(separator);
@@ -100,45 +100,45 @@ export function formatHeader(snapshot: PanelSnapshot, width?: number): string {
     wrapAnsi(line, widthValue - 2, {
       hard: false,
       trim: false,
-    }).split('\n')
+    }).split("\n"),
   );
-  const horizontal = colors.line('─'.repeat(Math.max(2, widthValue - 2)));
+  const horizontal = colors.line("─".repeat(Math.max(2, widthValue - 2)));
   const top = colors.line(`┌${horizontal}┐`);
   const bottom = colors.line(`└${horizontal}┘`);
   const framed = wrappedLines
     .map((line) => {
       const centered = centerText(line, widthValue - 2);
       const padded = pad(centered, widthValue - 2);
-      return `${colors.line('│')}${padded}${colors.line('│')}`;
+      return `${colors.line("│")}${padded}${colors.line("│")}`;
     })
-    .join('\n');
-  return [top, framed, bottom].join('\n');
+    .join("\n");
+  return [top, framed, bottom].join("\n");
 }
 
-function formatSummary(snapshot: PanelSnapshot, mode: HeaderMode = 'full'): string {
+function formatSummary(snapshot: PanelSnapshot, mode: HeaderMode = "full"): string {
   if (snapshot.paused) {
-    return colors.warning('Auto-builds paused — press r to resume or run `poltergeist resume`');
+    return colors.warning("Auto-builds paused — press r to resume or run `poltergeist resume`");
   }
 
-  const daemonLabel = snapshot.summary.running === 1 ? 'daemon' : 'daemons';
+  const daemonLabel = snapshot.summary.running === 1 ? "daemon" : "daemons";
   const daemonSuffix =
-    mode === 'full' && snapshot.summary.running > 0
+    mode === "full" && snapshot.summary.running > 0
       ? formatDaemonSuffix(snapshot.summary.activeDaemons ?? [])
-      : '';
+      : "";
 
   const targetFailures = snapshot.summary.targetFailures ?? snapshot.summary.failures ?? 0;
   const scriptFailures = snapshot.summary.scriptFailures ?? 0;
   const failureParts: string[] = [];
   if (targetFailures > 0) {
-    failureParts.push(`${targetFailures} build${targetFailures === 1 ? '' : 's'} failed`);
+    failureParts.push(`${targetFailures} build${targetFailures === 1 ? "" : "s"} failed`);
   }
   if (scriptFailures > 0) {
-    failureParts.push(`${scriptFailures} script${scriptFailures === 1 ? '' : 's'} failed`);
+    failureParts.push(`${scriptFailures} script${scriptFailures === 1 ? "" : "s"} failed`);
   }
   const failureText =
     failureParts.length === 0
-      ? colors.success('0 failed')
-      : colors.failure(failureParts.join(' + '));
+      ? colors.success("0 failed")
+      : colors.failure(failureParts.join(" + "));
 
   const daemonText = `${snapshot.summary.running}/${snapshot.summary.totalTargets} ${daemonLabel}`;
   const buildingText =
@@ -146,33 +146,33 @@ function formatSummary(snapshot: PanelSnapshot, mode: HeaderMode = 'full'): stri
       ? colors.warning(`${snapshot.summary.building} building`)
       : undefined;
 
-  if (mode === 'narrow') {
+  if (mode === "narrow") {
     const parts = [buildingText, failureText, daemonText].filter(Boolean);
-    return parts.join(' · ');
+    return parts.join(" · ");
   }
 
   const parts = [buildingText, failureText, daemonText].filter(Boolean);
-  const summary = parts.join(' · ');
-  return `${summary}${daemonSuffix ? ` ${daemonSuffix}` : ''}`;
+  const summary = parts.join(" · ");
+  return `${summary}${daemonSuffix ? ` ${daemonSuffix}` : ""}`;
 }
 
-function formatUpstreamBadge(git: PanelSnapshot['git'], mode: HeaderMode): string | undefined {
+function formatUpstreamBadge(git: PanelSnapshot["git"], mode: HeaderMode): string | undefined {
   const ahead = git.ahead ?? 0;
   const behind = git.behind ?? 0;
-  const separator = mode === 'narrow' ? ' ' : ' · ';
+  const separator = mode === "narrow" ? " " : " · ";
   const submoduleLabel = git.isSubmodule
     ? colors.warning(
         git.superprojectRoot
-          ? `submodule of ${git.superprojectRoot.replace(homedir(), '~')}`
-          : 'submodule'
+          ? `submodule of ${git.superprojectRoot.replace(homedir(), "~")}`
+          : "submodule",
       )
     : undefined;
   if (ahead === 0 && behind === 0) {
-    const parts = [colors.success('✓ up to date')];
+    const parts = [colors.success("✓ up to date")];
     if (submoduleLabel) {
       parts.push(submoduleLabel);
     }
-    if (mode === 'narrow' && parts.length === 1) {
+    if (mode === "narrow" && parts.length === 1) {
       return undefined;
     }
     return parts.join(separator);
@@ -187,7 +187,7 @@ function formatUpstreamBadge(git: PanelSnapshot['git'], mode: HeaderMode): strin
   if (submoduleLabel) {
     parts.push(submoduleLabel);
   }
-  const label = mode === 'full' ? 'upstream' : 'up';
+  const label = mode === "full" ? "upstream" : "up";
   return `${colors.muted(label)} ${parts.join(separator)}`.trim();
 }
 
@@ -208,31 +208,31 @@ function shortcutWord(word: string): string {
 }
 
 export function renderControlsLine(width: number, paused: boolean, running: boolean): string {
-  const items: string[] = [`${shortcut('↑/↓')} move`, `${shortcut('←/→')} cycle logs`];
+  const items: string[] = [`${shortcut("↑/↓")} move`, `${shortcut("←/→")} cycle logs`];
 
   if (running) {
     if (paused) {
-      items.push(shortcutWord('resume'));
+      items.push(shortcutWord("resume"));
     } else {
-      items.push(shortcutWord('pause'));
-      items.push(shortcutWord('refresh'));
+      items.push(shortcutWord("pause"));
+      items.push(shortcutWord("refresh"));
     }
-    items.push(shortcutWord('stop'));
+    items.push(shortcutWord("stop"));
   } else {
-    items.push(shortcutWord('start'));
-    items.push(shortcutWord('refresh'));
+    items.push(shortcutWord("start"));
+    items.push(shortcutWord("refresh"));
   }
 
-  items.push(shortcutWord('quit'));
+  items.push(shortcutWord("quit"));
 
-  const base = items.join(' · ');
+  const base = items.join(" · ");
   const visible = visibleWidth(base);
   if (visible <= width) return base;
   return truncateVisible(base, width);
 }
 
 export function formatFooter(controlsLine: string, width: number): string {
-  const divider = colors.line('─'.repeat(Math.max(4, width)));
+  const divider = colors.line("─".repeat(Math.max(4, width)));
   const centered = centerText(controlsLine, width);
   return `${divider}\n${colors.header(centered)}`;
 }
@@ -247,10 +247,10 @@ export function formatTargets(
   summaryModes: SummaryModeOption[] = [],
   activeSummaryKey?: string,
   snapshot?: PanelSnapshot,
-  globalScripts: PanelStatusScriptResult[] = []
+  globalScripts: PanelStatusScriptResult[] = [],
 ): string {
   if (rows.length === 0) {
-    return `${colors.header('No targets configured.')}\n${colors.muted('Hint: run poltergeist status to populate targets')}`;
+    return `${colors.header("No targets configured.")}\n${colors.muted("Hint: run poltergeist status to populate targets")}`;
   }
 
   // Dynamically size columns so narrow terminals stay readable.
@@ -258,14 +258,14 @@ export function formatTargets(
   const statusCol = Math.max(16, width - targetCol);
 
   const lines: string[] = [];
-  const headerLine = `${pad(colors.header('Target'), targetCol)}${pad(colors.header('Status'), statusCol)}`;
-  const divider = colors.line('─'.repeat(Math.max(4, width)));
+  const headerLine = `${pad(colors.header("Target"), targetCol)}${pad(colors.header("Status"), statusCol)}`;
+  const divider = colors.line("─".repeat(Math.max(4, width)));
   lines.push(headerLine);
   lines.push(divider);
 
   rows.forEach((rowEntry, index) => {
     const entry = rowEntry.target;
-    const status = entry.status.lastBuild?.status || entry.status.status || 'unknown';
+    const status = entry.status.lastBuild?.status || entry.status.status || "unknown";
     const { color, label } = statusColor(status);
     const pending = entry.status.pendingFiles ?? 0;
     const scripts = scriptsByTarget.get(entry.name) ?? [];
@@ -274,27 +274,27 @@ export function formatTargets(
     const prefixDepth = Math.max(0, rowEntry.depth - 1);
     const connector =
       rowEntry.depth === 0
-        ? ''
-        : rowEntry.connector === 'last' || rowEntry.connector === 'single'
-          ? '└─ '
-          : '├─ ';
-    const indent = rowEntry.depth > 0 ? '  '.repeat(prefixDepth) : '';
+        ? ""
+        : rowEntry.connector === "last" || rowEntry.connector === "single"
+          ? "└─ "
+          : "├─ ";
+    const indent = rowEntry.depth > 0 ? "  ".repeat(prefixDepth) : "";
     const scriptBadge = hasFailure
-      ? colors.failure(' ✖ script')
+      ? colors.failure(" ✖ script")
       : hasUnknown
-        ? colors.warning(' ⚠ script')
-        : '';
+        ? colors.warning(" ⚠ script")
+        : "";
     const rawName = `${indent}${connector}${entry.name}${scriptBadge}`;
     const displayName = truncateVisible(rawName, targetCol);
     const targetName = index === selectedIndex ? colors.accent(displayName) : displayName;
-    const enabledLabel = entry.enabled ? '' : colors.header(' (disabled)');
+    const enabledLabel = entry.enabled ? "" : colors.header(" (disabled)");
     const statusLabel = pending > 0 ? `${label} · +${pending} queued` : label;
     const lastBuild = formatRelativeTime(entry.status.lastBuild?.timestamp);
     const duration = formatDuration(entry.status.lastBuild?.duration);
 
     const badge = formatStatusBadge(status, statusLabel, color);
-    const timePart = lastBuild && lastBuild !== '—' ? color(lastBuild) : '';
-    const durationPart = duration && duration !== '—' ? colors.muted(duration) : '';
+    const timePart = lastBuild && lastBuild !== "—" ? color(lastBuild) : "";
+    const durationPart = duration && duration !== "—" ? colors.muted(duration) : "";
     const statusDetails = formatStatusDetails(statusCol, badge, timePart, durationPart);
 
     const rowLine = `${pad(`${targetName}${enabledLabel}`, targetCol)}${pad(statusDetails, statusCol)}`;
@@ -303,16 +303,16 @@ export function formatTargets(
     const scriptLines =
       scriptsByTarget
         .get(entry.name)
-        ?.flatMap((script) => formatScriptLines(script, '  ', width)) ?? [];
+        ?.flatMap((script) => formatScriptLines(script, "  ", width)) ?? [];
     lines.push(...scriptLines);
 
     entry.status.postBuild?.forEach((result) => {
       const postColor = postBuildColor(result.status);
       const durationTag =
-        result.durationMs !== undefined ? ` · ${formatDurationShort(result.durationMs)}` : '';
-      const hint = result.status === 'failure' ? failureHint(result.lines ?? []) : undefined;
+        result.durationMs !== undefined ? ` · ${formatDurationShort(result.durationMs)}` : "";
+      const hint = result.status === "failure" ? failureHint(result.lines ?? []) : undefined;
       const summaryText =
-        result.summary || `${result.name}: ${result.status ?? 'pending'}`.replace(/\s+/g, ' ');
+        result.summary || `${result.name}: ${result.status ?? "pending"}`.replace(/\s+/g, " ");
       const enrichedSummary = hint ? `${summaryText} — ${hint}` : summaryText;
       const postLines = wrapAnsi(
         postColor(`  ${enrichedSummary}${durationTag}`),
@@ -320,18 +320,18 @@ export function formatTargets(
         {
           hard: false,
           trim: false,
-        }
-      ).split('\n');
+        },
+      ).split("\n");
       for (const line of postLines) {
         lines.push(line);
       }
       // Compact success: skip detailed lines when the post-build succeeded.
-      if (result.status !== 'success') {
+      if (result.status !== "success") {
         result.lines?.forEach((line) => {
           const wrapped = wrapAnsi(postColor(`    ${line}`), Math.max(1, width), {
             hard: false,
             trim: false,
-          }).split('\n');
+          }).split("\n");
           for (const wrappedLine of wrapped) {
             lines.push(wrappedLine);
           }
@@ -343,7 +343,7 @@ export function formatTargets(
   rowSummaries.forEach((row) => {
     const name = row.selected ? colors.accent(row.label) : row.label;
     const status =
-      row.exitCode && row.exitCode !== 0 ? colors.failure('needs attention') : colors.muted('view');
+      row.exitCode && row.exitCode !== 0 ? colors.failure("needs attention") : colors.muted("view");
     lines.push(`${pad(name, targetCol)}${pad(status, statusCol)}`);
   });
 
@@ -351,7 +351,7 @@ export function formatTargets(
     globalScripts.forEach((script) => {
       const isFail = (script.exitCode ?? 0) !== 0;
       const name = colors.muted(script.label);
-      const primaryLine = script.lines?.[0]?.trim() || (isFail ? 'failed' : 'ok');
+      const primaryLine = script.lines?.[0]?.trim() || (isFail ? "failed" : "ok");
       const statusText = isFail ? colors.failure(primaryLine) : colors.muted(primaryLine);
       lines.push(`${pad(name, targetCol)}${pad(statusText, statusCol)}`);
     });
@@ -368,7 +368,7 @@ export function formatTargets(
     }
   }
 
-  return lines.join('\n');
+  return lines.join("\n");
 }
 
 export function formatSummaryChips(
@@ -376,33 +376,33 @@ export function formatSummaryChips(
   activeSummaryKey: string | undefined,
   width: number,
   snapshot: PanelSnapshot,
-  options: { center?: boolean } = {}
+  options: { center?: boolean } = {},
 ): string {
   const center = options.center ?? true;
-  if (modes.length === 0) return '';
+  if (modes.length === 0) return "";
 
   const parts = modes.map((mode) => {
     const count = summaryCount(mode, snapshot);
-    let suffix = '';
-    if (typeof count === 'number') {
-      suffix = count > 0 ? ` (${count})` : '';
-    } else if (typeof count === 'string' && count.trim().length > 0) {
+    let suffix = "";
+    if (typeof count === "number") {
+      suffix = count > 0 ? ` (${count})` : "";
+    } else if (typeof count === "string" && count.trim().length > 0) {
       suffix = ` (${count})`;
     }
-    const label = mode.type === 'ai' ? 'AI Summary' : mode.label;
+    const label = mode.type === "ai" ? "AI Summary" : mode.label;
     const body = `${label}${suffix}`;
     return mode.key === activeSummaryKey ? colors.accent(body) : colors.muted(body);
   });
 
-  const line = parts.join(' | ');
+  const line = parts.join(" | ");
   return center ? centerText(line, width) : line;
 }
 
 function summaryCount(mode: SummaryModeOption, snapshot: PanelSnapshot): number | string | null {
-  if (mode.type === 'ai') {
+  if (mode.type === "ai") {
     return (snapshot.git.summary ?? []).filter((line) => line.trim().length > 0).length;
   }
-  if (mode.type === 'git') {
+  if (mode.type === "git") {
     return snapshot.git.dirtyFileNames?.length ?? snapshot.git.dirtyFiles ?? 0;
   }
   const custom = mode.summary;
@@ -419,52 +419,52 @@ function summaryCount(mode: SummaryModeOption, snapshot: PanelSnapshot): number 
 
 function formatDaemonSuffix(activeDaemons: string[]): string {
   if (!activeDaemons.length) {
-    return '';
+    return "";
   }
   const formatted = activeDaemons.map((daemon) => {
-    if (daemon.startsWith('target:')) {
-      return daemon.replace('target:', '');
+    if (daemon.startsWith("target:")) {
+      return daemon.replace("target:", "");
     }
     if (/^\d+$/.test(daemon)) {
       return `PID ${daemon}`;
     }
     return daemon;
   });
-  return ` (${formatted.join(', ')})`;
+  return ` (${formatted.join(", ")})`;
 }
 
 export function formatGlobalScripts(scripts: PanelStatusScriptResult[], width: number): string {
   if (scripts.length === 0) {
-    return '';
+    return "";
   }
-  const lines = scripts.flatMap((script) => formatScriptLines(script, '', width));
-  const divider = colors.line('─'.repeat(Math.max(4, width)));
-  const header = `${divider}\n${colors.header('Global scripts:')}`;
-  return `\n${header}\n${lines.join('\n')}`;
+  const lines = scripts.flatMap((script) => formatScriptLines(script, "", width));
+  const divider = colors.line("─".repeat(Math.max(4, width)));
+  const header = `${divider}\n${colors.header("Global scripts:")}`;
+  return `\n${header}\n${lines.join("\n")}`;
 }
 
 export function formatDirtyFiles(snapshot: PanelSnapshot, maxWidth?: number): string {
   const dirtyFiles = snapshot.git.dirtyFileNames ?? [];
   const totalDirty = snapshot.git.dirtyFiles ?? dirtyFiles.length;
   if (totalDirty === 0 && dirtyFiles.length === 0) {
-    return '';
+    return "";
   }
   const groups = groupDirtyFiles(dirtyFiles);
   const visibleCount = Math.min(dirtyFiles.length, 10);
   const lines: string[] = [];
   lines.push(
     colors.header(
-      `Dirty Files (${visibleCount}${totalDirty > visibleCount ? ` of ${totalDirty}` : ''}):`
-    )
+      `Dirty Files (${visibleCount}${totalDirty > visibleCount ? ` of ${totalDirty}` : ""}):`,
+    ),
   );
   groups.forEach((group) => {
-    const dir = group.dir || '.';
+    const dir = group.dir || ".";
     const label =
       group.files.length === 1
-        ? dir === '.'
+        ? dir === "."
           ? group.files[0]
           : `${dir}/${group.files[0]}`
-        : `${dir}: ${group.files.join(', ')}`;
+        : `${dir}: ${group.files.join(", ")}`;
     const safeLabel =
       maxWidth && maxWidth > 4 ? truncateVisible(label, Math.max(1, maxWidth - 2)) : label;
     lines.push(colors.muted(`• ${safeLabel}`));
@@ -475,7 +475,7 @@ export function formatDirtyFiles(snapshot: PanelSnapshot, maxWidth?: number): st
   } else if (visibleCount === 0 && totalDirty > 0) {
     lines.push(colors.muted(`• (${totalDirty} dirty file(s); paths unavailable)`));
   }
-  return `\n${lines.join('\n')}`;
+  return `\n${lines.join("\n")}`;
 }
 
 export function formatAiSummary(lines: string[]): { header?: string; body: string } | null {
@@ -493,23 +493,23 @@ export function formatAiSummary(lines: string[]): { header?: string; body: strin
     } else {
       filtered.shift();
     }
-    return { header, body: filtered.join('\n') };
+    return { header, body: filtered.join("\n") };
   }
-  return { body: filtered.join('\n') };
+  return { body: filtered.join("\n") };
 }
 
 function statusColor(status?: string): { color: (value: string) => string; label: string } {
   switch (status) {
-    case 'success':
-      return { color: colors.success, label: 'success' };
-    case 'failure':
-      return { color: colors.failure, label: 'failed' };
-    case 'building':
-      return { color: colors.warning, label: 'building' };
-    case 'watching':
-      return { color: colors.accent, label: 'watching' };
+    case "success":
+      return { color: colors.success, label: "success" };
+    case "failure":
+      return { color: colors.failure, label: "failed" };
+    case "building":
+      return { color: colors.warning, label: "building" };
+    case "watching":
+      return { color: colors.accent, label: "watching" };
     default:
-      return { color: colors.info, label: status || 'unknown' };
+      return { color: colors.info, label: status || "unknown" };
   }
 }
 
@@ -517,9 +517,9 @@ function formatStatusDetails(
   maxWidth: number,
   badge: string,
   timePart: string,
-  durationPart: string
+  durationPart: string,
 ): string {
-  const join = (parts: string[]) => parts.filter(Boolean).join(' ');
+  const join = (parts: string[]) => parts.filter(Boolean).join(" ");
   const candidates: string[][] = [];
 
   const full = [badge, timePart, durationPart].filter(Boolean);
@@ -547,16 +547,16 @@ function formatStatusDetails(
 }
 
 export function formatProgress(
-  progress: import('../types.js').BuildProgress,
-  maxWidth: number
+  progress: import("../types.js").BuildProgress,
+  maxWidth: number,
 ): string | null {
   let { percent, current, total, label } = progress;
   if (!Number.isFinite(percent) || percent >= 100 || percent < 0) return null;
   // Round for display so the width math stays predictable.
   percent = Math.max(0, Math.min(99, Math.round(percent)));
   const percentText = `${percent}%`;
-  const countText = Number.isFinite(current) && Number.isFinite(total) ? `${current}/${total}` : '';
-  const labelText = label ? ` ${label}` : '';
+  const countText = Number.isFinite(current) && Number.isFinite(total) ? `${current}/${total}` : "";
+  const labelText = label ? ` ${label}` : "";
 
   // Reserve space for fixed parts; whatever remains is the bar width.
   const reserved =
@@ -569,13 +569,13 @@ export function formatProgress(
   const parts = [percentText, bar];
   if (countText) parts.push(countText);
   if (labelText) parts.push(labelText.trim());
-  const text = parts.join(' ');
+  const text = parts.join(" ");
   // Avoid truncating mid-ANSI: if it won't fit, drop the label first, then count.
   if (visibleWidth(text) > maxWidth) {
-    const noLabel = parts.slice(0, labelText ? -1 : parts.length).join(' ');
+    const noLabel = parts.slice(0, labelText ? -1 : parts.length).join(" ");
     if (visibleWidth(noLabel) <= maxWidth) return noLabel;
     if (countText) {
-      const stripped = [percentText, bar].join(' ');
+      const stripped = [percentText, bar].join(" ");
       return visibleWidth(stripped) <= maxWidth ? stripped : percentText;
     }
   }
@@ -587,16 +587,16 @@ export function progressBar(percent: number, width: number): string {
   const clamped = Math.max(0, Math.min(width, filled));
   const empty = Math.max(0, width - clamped);
   // Prefer CLI-style blocks; fall back to ASCII if the terminal/font mangles them.
-  const preferAscii = process.env.POLTERGEIST_ASCII_BAR === '1';
-  const filledChar = preferAscii ? '=' : '█';
-  const emptyChar = preferAscii ? '-' : '░';
+  const preferAscii = process.env.POLTERGEIST_ASCII_BAR === "1";
+  const filledChar = preferAscii ? "=" : "█";
+  const emptyChar = preferAscii ? "-" : "░";
   const bodyRaw = colors.accent(filledChar.repeat(clamped)) + colors.muted(emptyChar.repeat(empty));
-  const bar = colors.muted('[') + bodyRaw + colors.muted(']');
+  const bar = colors.muted("[") + bodyRaw + colors.muted("]");
 
   // Auto-fallback: if the rendered width loses glyphs, retry with ASCII.
   if (!preferAscii && visibleWidth(stripAnsiCodes(bar)) !== visibleWidth(bar)) {
-    const asciiBody = colors.accent('='.repeat(clamped)) + colors.muted('-'.repeat(empty));
-    return colors.muted('[') + asciiBody + colors.muted(']');
+    const asciiBody = colors.accent("=".repeat(clamped)) + colors.muted("-".repeat(empty));
+    return colors.muted("[") + asciiBody + colors.muted("]");
   }
 
   return bar;
@@ -605,24 +605,24 @@ export function progressBar(percent: number, width: number): string {
 function formatStatusBadge(
   status: string | undefined,
   label: string,
-  color: (value: string) => string
+  color: (value: string) => string,
 ): string {
   switch (status) {
-    case 'success':
-      return colors.success('✔');
-    case 'failure':
-      return colors.failure('✗ failure');
-    case 'building':
-      return colors.warning('⧗ building');
-    case 'watching':
-      return colors.accent('◉ watching');
+    case "success":
+      return colors.success("✔");
+    case "failure":
+      return colors.failure("✗ failure");
+    case "building":
+      return colors.warning("⧗ building");
+    case "watching":
+      return colors.accent("◉ watching");
     default:
       return color(label);
   }
 }
 
 function formatRelativeTime(timestamp?: string): string {
-  if (!timestamp) return '—';
+  if (!timestamp) return "—";
   const delta = Date.now() - new Date(timestamp).getTime();
   const seconds = Math.max(0, Math.floor(delta / 1000));
   if (seconds < 60) return `${seconds}s ago`;
@@ -635,7 +635,7 @@ function formatRelativeTime(timestamp?: string): string {
 }
 
 function formatDuration(durationMs?: number | null): string {
-  if (!durationMs) return '—';
+  if (!durationMs) return "—";
   if (durationMs < 1000) return `${durationMs}ms`;
   const seconds = Math.round(durationMs / 1000);
   return `${seconds}s`;
@@ -660,11 +660,11 @@ function scriptColorFromExitCode(exitCode?: number | null): (value: string) => s
 
 function postBuildColor(status?: string): (value: string) => string {
   switch (status) {
-    case 'success':
+    case "success":
       return colors.success;
-    case 'failure':
+    case "failure":
       return colors.failure;
-    case 'running':
+    case "running":
       return colors.warning;
     default:
       return colors.info;
@@ -687,8 +687,8 @@ function groupDirtyFiles(files: string[]): Array<{ dir: string; files: string[] 
   const limit = files.slice(0, 10);
   const groups = new Map<string, string[]>();
   for (const path of limit) {
-    const lastSlash = path.lastIndexOf('/');
-    const dir = lastSlash >= 0 ? path.slice(0, lastSlash) : '';
+    const lastSlash = path.lastIndexOf("/");
+    const dir = lastSlash >= 0 ? path.slice(0, lastSlash) : "";
     const fileName = lastSlash >= 0 ? path.slice(lastSlash + 1) : path;
     const existing = groups.get(dir) ?? [];
     existing.push(fileName);
@@ -721,8 +721,8 @@ export function splitStatusScripts(scripts: PanelStatusScriptResult[]): {
 
 export function formatScriptLines(
   script: PanelStatusScriptResult,
-  prefix = '',
-  width = 80
+  prefix = "",
+  width = 80,
 ): string[] {
   const scriptColor = scriptColorFromExitCode(script.exitCode);
   const looksLikeSwiftLint = isSwiftLint(script.label, script.lines[0]);
@@ -730,56 +730,56 @@ export function formatScriptLines(
     1,
     Math.min(
       looksLikeSwiftLint ? 3 : Number.POSITIVE_INFINITY,
-      script.maxLines ?? script.lines.length
-    )
+      script.maxLines ?? script.lines.length,
+    ),
   );
   const selectedLines = script.lines.slice(0, limit).map(stripAnsiCodes);
   const normalizedLines = selectedLines.map((line, index) =>
-    normalizeScriptLine(line, script.label, script.exitCode, index === 0)
+    normalizeScriptLine(line, script.label, script.exitCode, index === 0),
   );
-  const hideLabelForSwiftLintSuccess = normalizedLines[0] === 'SwiftLint ✓';
+  const hideLabelForSwiftLintSuccess = normalizedLines[0] === "SwiftLint ✓";
   const hideLabel =
     (script.targets?.length === 1 &&
-      script.label.toLowerCase().startsWith('tests') &&
+      script.label.toLowerCase().startsWith("tests") &&
       script.lines.length > 0) ||
-    script.label.toLowerCase() === 'tests' ||
+    script.label.toLowerCase() === "tests" ||
     hideLabelForSwiftLintSuccess;
 
   if (normalizedLines.length === 0) {
-    const line = `${scriptColor(`${prefix}${hideLabel ? '' : `${script.label}: `}(no output)`)}`;
+    const line = `${scriptColor(`${prefix}${hideLabel ? "" : `${script.label}: `}(no output)`)}`;
     return wrapAnsi(line, Math.max(1, width), {
       hard: false,
       trim: false,
-    }).split('\n');
+    }).split("\n");
   }
   const block = normalizedLines
     .map((line, index) =>
       index === 0
-        ? `${scriptColor(`${prefix}${hideLabel ? '' : `${script.label}: `}${line}`)}`
-        : `${scriptColor(`${prefix}  ${line}`)}`
+        ? `${scriptColor(`${prefix}${hideLabel ? "" : `${script.label}: `}${line}`)}`
+        : `${scriptColor(`${prefix}  ${line}`)}`,
     )
-    .join('\n');
-  return wrapAnsi(block, Math.max(1, width), { hard: false, trim: false }).split('\n');
+    .join("\n");
+  return wrapAnsi(block, Math.max(1, width), { hard: false, trim: false }).split("\n");
 }
 
-const ansiRegexPattern = '\\x1B\\[[0-?]*[ -/]*[@-~]';
-const ansiRegex = new RegExp(ansiRegexPattern, 'g');
+const ansiRegexPattern = "\\x1B\\[[0-?]*[ -/]*[@-~]";
+const ansiRegex = new RegExp(ansiRegexPattern, "g");
 export function stripAnsiCodes(value: string): string {
-  return value.replace(ansiRegex, '');
+  return value.replace(ansiRegex, "");
 }
 
 function normalizeScriptLine(
   line: string,
   label: string,
   exitCode: number | null,
-  isFirstLine: boolean
+  isFirstLine: boolean,
 ): string {
   const looksLikeSwiftLint = isSwiftLint(label, line);
 
   if (looksLikeSwiftLint && isFirstLine && (exitCode ?? 0) === 0) {
     const zeroMatch = /swiftlint:\s*0\s+errors\s*\/\s*0\s+warnings/i;
     if (zeroMatch.test(line)) {
-      return 'SwiftLint ✓';
+      return "SwiftLint ✓";
     }
   }
 
@@ -788,10 +788,10 @@ function normalizeScriptLine(
 
 function isSwiftLint(label: string, line?: string): boolean {
   const lowerLabel = label.toLowerCase();
-  const lowerLine = line?.toLowerCase() ?? '';
+  const lowerLine = line?.toLowerCase() ?? "";
   return (
-    lowerLabel.includes('swiftlint') ||
-    lowerLine.startsWith('swiftlint') ||
-    lowerLine.includes('swiftlint:')
+    lowerLabel.includes("swiftlint") ||
+    lowerLine.startsWith("swiftlint") ||
+    lowerLine.includes("swiftlint:")
   );
 }

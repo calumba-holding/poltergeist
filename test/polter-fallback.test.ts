@@ -1,14 +1,14 @@
-import { spawn } from 'child_process';
-import { existsSync, mkdirSync, rmSync, writeFileSync } from 'fs';
-import os from 'os';
-import { join } from 'path';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { spawn } from "child_process";
+import { existsSync, mkdirSync, rmSync, writeFileSync } from "fs";
+import os from "os";
+import { join } from "path";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-describe('polter fallback behavior', () => {
+describe("polter fallback behavior", () => {
   // Use a unique temporary directory outside the Poltergeist project
   const testDir = join(os.tmpdir(), `pgrun-test-${Date.now()}`);
-  const configPath = join(testDir, 'poltergeist.config.json');
-  const binaryPath = join(testDir, 'test-cli.js');
+  const configPath = join(testDir, "poltergeist.config.json");
+  const binaryPath = join(testDir, "test-cli.js");
 
   beforeEach(() => {
     // Clean up from previous tests
@@ -25,43 +25,43 @@ describe('polter fallback behavior', () => {
     }
   });
 
-  it('should fall back to stale execution when no config is found', async () => {
+  it("should fall back to stale execution when no config is found", async () => {
     // Create a cross-platform mock binary (Node.js script)
     writeFileSync(binaryPath, 'console.log("test-output");', { mode: 0o755 });
 
     // Run polter from test directory (no config) - don't pass --help as it exits early
-    const result = await runPolter(testDir, 'test-cli.js', [], { expectSuccess: true });
+    const result = await runPolter(testDir, "test-cli.js", [], { expectSuccess: true });
 
-    expect(result.stderr).toContain('[Poltergeist]');
-    expect(result.stderr).toContain('Executing potentially stale binary');
+    expect(result.stderr).toContain("[Poltergeist]");
+    expect(result.stderr).toContain("Executing potentially stale binary");
     expect(result.stdout).toContain(
-      '[Poltergeist] Running binary: test-cli.js (potentially stale)'
+      "[Poltergeist] Running binary: test-cli.js (potentially stale)",
     );
     // Note: Script output may not be captured on Windows CI due to stdio inheritance
-    if (process.platform !== 'win32') {
-      expect(result.stdout).toContain('test-output');
+    if (process.platform !== "win32") {
+      expect(result.stdout).toContain("test-output");
     }
   });
 
-  it('should fall back to stale execution when target not found in config', async () => {
+  it("should fall back to stale execution when target not found in config", async () => {
     // Create a valid config but without our target
     const config = {
-      version: '1.0',
-      projectType: 'node',
+      version: "1.0",
+      projectType: "node",
       targets: [
         {
-          name: 'other-target',
-          type: 'executable',
+          name: "other-target",
+          type: "executable",
           enabled: true,
-          outputPath: './other-binary',
+          outputPath: "./other-binary",
           buildCommand: 'echo "build"',
-          watchPaths: ['src/**/*.ts'],
+          watchPaths: ["src/**/*.ts"],
         },
       ],
       watchman: {
         useDefaultExclusions: true,
         excludeDirs: [],
-        projectType: 'node',
+        projectType: "node",
         maxFileEvents: 10000,
         recrawlThreshold: 3,
         settlingDelay: 1000,
@@ -82,87 +82,87 @@ describe('polter fallback behavior', () => {
     // Create a cross-platform mock binary (Node.js script)
     writeFileSync(binaryPath, 'console.log("fallback-output");', { mode: 0o755 });
 
-    const result = await runPolter(testDir, 'test-cli.js', [], { expectSuccess: true });
+    const result = await runPolter(testDir, "test-cli.js", [], { expectSuccess: true });
 
-    expect(result.stderr).toContain('[Poltergeist]');
-    expect(result.stderr).toContain('Available configured targets:');
-    expect(result.stderr).toContain('other-target');
+    expect(result.stderr).toContain("[Poltergeist]");
+    expect(result.stderr).toContain("Available configured targets:");
+    expect(result.stderr).toContain("other-target");
     // Note: Script output may not be captured on Windows CI due to stdio inheritance
-    if (process.platform !== 'win32') {
-      expect(result.stdout).toContain('fallback-output');
+    if (process.platform !== "win32") {
+      expect(result.stdout).toContain("fallback-output");
     }
   });
 
-  it('should handle missing binary gracefully', async () => {
+  it("should handle missing binary gracefully", async () => {
     // No config and no binary
-    const result = await runPolter(testDir, 'nonexistent-cli', [], { expectSuccess: false });
+    const result = await runPolter(testDir, "nonexistent-cli", [], { expectSuccess: false });
 
     expect(result.stderr).toContain("[Poltergeist] Binary not found for target 'nonexistent-cli'");
-    expect(result.stderr).toContain('Tried the following locations:');
-    expect(result.stderr).toContain('Try running: poltergeist start');
+    expect(result.stderr).toContain("Tried the following locations:");
+    expect(result.stderr).toContain("Try running: poltergeist start");
     expect(result.exitCode).toBe(1);
   });
 
-  it('should show verbose output in fallback mode', async () => {
+  it("should show verbose output in fallback mode", async () => {
     // Create a cross-platform mock binary (Node.js script)
     writeFileSync(binaryPath, 'console.log("verbose-test");', { mode: 0o755 });
 
-    const result = await runPolter(testDir, 'test-cli.js', [], {
+    const result = await runPolter(testDir, "test-cli.js", [], {
       expectSuccess: true,
       verbose: true,
     });
 
     expect(result.stderr).toContain(
-      '[Poltergeist] ⚠ No poltergeist.config.json found - attempting stale execution'
+      "[Poltergeist] ⚠ No poltergeist.config.json found - attempting stale execution",
     );
-    expect(result.stdout).toContain('Project root:');
-    expect(result.stdout).toContain('Binary path:');
-    expect(result.stdout).toContain('[Poltergeist] ⚠ Status: Executing without build verification');
+    expect(result.stdout).toContain("Project root:");
+    expect(result.stdout).toContain("Binary path:");
+    expect(result.stdout).toContain("[Poltergeist] ⚠ Status: Executing without build verification");
   });
 
-  it('should handle different binary extensions correctly', async () => {
-    const jsPath = join(testDir, 'test-cli.js');
+  it("should handle different binary extensions correctly", async () => {
+    const jsPath = join(testDir, "test-cli.js");
     writeFileSync(jsPath, 'console.log("js-output");');
 
-    const result = await runPolter(testDir, 'test-cli.js', [], { expectSuccess: true });
+    const result = await runPolter(testDir, "test-cli.js", [], { expectSuccess: true });
 
     expect(result.stdout).toContain(
-      '[Poltergeist] Running binary: test-cli.js (potentially stale)'
+      "[Poltergeist] Running binary: test-cli.js (potentially stale)",
     );
-    expect(result.stdout).toContain('js-output');
+    expect(result.stdout).toContain("js-output");
   });
 
-  it('should try multiple binary discovery paths', async () => {
+  it("should try multiple binary discovery paths", async () => {
     // Create binary in build subdirectory - polter looks for exact name match
-    const buildDir = join(testDir, 'build');
+    const buildDir = join(testDir, "build");
     mkdirSync(buildDir);
-    const buildBinaryPath = join(buildDir, 'test-cli.js');
+    const buildBinaryPath = join(buildDir, "test-cli.js");
     writeFileSync(buildBinaryPath, 'console.log("build-output");', {
       mode: 0o755,
     });
 
-    const result = await runPolter(testDir, 'test-cli', [], { expectSuccess: true });
+    const result = await runPolter(testDir, "test-cli", [], { expectSuccess: true });
 
-    expect(result.stdout).toContain('[Poltergeist] Running binary: test-cli (potentially stale)');
+    expect(result.stdout).toContain("[Poltergeist] Running binary: test-cli (potentially stale)");
     // Note: Script output may not be captured on Windows CI due to stdio inheritance
-    if (process.platform !== 'win32') {
-      expect(result.stdout).toContain('build-output');
+    if (process.platform !== "win32") {
+      expect(result.stdout).toContain("build-output");
     }
   });
 
-  it('should handle cli suffix removal for binary discovery', async () => {
+  it("should handle cli suffix removal for binary discovery", async () => {
     // Create binary without -cli suffix - polter looks for exact name match after suffix removal
-    const baseBinaryPath = join(testDir, 'myapp.js');
+    const baseBinaryPath = join(testDir, "myapp.js");
     writeFileSync(baseBinaryPath, 'console.log("base-app-output");', {
       mode: 0o755,
     });
 
-    const result = await runPolter(testDir, 'myapp-cli', [], { expectSuccess: true });
+    const result = await runPolter(testDir, "myapp-cli", [], { expectSuccess: true });
 
-    expect(result.stdout).toContain('[Poltergeist] Running binary: myapp-cli (potentially stale)');
+    expect(result.stdout).toContain("[Poltergeist] Running binary: myapp-cli (potentially stale)");
     // Note: Script output may not be captured on Windows CI due to stdio inheritance
-    if (process.platform !== 'win32') {
-      expect(result.stdout).toContain('base-app-output');
+    if (process.platform !== "win32") {
+      expect(result.stdout).toContain("base-app-output");
     }
   });
 });
@@ -172,7 +172,7 @@ describe('polter fallback behavior', () => {
  */
 function stripAnsiCodes(text: string): string {
   // biome-ignore lint/suspicious/noControlCharactersInRegex: ANSI escape sequence removal
-  return text.replace(/\x1b\[[0-9;]*m/g, '');
+  return text.replace(/\x1b\[[0-9;]*m/g, "");
 }
 
 /**
@@ -186,43 +186,43 @@ async function runPolter(
     expectSuccess?: boolean;
     verbose?: boolean;
     timeout?: number;
-  } = {}
+  } = {},
 ): Promise<{ stdout: string; stderr: string; exitCode: number }> {
   const { verbose = false, timeout = 10000 } = options;
 
-  const polterPath = join(__dirname, '../dist/polter.js');
+  const polterPath = join(__dirname, "../dist/polter.js");
   const polterArgs = [];
 
   if (verbose) {
-    polterArgs.push('--verbose');
+    polterArgs.push("--verbose");
   }
 
   polterArgs.push(target, ...args);
 
   return new Promise((resolve) => {
-    const child = spawn('node', [polterPath, ...polterArgs], {
+    const child = spawn("node", [polterPath, ...polterArgs], {
       cwd,
-      stdio: ['pipe', 'pipe', 'pipe'],
-      env: { ...process.env, NO_COLOR: '1' }, // Disable colored output
+      stdio: ["pipe", "pipe", "pipe"],
+      env: { ...process.env, NO_COLOR: "1" }, // Disable colored output
     });
 
-    let stdout = '';
-    let stderr = '';
+    let stdout = "";
+    let stderr = "";
 
-    child.stdout?.on('data', (data) => {
+    child.stdout?.on("data", (data) => {
       stdout += data.toString();
     });
 
-    child.stderr?.on('data', (data) => {
+    child.stderr?.on("data", (data) => {
       stderr += data.toString();
     });
 
     const timeoutId = setTimeout(() => {
-      child.kill('SIGTERM');
+      child.kill("SIGTERM");
       resolve({ stdout: stripAnsiCodes(stdout), stderr: stripAnsiCodes(stderr), exitCode: -1 });
     }, timeout);
 
-    child.on('exit', (code) => {
+    child.on("exit", (code) => {
       clearTimeout(timeoutId);
       resolve({
         stdout: stripAnsiCodes(stdout),
@@ -231,7 +231,7 @@ async function runPolter(
       });
     });
 
-    child.on('error', (error) => {
+    child.on("error", (error) => {
       clearTimeout(timeoutId);
       resolve({
         stdout: stripAnsiCodes(stdout),

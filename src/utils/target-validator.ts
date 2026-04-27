@@ -1,7 +1,7 @@
-import chalk from 'chalk';
-import { sortBy } from 'es-toolkit/array';
-import type { PoltergeistConfig, Target } from '../types.js';
-import { ConfigurationManager } from './config-manager.js';
+import chalk from "chalk";
+import { sortBy } from "es-toolkit/array";
+import type { PoltergeistConfig, Target } from "../types.js";
+import { ConfigurationManager } from "./config-manager.js";
 
 /**
  * Calculate Levenshtein distance between two strings for fuzzy matching
@@ -26,7 +26,7 @@ function levenshteinDistance(a: string, b: string): number {
         matrix[i][j] = Math.min(
           matrix[i - 1][j - 1] + 1, // substitution
           matrix[i][j - 1] + 1, // insertion
-          matrix[i - 1][j] + 1 // deletion
+          matrix[i - 1][j] + 1, // deletion
         );
       }
     }
@@ -61,7 +61,7 @@ function findSimilarTargets(targetName: string, availableTargets: string[]): str
  */
 export function formatAvailableTargets(config: PoltergeistConfig): string[] {
   return config.targets.map((t) => {
-    const status = t.enabled ? '' : chalk.gray(' [disabled]');
+    const status = t.enabled ? "" : chalk.gray(" [disabled]");
     return `  • ${chalk.cyan(t.name)} (${t.type})${status}`;
   });
 }
@@ -75,16 +75,16 @@ export function validateTarget(targetName: string, config: PoltergeistConfig): v
 
   if (!match) {
     console.error(chalk.red(`❌ Target '${targetName}' not found`));
-    console.error('');
+    console.error("");
 
     // Show available targets
-    console.error(chalk.yellow('Available targets:'));
-    console.error(formatAvailableTargets(config).join('\n'));
+    console.error(chalk.yellow("Available targets:"));
+    console.error(formatAvailableTargets(config).join("\n"));
 
     // Find similar targets
     const suggestions = findSimilarTargets(targetName, targetNames);
     if (suggestions.length > 0) {
-      console.error('');
+      console.error("");
 
       // Check if we have an exact case-insensitive match
       const exactMatch = suggestions.find((s) => s.toLowerCase() === targetName.toLowerCase());
@@ -93,7 +93,7 @@ export function validateTarget(targetName: string, config: PoltergeistConfig): v
       } else if (suggestions.length === 1) {
         console.error(chalk.cyan(`Did you mean '${suggestions[0]}'?`));
       } else {
-        console.error(chalk.cyan('Did you mean one of these?'));
+        console.error(chalk.cyan("Did you mean one of these?"));
         for (const suggestion of suggestions) {
           console.error(`  • ${suggestion}`);
         }
@@ -101,8 +101,8 @@ export function validateTarget(targetName: string, config: PoltergeistConfig): v
     }
 
     // Show usage example
-    console.error('');
-    console.error(chalk.gray('Usage: npx poltergeist logs <target> [options]'));
+    console.error("");
+    console.error(chalk.gray("Usage: npx poltergeist logs <target> [options]"));
     if (targetNames.length > 0) {
       console.error(chalk.gray(`Example: npx poltergeist logs ${targetNames[0]} --tail 50`));
     }
@@ -118,7 +118,7 @@ export function getTargetOrFail(targetName: string, config: PoltergeistConfig): 
   const target = ConfigurationManager.findTarget(config, targetName);
   if (!target) {
     validateTarget(targetName, config);
-    throw new Error('Unreachable');
+    throw new Error("Unreachable");
   }
   return target;
 }

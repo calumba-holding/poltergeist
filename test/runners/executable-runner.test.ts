@@ -1,20 +1,20 @@
-import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'fs';
-import { tmpdir } from 'os';
-import { join } from 'path';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { Logger } from '../../src/logger.js';
-import { ExecutableRunner } from '../../src/runners/executable-runner.js';
-import type { ExecutableTarget } from '../../src/types.js';
+import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "fs";
+import { tmpdir } from "os";
+import { join } from "path";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { Logger } from "../../src/logger.js";
+import { ExecutableRunner } from "../../src/runners/executable-runner.js";
+import type { ExecutableTarget } from "../../src/types.js";
 
-vi.mock('child_process', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('child_process')>();
+vi.mock("child_process", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("child_process")>();
   return {
     ...actual,
     spawn: vi.fn(),
   };
 });
 
-const { spawn } = await import('child_process');
+const { spawn } = await import("child_process");
 
 function makeLogger(): Logger {
   return {
@@ -27,22 +27,22 @@ function makeLogger(): Logger {
   } as Logger;
 }
 
-describe('ExecutableRunner', () => {
+describe("ExecutableRunner", () => {
   let projectRoot: string;
   let target: ExecutableTarget;
 
   beforeEach(() => {
-    projectRoot = mkdtempSync(join(tmpdir(), 'poltergeist-runner-'));
-    mkdirSync(join(projectRoot, 'dist'), { recursive: true });
-    const binaryPath = join(projectRoot, 'dist', 'app');
-    writeFileSync(binaryPath, '');
+    projectRoot = mkdtempSync(join(tmpdir(), "poltergeist-runner-"));
+    mkdirSync(join(projectRoot, "dist"), { recursive: true });
+    const binaryPath = join(projectRoot, "dist", "app");
+    writeFileSync(binaryPath, "");
 
     target = {
-      name: 'app',
-      type: 'executable',
-      buildCommand: 'echo build',
-      outputPath: './dist/app',
-      watchPaths: ['src/**/*.go'],
+      name: "app",
+      type: "executable",
+      buildCommand: "echo build",
+      outputPath: "./dist/app",
+      watchPaths: ["src/**/*.go"],
       autoRun: {
         enabled: true,
         restartDelayMs: 100,
@@ -57,7 +57,7 @@ describe('ExecutableRunner', () => {
     }
   });
 
-  it('launches the binary after first successful build', async () => {
+  it("launches the binary after first successful build", async () => {
     const listeners: Record<string, (...args: any[]) => void> = {};
     (spawn as vi.Mock).mockImplementation(() => ({
       on: (event: string, handler: (...args: any[]) => void) => {
@@ -83,14 +83,14 @@ describe('ExecutableRunner', () => {
 
     expect(spawn).toHaveBeenCalledTimes(1);
     const [command, args] = (spawn as vi.Mock).mock.calls[0];
-    expect(command).toBe(join(projectRoot, 'dist', 'app'));
+    expect(command).toBe(join(projectRoot, "dist", "app"));
     expect(args).toEqual([]);
 
     // Simulate exit to avoid dangling listeners
     listeners.exit?.(0, null);
   });
 
-  it('restarts the process after subsequent successful build', async () => {
+  it("restarts the process after subsequent successful build", async () => {
     vi.useFakeTimers();
     const killMocks: Array<ReturnType<typeof vi.fn>> = [];
 
@@ -128,14 +128,14 @@ describe('ExecutableRunner', () => {
     await runner.onBuildSuccess();
     await vi.advanceTimersByTimeAsync(150);
     await vi.waitFor(() => {
-      expect(killMocks[0]).toHaveBeenCalledWith('SIGINT');
+      expect(killMocks[0]).toHaveBeenCalledWith("SIGINT");
       expect(spawn).toHaveBeenCalledTimes(2);
     });
 
     vi.useRealTimers();
   });
 
-  it('stops the process gracefully', async () => {
+  it("stops the process gracefully", async () => {
     const listeners: Record<string, (...args: any[]) => void> = {};
     const killMock = vi.fn(() => {
       listeners.exit?.(0, null);
@@ -164,6 +164,6 @@ describe('ExecutableRunner', () => {
     await runner.onBuildSuccess();
     await runner.stop();
 
-    expect(killMock).toHaveBeenCalledWith('SIGTERM');
+    expect(killMock).toHaveBeenCalledWith("SIGTERM");
   });
 });

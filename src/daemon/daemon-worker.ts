@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
-import { createPoltergeist } from '../factories.js';
-import { createLogger } from '../logger.js';
-import type { PoltergeistConfig } from '../types.js';
+import { createPoltergeist } from "../factories.js";
+import { createLogger } from "../logger.js";
+import type { PoltergeistConfig } from "../types.js";
 
 interface DaemonArgs {
   config: PoltergeistConfig;
@@ -20,26 +20,26 @@ interface DaemonArgs {
 export async function runDaemon(args: DaemonArgs): Promise<void> {
   const { config, projectRoot, configPath, target, verbose, logLevel, logFile } = args;
 
-  if (process.env.POLTERGEIST_DEBUG_DAEMON === 'true') {
-    console.error('[daemon-worker] argv:', process.argv);
+  if (process.env.POLTERGEIST_DEBUG_DAEMON === "true") {
+    console.error("[daemon-worker] argv:", process.argv);
     console.error(
-      '[daemon-worker] configPath:',
+      "[daemon-worker] configPath:",
       configPath,
-      'projectRoot:',
+      "projectRoot:",
       projectRoot,
-      'target:',
-      target
+      "target:",
+      target,
     );
   }
 
   // Create file-based logger using the standard logger factory
   // Priority: logLevel flag > verbose flag > config > default
-  const effectiveLogLevel = logLevel || (verbose ? 'debug' : config.logging?.level || 'info');
+  const effectiveLogLevel = logLevel || (verbose ? "debug" : config.logging?.level || "info");
   // Pass target name if running a specific target, otherwise undefined for multi-target daemon
   const logger = createLogger(logFile, effectiveLogLevel, target);
 
   try {
-    logger.info('Daemon starting', { projectRoot, target });
+    logger.info("Daemon starting", { projectRoot, target });
 
     // Create Poltergeist instance with file logger
     const poltergeist = createPoltergeist(config, projectRoot, logger, configPath);
@@ -49,19 +49,19 @@ export async function runDaemon(args: DaemonArgs): Promise<void> {
       logger.info(`Received ${signal}, shutting down gracefully...`);
       try {
         await poltergeist.stop();
-        logger.info('Daemon stopped successfully');
+        logger.info("Daemon stopped successfully");
         process.exit(0);
       } catch (error) {
-        logger.error('Error during shutdown:', error);
+        logger.error("Error during shutdown:", error);
         process.exit(1);
       }
     };
 
-    process.on('SIGTERM', () => shutdown('SIGTERM'));
-    process.on('SIGINT', () => shutdown('SIGINT'));
+    process.on("SIGTERM", () => shutdown("SIGTERM"));
+    process.on("SIGINT", () => shutdown("SIGINT"));
 
     // Start Poltergeist
-    logger.info('Starting Poltergeist...');
+    logger.info("Starting Poltergeist...");
 
     let readyNotified = false;
     const notifyParentReady = () => {
@@ -69,24 +69,24 @@ export async function runDaemon(args: DaemonArgs): Promise<void> {
         return;
       }
       readyNotified = true;
-      logger.info('Daemon ready — initial builds continuing in background');
+      logger.info("Daemon ready — initial builds continuing in background");
       logger.debug(`process.send available: ${typeof process.send}`);
       if (process.send) {
         try {
-          process.send({ type: 'started', pid: process.pid });
-          logger.debug('Started message sent successfully');
+          process.send({ type: "started", pid: process.pid });
+          logger.debug("Started message sent successfully");
         } catch (ipcError) {
-          logger.error('Failed to send IPC message:', ipcError);
+          logger.error("Failed to send IPC message:", ipcError);
         }
       } else {
-        logger.warn('No IPC channel available (process.send is undefined)');
+        logger.warn("No IPC channel available (process.send is undefined)");
       }
     };
 
     poltergeist.onReady(notifyParentReady);
 
     await poltergeist.start(target, { waitForInitialBuilds: false });
-    logger.info('Daemon started successfully (initial builds running in background)');
+    logger.info("Daemon started successfully (initial builds running in background)");
 
     // Keep the daemon process alive indefinitely; shutdown signals will call process.exit
     const keepAlive = setInterval(() => {}, 60_000);
@@ -99,14 +99,14 @@ export async function runDaemon(args: DaemonArgs): Promise<void> {
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     const errorStack = error instanceof Error ? error.stack : undefined;
-    logger.error('Daemon startup failed:', errorMessage);
+    logger.error("Daemon startup failed:", errorMessage);
     if (errorStack) {
-      logger.error('Stack trace:', errorStack);
+      logger.error("Stack trace:", errorStack);
     }
 
     // Notify parent process of failure
     if (process.send) {
-      process.send({ type: 'error', error: errorMessage });
+      process.send({ type: "error", error: errorMessage });
     }
 
     process.exit(1);
@@ -118,19 +118,19 @@ export async function runDaemon(args: DaemonArgs): Promise<void> {
 // For Bun compiled binaries, we need to explicitly check for daemon mode flags
 if (
   // Check if we're running as daemon-worker.js or daemon-worker.ts directly
-  process.argv[1]?.endsWith('daemon-worker.js') ||
-  process.argv[1]?.endsWith('daemon-worker.ts') ||
+  process.argv[1]?.endsWith("daemon-worker.js") ||
+  process.argv[1]?.endsWith("daemon-worker.ts") ||
   // Or if we have the --daemon-worker flag (for compiled binaries)
-  process.argv.includes('--daemon-worker')
+  process.argv.includes("--daemon-worker")
 ) {
   // Parse arguments and run daemon
-  if (process.argv.length < 3 && !process.argv.includes('--daemon-worker')) {
-    console.error('Daemon worker requires arguments');
+  if (process.argv.length < 3 && !process.argv.includes("--daemon-worker")) {
+    console.error("Daemon worker requires arguments");
     process.exit(1);
   }
 
   // Find the args - either after --daemon-worker or as argv[2]
-  const argsIndex = process.argv.indexOf('--daemon-worker');
+  const argsIndex = process.argv.indexOf("--daemon-worker");
   let argsString: string | undefined;
 
   if (argsIndex !== -1 && process.argv[argsIndex + 1]) {
@@ -140,18 +140,18 @@ if (
   }
 
   if (!argsString) {
-    console.error('Daemon worker requires arguments');
+    console.error("Daemon worker requires arguments");
     process.exit(1);
   }
 
   try {
     const args: DaemonArgs = JSON.parse(argsString);
     runDaemon(args).catch((error) => {
-      console.error('Daemon worker error:', error);
+      console.error("Daemon worker error:", error);
       process.exit(1);
     });
   } catch (error) {
-    console.error('Failed to parse daemon arguments:', error);
+    console.error("Failed to parse daemon arguments:", error);
     process.exit(1);
   }
 }

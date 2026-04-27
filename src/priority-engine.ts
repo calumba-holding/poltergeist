@@ -1,15 +1,15 @@
 // Priority Scoring Engine for Intelligent Build Scheduling
 
-import type { Logger } from './logger.js';
+import type { Logger } from "./logger.js";
 import type {
   BuildSchedulingConfig,
   BuildStatus,
   ChangeEvent,
   Target,
   TargetPriority,
-} from './types.js';
-import { BuildStatusManager } from './utils/build-status-manager.js';
-import picomatch from './utils/glob-matcher.js';
+} from "./types.js";
+import { BuildStatusManager } from "./utils/build-status-manager.js";
+import picomatch from "./utils/glob-matcher.js";
 
 export class PriorityEngine {
   private config: BuildSchedulingConfig;
@@ -46,7 +46,7 @@ export class PriorityEngine {
 
     // Analyze changes for this target
     const targetChanges = this.getTargetChanges(target.name, recentHistory);
-    const directChanges = targetChanges.filter((c) => c.changeType === 'direct');
+    const directChanges = targetChanges.filter((c) => c.changeType === "direct");
 
     // Calculate base metrics for priority algorithm
     const lastDirectChange =
@@ -82,7 +82,7 @@ export class PriorityEngine {
     };
 
     this.logger.debug(
-      `Priority for ${target.name}: ${score.toFixed(2)} (focus: ${focusMultiplier.toFixed(2)}x, success: ${(successRate * 100).toFixed(1)}%)`
+      `Priority for ${target.name}: ${score.toFixed(2)} (focus: ${focusMultiplier.toFixed(2)}x, success: ${(successRate * 100).toFixed(1)}%)`,
     );
 
     return priority;
@@ -97,13 +97,13 @@ export class PriorityEngine {
 
     // Return empty if no targets provided
     if (targets.length === 0) {
-      this.logger.debug('No targets provided, skipping change recording');
+      this.logger.debug("No targets provided, skipping change recording");
       return events;
     }
 
     for (const file of files) {
       // Filter out malformed file paths
-      if (!file || file.trim().length === 0 || file.includes('//')) {
+      if (!file || file.trim().length === 0 || file.includes("//")) {
         this.logger.debug(`Skipping malformed file path: "${file}"`);
         continue;
       }
@@ -206,7 +206,7 @@ export class PriorityEngine {
   private calculateBaseScore(
     directChanges: ChangeEvent[],
     affectedFiles: string[],
-    now: number
+    now: number,
   ): number {
     let score = 0;
 
@@ -265,7 +265,7 @@ export class PriorityEngine {
 
   private getAffectedTargets(file: string, targets: Target[]): Target[] {
     return targets.filter((target) =>
-      target.watchPaths.some((pattern) => picomatch(pattern)(file))
+      target.watchPaths.some((pattern) => picomatch(pattern)(file)),
     );
   }
 
@@ -277,37 +277,37 @@ export class PriorityEngine {
    */
   private classifyChange(
     file: string,
-    affectedTargets: Target[]
-  ): 'direct' | 'shared' | 'generated' {
+    affectedTargets: Target[],
+  ): "direct" | "shared" | "generated" {
     // Check if it's a generated file
     if (
-      file.includes('Version.swift') ||
-      file.includes('.generated.') ||
-      file.includes('/build/') ||
-      file.includes('/.build/')
+      file.includes("Version.swift") ||
+      file.includes(".generated.") ||
+      file.includes("/build/") ||
+      file.includes("/.build/")
     ) {
-      return 'generated';
+      return "generated";
     }
 
     // Direct change affects only one target
     if (affectedTargets.length === 1) {
-      return 'direct';
+      return "direct";
     }
 
     // Shared change affects multiple targets
-    return 'shared';
+    return "shared";
   }
 
   private calculateImpactWeight(
     _file: string,
-    changeType: 'direct' | 'shared' | 'generated'
+    changeType: "direct" | "shared" | "generated",
   ): number {
     switch (changeType) {
-      case 'direct':
+      case "direct":
         return 1.0;
-      case 'shared':
+      case "shared":
         return 0.7;
-      case 'generated':
+      case "generated":
         return 0.3;
     }
   }

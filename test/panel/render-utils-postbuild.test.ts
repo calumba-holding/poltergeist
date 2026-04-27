@@ -1,19 +1,19 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from "vitest";
 
-import { formatTargets } from '../../src/panel/render-utils.js';
+import { formatTargets } from "../../src/panel/render-utils.js";
 import type {
   PanelSnapshot,
   PanelStatusScriptResult,
   TargetPanelEntry,
-} from '../../src/panel/types.js';
+} from "../../src/panel/types.js";
 
 const target: TargetPanelEntry = {
-  name: 'app',
+  name: "app",
   status: {
-    status: 'success',
-    lastBuild: { status: 'success', timestamp: new Date().toISOString() },
+    status: "success",
+    lastBuild: { status: "success", timestamp: new Date().toISOString() },
   },
-  targetType: 'app-bundle',
+  targetType: "app-bundle",
   enabled: true,
   group: undefined,
   logChannels: [],
@@ -22,9 +22,9 @@ const target: TargetPanelEntry = {
 const snapshotBase: PanelSnapshot = {
   targets: [target],
   summary: { totalTargets: 1, building: 0, failures: 0, running: 1 },
-  git: { branch: 'main', hasRepo: true, dirtyFiles: 0, insertions: 0, deletions: 0 },
-  projectName: 'app',
-  projectRoot: '/tmp/app',
+  git: { branch: "main", hasRepo: true, dirtyFiles: 0, insertions: 0, deletions: 0 },
+  projectName: "app",
+  projectRoot: "/tmp/app",
   preferredIndex: 0,
   lastUpdated: Date.now(),
   statusScripts: [],
@@ -33,22 +33,22 @@ const snapshotBase: PanelSnapshot = {
 };
 
 const makeRows = (entries: TargetPanelEntry[]) =>
-  entries.map((t) => ({ target: t, depth: 0, connector: 'single' as const }));
+  entries.map((t) => ({ target: t, depth: 0, connector: "single" as const }));
 
-describe('formatTargets post-build rendering', () => {
-  it('collapses successful post-build details', () => {
+describe("formatTargets post-build rendering", () => {
+  it("collapses successful post-build details", () => {
     const entry: TargetPanelEntry = {
       ...target,
       status: {
-        status: 'success',
-        lastBuild: { status: 'success', timestamp: new Date().toISOString() },
+        status: "success",
+        lastBuild: { status: "success", timestamp: new Date().toISOString() },
         postBuild: [
           {
-            name: 'Swift tests',
-            status: 'success',
-            summary: 'Swift tests: success [1s]',
+            name: "Swift tests",
+            status: "success",
+            summary: "Swift tests: success [1s]",
             durationMs: 1000,
-            lines: ['should not be shown'],
+            lines: ["should not be shown"],
           },
         ],
       },
@@ -64,26 +64,26 @@ describe('formatTargets post-build rendering', () => {
       [],
       undefined,
       snapshotBase,
-      []
+      [],
     );
 
-    expect(text).toContain('Swift tests: success');
-    expect(text).not.toContain('should not be shown');
+    expect(text).toContain("Swift tests: success");
+    expect(text).not.toContain("should not be shown");
   });
 
-  it('shows failure hint (exit code) for failed post-build', () => {
+  it("shows failure hint (exit code) for failed post-build", () => {
     const entry: TargetPanelEntry = {
       ...target,
       status: {
-        status: 'failure',
-        lastBuild: { status: 'failure', timestamp: new Date().toISOString() },
+        status: "failure",
+        lastBuild: { status: "failure", timestamp: new Date().toISOString() },
         postBuild: [
           {
-            name: 'Swift tests',
-            status: 'failure',
-            summary: 'Swift tests failed',
+            name: "Swift tests",
+            status: "failure",
+            summary: "Swift tests failed",
             durationMs: 1200,
-            lines: ['Build failed with exit code 134'],
+            lines: ["Build failed with exit code 134"],
           },
         ],
       },
@@ -99,9 +99,9 @@ describe('formatTargets post-build rendering', () => {
       [],
       undefined,
       snapshotBase,
-      []
+      [],
     );
 
-    expect(text).toContain('exit 134');
+    expect(text).toContain("exit 134");
   });
 });

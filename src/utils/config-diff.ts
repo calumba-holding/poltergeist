@@ -1,4 +1,4 @@
-import type { PoltergeistConfig, Target } from '../types.js';
+import type { PoltergeistConfig, Target } from "../types.js";
 
 export interface ConfigChanges {
   targetsAdded: Target[];
@@ -15,7 +15,7 @@ export interface ConfigChanges {
  */
 export function detectConfigChanges(
   oldConfig: PoltergeistConfig,
-  newConfig: PoltergeistConfig
+  newConfig: PoltergeistConfig,
 ): ConfigChanges {
   const oldTargets = new Map(oldConfig.targets.map((t) => [t.name, t] as const));
   const newTargets = new Map(newConfig.targets.map((t) => [t.name, t] as const));

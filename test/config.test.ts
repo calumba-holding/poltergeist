@@ -1,30 +1,30 @@
 // Comprehensive tests for configuration loading and validation
 
-import { mkdirSync, rmSync, writeFileSync } from 'fs';
-import { tmpdir } from 'os';
-import { dirname, join } from 'path';
-import { fileURLToPath } from 'url';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { ConfigLoader, ConfigurationError, migrateOldConfig } from '../src/config.js';
-import type { PoltergeistConfig } from '../src/types.js';
-import { ConfigurationManager } from '../src/utils/config-manager.js';
+import { mkdirSync, rmSync, writeFileSync } from "fs";
+import { tmpdir } from "os";
+import { dirname, join } from "path";
+import { fileURLToPath } from "url";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { ConfigLoader, ConfigurationError, migrateOldConfig } from "../src/config.js";
+import type { PoltergeistConfig } from "../src/types.js";
+import { ConfigurationManager } from "../src/utils/config-manager.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-describe('ConfigLoader', () => {
+describe("ConfigLoader", () => {
   let tempDir: string;
   let configPath: string;
 
   // Helper to create valid base config
   const createValidConfig = (overrides = {}) => ({
-    version: '1.0',
-    projectType: 'swift',
+    version: "1.0",
+    projectType: "swift",
     targets: [],
     watchman: {
       useDefaultExclusions: true,
       excludeDirs: [],
-      projectType: 'swift',
+      projectType: "swift",
       maxFileEvents: 10000,
       recrawlThreshold: 5,
       settlingDelay: 1000,
@@ -36,7 +36,7 @@ describe('ConfigLoader', () => {
     // Create a temporary directory for test configs
     tempDir = join(tmpdir(), `poltergeist-test-${Date.now()}`);
     mkdirSync(tempDir, { recursive: true });
-    configPath = join(tempDir, '.poltergeist.json');
+    configPath = join(tempDir, ".poltergeist.json");
   });
 
   afterEach(() => {
@@ -48,26 +48,26 @@ describe('ConfigLoader', () => {
     }
   });
 
-  describe('Configuration Format', () => {
-    it('should load valid new format configuration', () => {
+  describe("Configuration Format", () => {
+    it("should load valid new format configuration", () => {
       const config = createValidConfig({
         targets: [
           {
-            name: 'cli',
-            type: 'executable',
+            name: "cli",
+            type: "executable",
             enabled: true,
-            buildCommand: 'npm run build',
-            outputPath: './dist/cli',
-            watchPaths: ['src/**/*.ts'],
+            buildCommand: "npm run build",
+            outputPath: "./dist/cli",
+            watchPaths: ["src/**/*.ts"],
           },
           {
-            name: 'app',
-            type: 'app-bundle',
-            platform: 'macos',
+            name: "app",
+            type: "app-bundle",
+            platform: "macos",
             enabled: true,
-            buildCommand: 'xcodebuild',
-            bundleId: 'com.example.app',
-            watchPaths: ['app/**/*.swift'],
+            buildCommand: "xcodebuild",
+            bundleId: "com.example.app",
+            watchPaths: ["app/**/*.swift"],
           },
         ],
       });
@@ -77,21 +77,21 @@ describe('ConfigLoader', () => {
       const loaded = loader.loadConfig();
 
       expect(loaded.targets).toHaveLength(2);
-      expect(loaded.targets[0].name).toBe('cli');
-      expect(loaded.targets[1].name).toBe('app');
+      expect(loaded.targets[0].name).toBe("cli");
+      expect(loaded.targets[1].name).toBe("app");
     });
 
-    it('should reject old configuration format', () => {
+    it("should reject old configuration format", () => {
       const oldConfig = {
         cli: {
           enabled: true,
-          buildCommand: 'npm run build',
-          watchPaths: ['src/**/*.ts'],
+          buildCommand: "npm run build",
+          watchPaths: ["src/**/*.ts"],
         },
         macApp: {
           enabled: true,
-          buildCommand: 'xcodebuild',
-          watchPaths: ['app/**/*.swift'],
+          buildCommand: "xcodebuild",
+          watchPaths: ["app/**/*.swift"],
         },
       };
 
@@ -99,32 +99,32 @@ describe('ConfigLoader', () => {
       const loader = new ConfigLoader(configPath);
 
       expect(() => loader.loadConfig()).toThrow(ConfigurationError);
-      expect(() => loader.loadConfig()).toThrow('Old configuration format detected');
+      expect(() => loader.loadConfig()).toThrow("Old configuration format detected");
     });
 
-    it('should auto-migrate old format if forced', () => {
+    it("should auto-migrate old format if forced", () => {
       const oldConfig = {
         cli: {
           enabled: true,
-          buildCommand: 'npm run build',
-          outputPath: './dist/cli',
-          watchPaths: ['src/**/*.ts'],
-          statusFile: '/tmp/cli-status.json',
-          lockFile: '/tmp/cli.lock',
+          buildCommand: "npm run build",
+          outputPath: "./dist/cli",
+          watchPaths: ["src/**/*.ts"],
+          statusFile: "/tmp/cli-status.json",
+          lockFile: "/tmp/cli.lock",
         },
         macApp: {
           enabled: false,
-          buildCommand: 'xcodebuild',
-          bundleId: 'com.example.app',
-          watchPaths: ['app/**/*.swift'],
+          buildCommand: "xcodebuild",
+          bundleId: "com.example.app",
+          watchPaths: ["app/**/*.swift"],
         },
         notifications: {
           enabled: true,
-          successSound: 'Glass',
+          successSound: "Glass",
         },
         logging: {
-          file: '.poltergeist.log',
-          level: 'info',
+          file: ".poltergeist.log",
+          level: "info",
         },
       };
 
@@ -137,34 +137,34 @@ describe('ConfigLoader', () => {
       // But we can get the migrated version using the helper function
       const migrated = migrateOldConfig(oldConfig);
       expect(migrated.targets).toHaveLength(2);
-      expect(migrated.targets[0].name).toBe('cli');
-      expect(migrated.targets[0].type).toBe('executable');
-      expect(migrated.targets[1].name).toBe('mac-app');
-      expect(migrated.targets[1].type).toBe('app-bundle');
+      expect(migrated.targets[0].name).toBe("cli");
+      expect(migrated.targets[0].type).toBe("executable");
+      expect(migrated.targets[1].name).toBe("mac-app");
+      expect(migrated.targets[1].type).toBe("app-bundle");
       expect(migrated.notifications).toEqual(oldConfig.notifications);
       expect(migrated.logging).toEqual(oldConfig.logging);
     });
   });
 
-  describe('Target Validation', () => {
-    it('should reject duplicate target names', () => {
+  describe("Target Validation", () => {
+    it("should reject duplicate target names", () => {
       const config = createValidConfig({
         targets: [
           {
-            name: 'my-target',
-            type: 'executable',
+            name: "my-target",
+            type: "executable",
             enabled: true,
-            buildCommand: 'echo test1',
-            outputPath: './out1',
-            watchPaths: ['src/**/*'],
+            buildCommand: "echo test1",
+            outputPath: "./out1",
+            watchPaths: ["src/**/*"],
           },
           {
-            name: 'my-target', // Duplicate
-            type: 'executable',
+            name: "my-target", // Duplicate
+            type: "executable",
             enabled: true,
-            buildCommand: 'echo test2',
-            outputPath: './out2',
-            watchPaths: ['lib/**/*'],
+            buildCommand: "echo test2",
+            outputPath: "./out2",
+            watchPaths: ["lib/**/*"],
           },
         ],
       });
@@ -172,18 +172,18 @@ describe('ConfigLoader', () => {
       writeFileSync(configPath, JSON.stringify(config, null, 2));
       const loader = new ConfigLoader(configPath);
 
-      expect(() => loader.loadConfig()).toThrow('Duplicate target names found: my-target');
+      expect(() => loader.loadConfig()).toThrow("Duplicate target names found: my-target");
     });
 
-    it('should validate required fields for executable target', () => {
+    it("should validate required fields for executable target", () => {
       const config = createValidConfig({
         targets: [
           {
-            name: 'cli',
-            type: 'executable',
+            name: "cli",
+            type: "executable",
             enabled: true,
             // Missing buildCommand
-            watchPaths: ['src/**/*'],
+            watchPaths: ["src/**/*"],
           },
         ],
       });
@@ -194,17 +194,17 @@ describe('ConfigLoader', () => {
       expect(() => loader.loadConfig()).toThrow();
     });
 
-    it('should validate required fields for app-bundle target', () => {
+    it("should validate required fields for app-bundle target", () => {
       const config = createValidConfig({
         targets: [
           {
-            name: 'app',
-            type: 'app-bundle',
-            platform: 'macos',
+            name: "app",
+            type: "app-bundle",
+            platform: "macos",
             enabled: true,
-            buildCommand: 'xcodebuild',
+            buildCommand: "xcodebuild",
             // Missing bundleId
-            watchPaths: ['app/**/*'],
+            watchPaths: ["app/**/*"],
           },
         ],
       });
@@ -215,17 +215,17 @@ describe('ConfigLoader', () => {
       expect(() => loader.loadConfig()).toThrow();
     });
 
-    it('should validate platform values for app-bundle', () => {
+    it("should validate platform values for app-bundle", () => {
       const config = createValidConfig({
         targets: [
           {
-            name: 'app',
-            type: 'app-bundle',
-            platform: 'windows', // Invalid platform
+            name: "app",
+            type: "app-bundle",
+            platform: "windows", // Invalid platform
             enabled: true,
-            buildCommand: 'build.bat',
-            bundleId: 'com.example.app',
-            watchPaths: ['app/**/*'],
+            buildCommand: "build.bat",
+            bundleId: "com.example.app",
+            watchPaths: ["app/**/*"],
           },
         ],
       });
@@ -236,20 +236,20 @@ describe('ConfigLoader', () => {
       expect(() => loader.loadConfig()).toThrow();
     });
 
-    it('should allow valid platforms for app-bundle', () => {
-      const platforms = ['macos', 'ios', 'tvos', 'watchos', 'visionos'];
+    it("should allow valid platforms for app-bundle", () => {
+      const platforms = ["macos", "ios", "tvos", "watchos", "visionos"];
 
       for (const platform of platforms) {
         const config = createValidConfig({
           targets: [
             {
               name: `app-${platform}`,
-              type: 'app-bundle',
+              type: "app-bundle",
               platform,
               enabled: true,
-              buildCommand: 'xcodebuild',
-              bundleId: 'com.example.app',
-              watchPaths: ['app/**/*'],
+              buildCommand: "xcodebuild",
+              bundleId: "com.example.app",
+              watchPaths: ["app/**/*"],
             },
           ],
         });
@@ -262,17 +262,17 @@ describe('ConfigLoader', () => {
     });
   });
 
-  describe('Default Values', () => {
-    it('should not have settling delay if not specified', () => {
+  describe("Default Values", () => {
+    it("should not have settling delay if not specified", () => {
       const config = createValidConfig({
         targets: [
           {
-            name: 'cli',
-            type: 'executable',
+            name: "cli",
+            type: "executable",
             enabled: true,
-            buildCommand: 'npm run build',
-            outputPath: './dist/cli',
-            watchPaths: ['src/**/*'],
+            buildCommand: "npm run build",
+            outputPath: "./dist/cli",
+            watchPaths: ["src/**/*"],
             // No settlingDelay specified
           },
         ],
@@ -285,16 +285,16 @@ describe('ConfigLoader', () => {
       expect(loaded.targets[0].settlingDelay).toBeUndefined();
     });
 
-    it('should use custom settling delay when provided', () => {
+    it("should use custom settling delay when provided", () => {
       const config = createValidConfig({
         targets: [
           {
-            name: 'cli',
-            type: 'executable',
+            name: "cli",
+            type: "executable",
             enabled: true,
-            buildCommand: 'npm run build',
-            outputPath: './dist/cli',
-            watchPaths: ['src/**/*'],
+            buildCommand: "npm run build",
+            outputPath: "./dist/cli",
+            watchPaths: ["src/**/*"],
             settlingDelay: 1000,
           },
         ],
@@ -307,17 +307,17 @@ describe('ConfigLoader', () => {
       expect(loaded.targets[0].settlingDelay).toBe(1000);
     });
 
-    it('should not have autoRelaunch if not specified for app-bundle', () => {
+    it("should not have autoRelaunch if not specified for app-bundle", () => {
       const config = createValidConfig({
         targets: [
           {
-            name: 'app',
-            type: 'app-bundle',
-            platform: 'macos',
+            name: "app",
+            type: "app-bundle",
+            platform: "macos",
             enabled: true,
-            buildCommand: 'xcodebuild',
-            bundleId: 'com.example.app',
-            watchPaths: ['app/**/*'],
+            buildCommand: "xcodebuild",
+            bundleId: "com.example.app",
+            watchPaths: ["app/**/*"],
             // No autoRelaunch specified
           },
         ],
@@ -331,24 +331,24 @@ describe('ConfigLoader', () => {
     });
   });
 
-  describe('Optional Features', () => {
-    it('should load notifications config', () => {
+  describe("Optional Features", () => {
+    it("should load notifications config", () => {
       const config = createValidConfig({
         targets: [
           {
-            name: 'cli',
-            type: 'executable',
+            name: "cli",
+            type: "executable",
             enabled: true,
-            buildCommand: 'npm run build',
-            outputPath: './dist/cli',
-            watchPaths: ['src/**/*'],
+            buildCommand: "npm run build",
+            outputPath: "./dist/cli",
+            watchPaths: ["src/**/*"],
           },
         ],
         notifications: {
           enabled: true,
           onlyOnFailure: true,
-          successSound: 'Glass',
-          failureSound: 'Basso',
+          successSound: "Glass",
+          failureSound: "Basso",
         },
       });
 
@@ -358,26 +358,26 @@ describe('ConfigLoader', () => {
 
       expect(loaded.notifications).toEqual({
         enabled: true,
-        successSound: 'Glass',
-        failureSound: 'Basso',
+        successSound: "Glass",
+        failureSound: "Basso",
       });
     });
 
-    it('should default notifications.enabled to true when not specified', () => {
+    it("should default notifications.enabled to true when not specified", () => {
       const config = createValidConfig({
         targets: [
           {
-            name: 'cli',
-            type: 'executable',
+            name: "cli",
+            type: "executable",
             enabled: true,
-            buildCommand: 'npm run build',
-            outputPath: './dist/cli',
-            watchPaths: ['src/**/*'],
+            buildCommand: "npm run build",
+            outputPath: "./dist/cli",
+            watchPaths: ["src/**/*"],
           },
         ],
         notifications: {
-          successSound: 'Glass',
-          failureSound: 'Basso',
+          successSound: "Glass",
+          failureSound: "Basso",
         },
       });
 
@@ -387,24 +387,24 @@ describe('ConfigLoader', () => {
 
       expect(loaded.notifications).toBeDefined();
       expect(loaded.notifications?.enabled).toBe(true);
-      expect(loaded.notifications?.successSound).toBe('Glass');
-      expect(loaded.notifications?.failureSound).toBe('Basso');
+      expect(loaded.notifications?.successSound).toBe("Glass");
+      expect(loaded.notifications?.failureSound).toBe("Basso");
     });
 
-    it('should allow minimal notifications config with just sounds', () => {
+    it("should allow minimal notifications config with just sounds", () => {
       const config = createValidConfig({
         targets: [
           {
-            name: 'cli',
-            type: 'executable',
+            name: "cli",
+            type: "executable",
             enabled: true,
-            buildCommand: 'npm run build',
-            outputPath: './dist/cli',
-            watchPaths: ['src/**/*'],
+            buildCommand: "npm run build",
+            outputPath: "./dist/cli",
+            watchPaths: ["src/**/*"],
           },
         ],
         notifications: {
-          successSound: 'Hero',
+          successSound: "Hero",
         },
       });
 
@@ -414,20 +414,20 @@ describe('ConfigLoader', () => {
 
       expect(loaded.notifications).toBeDefined();
       expect(loaded.notifications?.enabled).toBe(true);
-      expect(loaded.notifications?.successSound).toBe('Hero');
+      expect(loaded.notifications?.successSound).toBe("Hero");
       expect(loaded.notifications?.failureSound).toBeUndefined();
     });
 
-    it('should allow empty notifications config', () => {
+    it("should allow empty notifications config", () => {
       const config = createValidConfig({
         targets: [
           {
-            name: 'cli',
-            type: 'executable',
+            name: "cli",
+            type: "executable",
             enabled: true,
-            buildCommand: 'npm run build',
-            outputPath: './dist/cli',
-            watchPaths: ['src/**/*'],
+            buildCommand: "npm run build",
+            outputPath: "./dist/cli",
+            watchPaths: ["src/**/*"],
           },
         ],
         notifications: {},
@@ -443,22 +443,22 @@ describe('ConfigLoader', () => {
       expect(loaded.notifications?.failureSound).toBeUndefined();
     });
 
-    it('should respect explicit notifications.enabled = false', () => {
+    it("should respect explicit notifications.enabled = false", () => {
       const config = createValidConfig({
         targets: [
           {
-            name: 'cli',
-            type: 'executable',
+            name: "cli",
+            type: "executable",
             enabled: true,
-            buildCommand: 'npm run build',
-            outputPath: './dist/cli',
-            watchPaths: ['src/**/*'],
+            buildCommand: "npm run build",
+            outputPath: "./dist/cli",
+            watchPaths: ["src/**/*"],
           },
         ],
         notifications: {
           enabled: false,
-          successSound: 'Glass',
-          failureSound: 'Basso',
+          successSound: "Glass",
+          failureSound: "Basso",
         },
       });
 
@@ -468,26 +468,26 @@ describe('ConfigLoader', () => {
 
       expect(loaded.notifications).toBeDefined();
       expect(loaded.notifications?.enabled).toBe(false);
-      expect(loaded.notifications?.successSound).toBe('Glass');
-      expect(loaded.notifications?.failureSound).toBe('Basso');
+      expect(loaded.notifications?.successSound).toBe("Glass");
+      expect(loaded.notifications?.failureSound).toBe("Basso");
     });
 
-    it('should load logging config', () => {
+    it("should load logging config", () => {
       const config = createValidConfig({
         targets: [
           {
-            name: 'cli',
-            type: 'executable',
+            name: "cli",
+            type: "executable",
             enabled: true,
-            buildCommand: 'npm run build',
-            outputPath: './dist/cli',
-            watchPaths: ['src/**/*'],
+            buildCommand: "npm run build",
+            outputPath: "./dist/cli",
+            watchPaths: ["src/**/*"],
           },
         ],
         logging: {
-          file: '.poltergeist.log',
-          level: 'debug',
-          maxSize: '10m',
+          file: ".poltergeist.log",
+          level: "debug",
+          maxSize: "10m",
           maxFiles: 5,
         },
       });
@@ -497,61 +497,61 @@ describe('ConfigLoader', () => {
       const loaded = loader.loadConfig();
 
       expect(loaded.logging).toBeDefined();
-      expect(loaded.logging?.level).toBe('debug');
+      expect(loaded.logging?.level).toBe("debug");
       // File path is resolved to absolute path, so just check it ends with the filename
       expect(loaded.logging?.file).toMatch(/\.poltergeist\.log$/);
     });
   });
 
-  describe('File Handling', () => {
-    it('should throw error if config file does not exist', () => {
-      const loader = new ConfigLoader('/non/existent/path/.poltergeist.json');
+  describe("File Handling", () => {
+    it("should throw error if config file does not exist", () => {
+      const loader = new ConfigLoader("/non/existent/path/.poltergeist.json");
 
-      expect(() => loader.loadConfig()).toThrow('Configuration file not found');
+      expect(() => loader.loadConfig()).toThrow("Configuration file not found");
     });
 
-    it('should throw error for invalid JSON', () => {
-      writeFileSync(configPath, '{ invalid json');
+    it("should throw error for invalid JSON", () => {
+      writeFileSync(configPath, "{ invalid json");
       const loader = new ConfigLoader(configPath);
 
       expect(() => loader.loadConfig()).toThrow();
     });
 
-    it('should throw error for non-object config', () => {
+    it("should throw error for non-object config", () => {
       writeFileSync(configPath, '"just a string"');
       const loader = new ConfigLoader(configPath);
 
       expect(() => loader.loadConfig()).toThrow();
     });
 
-    it('should throw error for config without targets', () => {
-      writeFileSync(configPath, '{}');
+    it("should throw error for config without targets", () => {
+      writeFileSync(configPath, "{}");
       const loader = new ConfigLoader(configPath);
 
       expect(() => loader.loadConfig()).toThrow();
     });
   });
 
-  describe('Minimal Config Validation', () => {
-    it('should accept minimal config with only required fields', () => {
+  describe("Minimal Config Validation", () => {
+    it("should accept minimal config with only required fields", () => {
       const config = {
-        version: '1.0',
-        projectType: 'cmake',
+        version: "1.0",
+        projectType: "cmake",
         targets: [
           {
-            name: 'minimal',
-            type: 'cmake-custom',
-            targetName: 'minimal',
-            watchPaths: ['src/**/*.c'],
+            name: "minimal",
+            type: "cmake-custom",
+            targetName: "minimal",
+            watchPaths: ["src/**/*.c"],
           },
         ],
         watchman: {
-          projectType: 'cmake',
-          excludeDirs: ['build'],
+          projectType: "cmake",
+          excludeDirs: ["build"],
         },
         notifications: {
-          successSound: 'Glass',
-          failureSound: 'Basso',
+          successSound: "Glass",
+          failureSound: "Basso",
         },
       };
 
@@ -559,26 +559,26 @@ describe('ConfigLoader', () => {
       const loader = new ConfigLoader(configPath);
       const loaded = loader.loadConfig();
 
-      expect(loaded.projectType).toBe('cmake');
+      expect(loaded.projectType).toBe("cmake");
       expect(loaded.targets).toHaveLength(1);
-      expect(loaded.targets[0].name).toBe('minimal');
+      expect(loaded.targets[0].name).toBe("minimal");
       expect(loaded.notifications?.enabled).toBe(true);
     });
 
-    it('should accept config without watchman if defaults can be applied', () => {
+    it("should accept config without watchman if defaults can be applied", () => {
       const config = {
-        version: '1.0',
-        projectType: 'cmake',
+        version: "1.0",
+        projectType: "cmake",
         targets: [
           {
-            name: 'test',
-            type: 'cmake-custom',
-            targetName: 'test',
-            watchPaths: ['**/*.cmake'],
+            name: "test",
+            type: "cmake-custom",
+            targetName: "test",
+            watchPaths: ["**/*.cmake"],
           },
         ],
         watchman: {
-          projectType: 'cmake',
+          projectType: "cmake",
         },
       };
 
@@ -586,7 +586,7 @@ describe('ConfigLoader', () => {
       const loader = new ConfigLoader(configPath);
       const loaded = loader.loadConfig();
 
-      expect(loaded.watchman.projectType).toBe('cmake');
+      expect(loaded.watchman.projectType).toBe("cmake");
       expect(loaded.watchman.useDefaultExclusions).toBe(true);
       expect(loaded.watchman.excludeDirs).toEqual([]);
       expect(loaded.watchman.maxFileEvents).toBe(10000);
@@ -594,23 +594,23 @@ describe('ConfigLoader', () => {
       expect(loaded.watchman.settlingDelay).toBe(1000);
     });
 
-    it('should accept config without notifications', () => {
+    it("should accept config without notifications", () => {
       const config = {
-        version: '1.0',
-        projectType: 'swift',
+        version: "1.0",
+        projectType: "swift",
         targets: [
           {
-            name: 'app',
-            type: 'executable',
-            buildCommand: 'swift build',
-            outputPath: '.build/debug/app',
-            watchPaths: ['Sources/**/*.swift'],
+            name: "app",
+            type: "executable",
+            buildCommand: "swift build",
+            outputPath: ".build/debug/app",
+            watchPaths: ["Sources/**/*.swift"],
           },
         ],
         watchman: {
           useDefaultExclusions: true,
           excludeDirs: [],
-          projectType: 'swift',
+          projectType: "swift",
           maxFileEvents: 10000,
           recrawlThreshold: 5,
           settlingDelay: 1000,
@@ -625,8 +625,8 @@ describe('ConfigLoader', () => {
     });
   });
 
-  describe('Edge Cases', () => {
-    it('should handle empty targets array', () => {
+  describe("Edge Cases", () => {
+    it("should handle empty targets array", () => {
       const config = createValidConfig({
         targets: [],
       });
@@ -638,17 +638,17 @@ describe('ConfigLoader', () => {
       expect(loaded.targets).toHaveLength(0);
     });
 
-    it('should handle very long target names', () => {
-      const longName = 'a'.repeat(100);
+    it("should handle very long target names", () => {
+      const longName = "a".repeat(100);
       const config = createValidConfig({
         targets: [
           {
             name: longName,
-            type: 'executable',
+            type: "executable",
             enabled: true,
-            buildCommand: 'echo test',
-            outputPath: './dist/test',
-            watchPaths: ['src/**/*'],
+            buildCommand: "echo test",
+            outputPath: "./dist/test",
+            watchPaths: ["src/**/*"],
           },
         ],
       });
@@ -660,16 +660,16 @@ describe('ConfigLoader', () => {
       expect(loaded.targets[0].name).toBe(longName);
     });
 
-    it('should reject target names with special characters', () => {
+    it("should reject target names with special characters", () => {
       const config = createValidConfig({
         targets: [
           {
-            name: 'my-target_v2.0',
-            type: 'executable',
+            name: "my-target_v2.0",
+            type: "executable",
             enabled: true,
-            buildCommand: 'echo test',
-            outputPath: './dist/test',
-            watchPaths: ['src/**/*'],
+            buildCommand: "echo test",
+            outputPath: "./dist/test",
+            watchPaths: ["src/**/*"],
           },
         ],
       });
@@ -677,51 +677,51 @@ describe('ConfigLoader', () => {
       writeFileSync(configPath, JSON.stringify(config, null, 2));
       const loader = new ConfigLoader(configPath);
 
-      expect(() => loader.loadConfig()).toThrow('Invalid target names');
+      expect(() => loader.loadConfig()).toThrow("Invalid target names");
     });
   });
 });
 
-describe('ConfigurationManager target lookup', () => {
+describe("ConfigurationManager target lookup", () => {
   const config = {
-    version: '1.0',
-    projectType: 'mixed',
+    version: "1.0",
+    projectType: "mixed",
     targets: [
       {
-        name: 'Peekaboo',
-        type: 'executable',
+        name: "Peekaboo",
+        type: "executable",
         enabled: true,
-        buildCommand: 'echo peek',
-        outputPath: './peekaboo',
-        watchPaths: ['src/**/*.swift'],
+        buildCommand: "echo peek",
+        outputPath: "./peekaboo",
+        watchPaths: ["src/**/*.swift"],
       },
       {
-        name: 'Peekaboo.app',
-        type: 'app-bundle',
+        name: "Peekaboo.app",
+        type: "app-bundle",
         enabled: true,
-        buildCommand: 'echo app',
-        bundleId: 'boo.peekaboo.app',
-        watchPaths: ['Apps/**/*.swift'],
+        buildCommand: "echo app",
+        bundleId: "boo.peekaboo.app",
+        watchPaths: ["Apps/**/*.swift"],
       },
     ],
   } satisfies PoltergeistConfig;
 
-  it('matches target names case-insensitively', () => {
-    const match = ConfigurationManager.findTarget(config, 'peekaboo');
-    expect(match?.name).toBe('Peekaboo');
+  it("matches target names case-insensitively", () => {
+    const match = ConfigurationManager.findTarget(config, "peekaboo");
+    expect(match?.name).toBe("Peekaboo");
 
-    const upper = ConfigurationManager.findTarget(config, 'PEEKABOO');
-    expect(upper?.name).toBe('Peekaboo');
+    const upper = ConfigurationManager.findTarget(config, "PEEKABOO");
+    expect(upper?.name).toBe("Peekaboo");
   });
 
-  it('normalizes dots, underscores, and spaces when matching', () => {
-    expect(ConfigurationManager.findTarget(config, 'peekaboo-app')).not.toBeNull();
-    expect(ConfigurationManager.findTarget(config, 'peekaboo app')).not.toBeNull();
-    expect(ConfigurationManager.findTarget(config, 'Peekaboo_App')).not.toBeNull();
+  it("normalizes dots, underscores, and spaces when matching", () => {
+    expect(ConfigurationManager.findTarget(config, "peekaboo-app")).not.toBeNull();
+    expect(ConfigurationManager.findTarget(config, "peekaboo app")).not.toBeNull();
+    expect(ConfigurationManager.findTarget(config, "Peekaboo_App")).not.toBeNull();
   });
 
-  it('exposes normalization helper for reuse', () => {
-    expect(ConfigurationManager.normalizeTargetName('Peekaboo.app')).toBe('peekaboo-app');
-    expect(ConfigurationManager.normalizeTargetName(' Peekaboo__App ')).toBe('peekaboo-app');
+  it("exposes normalization helper for reuse", () => {
+    expect(ConfigurationManager.normalizeTargetName("Peekaboo.app")).toBe("peekaboo-app");
+    expect(ConfigurationManager.normalizeTargetName(" Peekaboo__App ")).toBe("peekaboo-app");
   });
 });

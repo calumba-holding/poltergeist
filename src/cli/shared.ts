@@ -1,7 +1,7 @@
-import chalk from 'chalk';
-import type { PoltergeistConfig } from '../types.js';
-import type { LoadedConfiguration } from './configuration.js';
-import { loadConfiguration, parseGitSummaryModeOption } from './configuration.js';
+import chalk from "chalk";
+import type { PoltergeistConfig } from "../types.js";
+import type { LoadedConfiguration } from "./configuration.js";
+import { loadConfiguration, parseGitSummaryModeOption } from "./configuration.js";
 
 export const exitWithError = (message: string, code = 1): never => {
   console.error(chalk.red(message));
@@ -20,7 +20,7 @@ export const exitWithError = (message: string, code = 1): never => {
 
 export const loadConfigOrExit = async (
   configPath?: string,
-  options?: { allowMissing?: boolean }
+  options?: { allowMissing?: boolean },
 ): Promise<LoadedConfiguration> => {
   try {
     return await loadConfiguration(configPath);
@@ -28,25 +28,25 @@ export const loadConfigOrExit = async (
     if (options?.allowMissing) {
       const projectRoot = process.cwd();
       const minimalConfig: PoltergeistConfig = {
-        version: '1.0',
-        projectType: 'node',
+        version: "1.0",
+        projectType: "node",
         targets: [],
         watchman: {
           useDefaultExclusions: true,
           excludeDirs: [],
-          projectType: 'node',
+          projectType: "node",
           maxFileEvents: 0,
           recrawlThreshold: 0,
           settlingDelay: 1000,
         },
       };
-      return { config: minimalConfig, projectRoot, configPath: configPath ?? '' };
+      return { config: minimalConfig, projectRoot, configPath: configPath ?? "" };
     }
     return exitWithError((error as Error).message);
   }
 };
 
-export const parseGitModeOrExit = (value?: string): 'ai' | 'list' | undefined => {
+export const parseGitModeOrExit = (value?: string): "ai" | "list" | undefined => {
   try {
     return parseGitSummaryModeOption(value);
   } catch (error) {

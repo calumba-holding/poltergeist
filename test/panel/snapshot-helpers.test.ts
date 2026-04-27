@@ -1,30 +1,30 @@
-import { describe, expect, it } from 'vitest';
-import { computePreferredIndex, computeSummary } from '../../src/panel/snapshot-helpers.js';
-import type { TargetPanelEntry } from '../../src/panel/types.js';
+import { describe, expect, it } from "vitest";
+import { computePreferredIndex, computeSummary } from "../../src/panel/snapshot-helpers.js";
+import type { TargetPanelEntry } from "../../src/panel/types.js";
 
 const ACTIVE_PROCESS = {
   pid: 1234,
-  hostname: 'localhost',
+  hostname: "localhost",
   isActive: true,
 };
 
-describe('snapshot-helpers', () => {
-  it('computes summary with target and script failures', () => {
+describe("snapshot-helpers", () => {
+  it("computes summary with target and script failures", () => {
     const targets: TargetPanelEntry[] = [
       {
-        name: 'building',
-        status: { lastBuild: { status: 'building', timestamp: new Date().toISOString() } },
+        name: "building",
+        status: { lastBuild: { status: "building", timestamp: new Date().toISOString() } },
       },
       {
-        name: 'failed',
+        name: "failed",
         status: {
-          lastBuild: { status: 'failure', timestamp: new Date().toISOString() },
+          lastBuild: { status: "failure", timestamp: new Date().toISOString() },
           process: ACTIVE_PROCESS,
         },
       },
       {
-        name: 'idle',
-        status: { lastBuild: { status: 'success', timestamp: new Date().toISOString() } },
+        name: "idle",
+        status: { lastBuild: { status: "success", timestamp: new Date().toISOString() } },
       },
     ];
 
@@ -35,18 +35,18 @@ describe('snapshot-helpers', () => {
     expect(summary.scriptFailures).toBe(2);
     expect(summary.failures).toBe(3);
     expect(summary.running).toBe(1);
-    expect(summary.activeDaemons).toEqual(['1234']);
+    expect(summary.activeDaemons).toEqual(["1234"]);
   });
 
-  it('prefers building target index, then failure, else zero', () => {
+  it("prefers building target index, then failure, else zero", () => {
     const targets: TargetPanelEntry[] = [
-      { name: 'ok', status: { lastBuild: { status: 'success', timestamp: 't' } } },
-      { name: 'fail', status: { lastBuild: { status: 'failure', timestamp: 't' } } },
+      { name: "ok", status: { lastBuild: { status: "success", timestamp: "t" } } },
+      { name: "fail", status: { lastBuild: { status: "failure", timestamp: "t" } } },
     ];
     expect(computePreferredIndex(targets)).toBe(1);
 
     const buildingFirst: TargetPanelEntry[] = [
-      { name: 'build', status: { lastBuild: { status: 'building', timestamp: 't' } } },
+      { name: "build", status: { lastBuild: { status: "building", timestamp: "t" } } },
       ...targets,
     ];
     expect(computePreferredIndex(buildingFirst)).toBe(0);

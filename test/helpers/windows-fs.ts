@@ -1,17 +1,17 @@
 // Windows-safe file system operations for tests
 
-import { existsSync } from 'fs';
-import { mkdir, rm } from 'fs/promises';
-import { platform } from 'os';
+import { existsSync } from "fs";
+import { mkdir, rm } from "fs/promises";
+import { platform } from "os";
 
-const isWindows = platform() === 'win32';
+const isWindows = platform() === "win32";
 
 /**
  * Removes a directory with retry logic for Windows
  */
 export async function safeRemoveDir(path: string, maxRetries = 3): Promise<void> {
   // Skip cleanup in CI if running on Windows to avoid timeouts
-  if (process.platform === 'win32' && process.env.CI) {
+  if (process.platform === "win32" && process.env.CI) {
     return;
   }
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
@@ -23,7 +23,7 @@ export async function safeRemoveDir(path: string, maxRetries = 3): Promise<void>
     } catch (error: unknown) {
       if (attempt === maxRetries) {
         // On final attempt, ignore errors if directory doesn't exist
-        if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+        if ((error as NodeJS.ErrnoException).code === "ENOENT") {
           return;
         }
         throw error;
@@ -32,9 +32,9 @@ export async function safeRemoveDir(path: string, maxRetries = 3): Promise<void>
       // On Windows, wait a bit before retrying
       if (
         isWindows &&
-        ((error as NodeJS.ErrnoException).code === 'EBUSY' ||
-          (error as NodeJS.ErrnoException).code === 'EPERM' ||
-          (error as NodeJS.ErrnoException).code === 'EACCES')
+        ((error as NodeJS.ErrnoException).code === "EBUSY" ||
+          (error as NodeJS.ErrnoException).code === "EPERM" ||
+          (error as NodeJS.ErrnoException).code === "EACCES")
       ) {
         await new Promise((resolve) => setTimeout(resolve, 100 * attempt));
       }
@@ -56,7 +56,7 @@ export async function safeCreateDir(path: string, maxRetries = 3): Promise<void>
       }
 
       // If directory already exists, that's fine
-      if ((error as NodeJS.ErrnoException).code === 'EEXIST') {
+      if ((error as NodeJS.ErrnoException).code === "EEXIST") {
         return;
       }
 

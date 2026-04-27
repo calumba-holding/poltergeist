@@ -1,11 +1,11 @@
-import { visibleWidth } from '@mariozechner/pi-tui';
+import { visibleWidth } from "@mariozechner/pi-tui";
 
 export function pad(text: string, width: number): string {
   const length = visibleWidth(text);
   if (length >= width) {
     return text;
   }
-  return `${text}${' '.repeat(width - length)}`;
+  return `${text}${" ".repeat(width - length)}`;
 }
 
 export function centerText(text: string, width?: number): string {
@@ -17,28 +17,28 @@ export function centerText(text: string, width?: number): string {
   const totalPad = width - length;
   const left = Math.floor(totalPad / 2);
   const right = totalPad - left;
-  return `${' '.repeat(left)}${text}${' '.repeat(right)}`;
+  return `${" ".repeat(left)}${text}${" ".repeat(right)}`;
 }
 
 export function boxLines(lines: string[], maxWidth?: number): string {
-  if (lines.length === 0) return '';
+  if (lines.length === 0) return "";
   const widestLine = Math.max(...lines.map((line) => visibleWidth(line)));
   const boxWidth = maxWidth ? Math.max(4, maxWidth) : Math.max(4, widestLine + 2);
   const contentWidth = boxWidth - 2;
-  const top = `┌${'─'.repeat(contentWidth)}┐`;
-  const bottom = `└${'─'.repeat(contentWidth)}┘`;
+  const top = `┌${"─".repeat(contentWidth)}┐`;
+  const bottom = `└${"─".repeat(contentWidth)}┘`;
   const body = lines.map((line) => {
     const centered = visibleWidth(line) > contentWidth ? line : centerText(line, contentWidth);
     return `│${pad(centered, contentWidth)}│`;
   });
-  return [top, ...body, bottom].join('\n');
+  return [top, ...body, bottom].join("\n");
 }
 
 export function countLines(text: string): number {
   if (!text) {
     return 0;
   }
-  return text.split('\n').length;
+  return text.split("\n").length;
 }
 
 /**
@@ -50,7 +50,7 @@ export function countWrappedLines(text: string, maxWidth: number): number {
     return 0;
   }
   const width = Math.max(1, maxWidth);
-  return text.split('\n').reduce((acc, line) => {
+  return text.split("\n").reduce((acc, line) => {
     const len = visibleWidth(line);
     const wrapped = Math.max(1, Math.ceil(len / width));
     return acc + wrapped;
@@ -58,20 +58,20 @@ export function countWrappedLines(text: string, maxWidth: number): number {
 }
 
 export function limitSummaryLines(text: string, maxLines: number): string {
-  if (maxLines <= 0) return '';
-  const lines = text.split('\n');
+  if (maxLines <= 0) return "";
+  const lines = text.split("\n");
   if (lines.length <= maxLines) return text;
   // Truncate without ellipsis—panel already shows only the available vertical space.
-  return lines.slice(0, maxLines).join('\n');
+  return lines.slice(0, maxLines).join("\n");
 }
 
 export function truncateVisible(text: string, maxWidth: number): string {
-  if (maxWidth <= 0) return '';
+  if (maxWidth <= 0) return "";
   const length = visibleWidth(text);
   if (length <= maxWidth) return text;
-  if (maxWidth <= 1) return '…'.slice(0, maxWidth);
+  if (maxWidth <= 1) return "…".slice(0, maxWidth);
   const target = maxWidth - 1;
-  let acc = '';
+  let acc = "";
   let used = 0;
   for (const char of text) {
     const w = visibleWidth(char);

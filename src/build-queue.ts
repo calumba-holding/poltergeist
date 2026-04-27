@@ -1,12 +1,12 @@
 // Intelligent Build Queue with Priority Management
 
-import type { BaseBuilder } from './builders/index.js';
-import type { Logger } from './logger.js';
-import type { BuildNotifier } from './notifier.js';
-import type { PriorityEngine } from './priority-engine.js';
-import type { BuildRequest, BuildSchedulingConfig, BuildStatus, Target } from './types.js';
-import { BuildStatusManager } from './utils/build-status-manager.js';
-import { FileSystemUtils } from './utils/filesystem.js';
+import type { BaseBuilder } from "./builders/index.js";
+import type { Logger } from "./logger.js";
+import type { BuildNotifier } from "./notifier.js";
+import type { PriorityEngine } from "./priority-engine.js";
+import type { BuildRequest, BuildSchedulingConfig, BuildStatus, Target } from "./types.js";
+import { BuildStatusManager } from "./utils/build-status-manager.js";
+import { FileSystemUtils } from "./utils/filesystem.js";
 
 interface QueuedBuild extends BuildRequest {
   builder: BaseBuilder;
@@ -49,7 +49,7 @@ export class IntelligentBuildQueue {
     logger: Logger,
     priorityEngine: PriorityEngine,
     notifier?: BuildNotifier,
-    onBuildComplete?: (result: BuildStatus, request: QueuedBuild) => Promise<void> | void
+    onBuildComplete?: (result: BuildStatus, request: QueuedBuild) => Promise<void> | void,
   ) {
     this.config = config;
     this.logger = logger;
@@ -94,7 +94,7 @@ export class IntelligentBuildQueue {
     }
 
     this.logger.info(
-      `File changes detected: ${files.length} files affected ${affectedTargets.size} targets`
+      `File changes detected: ${files.length} files affected ${affectedTargets.size} targets`,
     );
 
     // Schedule builds for affected targets
@@ -109,8 +109,8 @@ export class IntelligentBuildQueue {
   /**
    * Queue a build without running change-detection (used for initial builds).
    */
-  public async queueTargetBuild(target: Target, reason: string = 'manual'): Promise<void> {
-    if (process.env.VITEST && reason === 'initial-build') {
+  public async queueTargetBuild(target: Target, reason: string = "manual"): Promise<void> {
+    if (process.env.VITEST && reason === "initial-build") {
       // In test environments we run direct builds for determinism; skip queue execution.
       return;
     }
@@ -158,7 +158,7 @@ export class IntelligentBuildQueue {
       this.sortQueue();
 
       this.logger.debug(
-        `Updated existing queue entry for ${targetName} with priority ${priority.score.toFixed(2)}`
+        `Updated existing queue entry for ${targetName} with priority ${priority.score.toFixed(2)}`,
       );
     } else {
       // Add new build request
@@ -182,7 +182,7 @@ export class IntelligentBuildQueue {
       this.sortQueue();
 
       this.logger.info(
-        `Queued build for ${targetName} with priority ${priority.score.toFixed(2)} (queue size: ${this.pendingQueue.length})`
+        `Queued build for ${targetName} with priority ${priority.score.toFixed(2)} (queue size: ${this.pendingQueue.length})`,
       );
     }
   }
@@ -210,7 +210,7 @@ export class IntelligentBuildQueue {
 
     if (process.env.DEBUG_WAITS) {
       // eslint-disable-next-line no-console
-      console.log('startBuild', targetName, request.triggeringFiles);
+      console.log("startBuild", targetName, request.triggeringFiles);
     }
 
     this.logger.info(`Starting build for ${targetName} (priority: ${request.priority.toFixed(2)})`);
@@ -239,7 +239,7 @@ export class IntelligentBuildQueue {
       // Create failure status
       const failureResult: BuildStatus = {
         targetName,
-        status: 'failure',
+        status: "failure",
         timestamp: new Date().toISOString(),
         error: error instanceof Error ? error.message : String(error),
         duration: Date.now() - startTime,
@@ -291,7 +291,7 @@ export class IntelligentBuildQueue {
     targetName: string,
     result: BuildStatus,
     startTime: number,
-    request: QueuedBuild
+    request: QueuedBuild,
   ): Promise<void> {
     // Remove from running builds
     this.runningBuilds.delete(targetName);
@@ -309,29 +309,29 @@ export class IntelligentBuildQueue {
       if (BuildStatusManager.isSuccess(result)) {
         if (process.env.DEBUG_WAITS) {
           // eslint-disable-next-line no-console
-          console.log('notify success', targetName, result);
+          console.log("notify success", targetName, result);
         }
         const outputInfo = builder?.getOutputInfo();
         const message = BuildStatusManager.formatNotificationMessage(result, outputInfo);
         if (process.env.DEBUG_WAITS) {
           // eslint-disable-next-line no-console
-          console.log('notify message', message);
+          console.log("notify message", message);
         }
 
         await this.notifier.notifyBuildComplete(`${targetName} Built`, message, target?.icon);
         if (process.env.DEBUG_WAITS) {
           // eslint-disable-next-line no-console
-          console.log('notify call args', `${targetName} Built`, message, target?.icon);
+          console.log("notify call args", `${targetName} Built`, message, target?.icon);
           // eslint-disable-next-line no-console
           console.log(
-            'notify mock calls',
-            (this.notifier.notifyBuildComplete as any)?.mock?.calls ?? 'no mock'
+            "notify mock calls",
+            (this.notifier.notifyBuildComplete as any)?.mock?.calls ?? "no mock",
           );
         }
       } else if (BuildStatusManager.isFailure(result)) {
         if (process.env.DEBUG_WAITS) {
           // eslint-disable-next-line no-console
-          console.log('notify failure', targetName, result);
+          console.log("notify failure", targetName, result);
         }
         const errorMessage = BuildStatusManager.getErrorMessage(result);
         await this.notifier.notifyBuildFailed(`${targetName} Failed`, errorMessage, target?.icon);
@@ -483,7 +483,7 @@ export class IntelligentBuildQueue {
 
     if (request.retryCount >= maxRetries) {
       this.logger.warn(
-        `Max retries reached for ${target.name} (${request.retryCount}/${maxRetries}), not retrying`
+        `Max retries reached for ${target.name} (${request.retryCount}/${maxRetries}), not retrying`,
       );
       return;
     }
@@ -495,7 +495,7 @@ export class IntelligentBuildQueue {
     const errorMessage = BuildStatusManager.getErrorMessage(result);
 
     this.logger.warn(
-      `Retrying ${target.name} (attempt ${attemptNumber}/${maxRetries}) in ${delay}ms due to failure${errorMessage ? `: ${errorMessage}` : ''}`
+      `Retrying ${target.name} (attempt ${attemptNumber}/${maxRetries}) in ${delay}ms due to failure${errorMessage ? `: ${errorMessage}` : ""}`,
     );
 
     setTimeout(() => {

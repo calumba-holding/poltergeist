@@ -2,7 +2,7 @@
  * CLI output formatter for consistent help displays across Poltergeist tools
  */
 
-import chalk from 'chalk';
+import chalk from "chalk";
 
 export interface CommandInfo {
   name: string;
@@ -44,15 +44,15 @@ export function sectionTitle(title: string): string {
  * Format the usage section
  */
 export function usage(programName: string, usageText: string): string {
-  const lines = [sectionTitle('Usage'), `  $ ${programName} ${usageText}`];
-  return lines.join('\n');
+  const lines = [sectionTitle("Usage"), `  $ ${programName} ${usageText}`];
+  return lines.join("\n");
 }
 
 /**
  * Format a single command with optional aliases
  */
 export function formatCommand(cmd: CommandInfo, padTo: number = 25): string {
-  const names = cmd.aliases ? `${cmd.name}, ${cmd.aliases.join(', ')}` : cmd.name;
+  const names = cmd.aliases ? `${cmd.name}, ${cmd.aliases.join(", ")}` : cmd.name;
   const fullName = cmd.args ? `${names} ${cmd.args}` : names;
   return `  ${fullName.padEnd(padTo)} ${chalk.gray(cmd.description)}`;
 }
@@ -61,7 +61,7 @@ export function formatCommand(cmd: CommandInfo, padTo: number = 25): string {
  * Format grouped commands
  */
 export function commandGroups(groups: CommandGroup[]): string {
-  const lines: string[] = [sectionTitle('Commands')];
+  const lines: string[] = [sectionTitle("Commands")];
 
   for (const group of groups) {
     if (group.title) {
@@ -71,10 +71,10 @@ export function commandGroups(groups: CommandGroup[]): string {
     // Calculate max width for alignment
     const maxWidth = Math.max(
       ...group.commands.map((cmd) => {
-        const names = cmd.aliases ? `${cmd.name}, ${cmd.aliases.join(', ')}` : cmd.name;
+        const names = cmd.aliases ? `${cmd.name}, ${cmd.aliases.join(", ")}` : cmd.name;
         const fullName = cmd.args ? `${names} ${cmd.args}` : names;
         return fullName.length;
-      })
+      }),
     );
 
     const padTo = Math.min(maxWidth + 2, 30);
@@ -83,25 +83,25 @@ export function commandGroups(groups: CommandGroup[]): string {
       lines.push(formatCommand(cmd, padTo));
     }
 
-    lines.push(''); // Empty line after each group
+    lines.push(""); // Empty line after each group
   }
 
-  return lines.join('\n').trimEnd();
+  return lines.join("\n").trimEnd();
 }
 
 /**
  * Format simple command list (no groups)
  */
 export function commands(commandList: CommandInfo[]): string {
-  const lines: string[] = [sectionTitle('Commands')];
+  const lines: string[] = [sectionTitle("Commands")];
 
   // Calculate max width for alignment
   const maxWidth = Math.max(
     ...commandList.map((cmd) => {
-      const names = cmd.aliases ? `${cmd.name}, ${cmd.aliases.join(', ')}` : cmd.name;
+      const names = cmd.aliases ? `${cmd.name}, ${cmd.aliases.join(", ")}` : cmd.name;
       const fullName = cmd.args ? `${names} ${cmd.args}` : names;
       return fullName.length;
-    })
+    }),
   );
 
   const padTo = Math.min(maxWidth + 2, 30);
@@ -110,14 +110,14 @@ export function commands(commandList: CommandInfo[]): string {
     lines.push(formatCommand(cmd, padTo));
   }
 
-  return lines.join('\n');
+  return lines.join("\n");
 }
 
 /**
  * Format options section
  */
 export function options(optionList: OptionInfo[]): string {
-  const lines: string[] = [sectionTitle('Options')];
+  const lines: string[] = [sectionTitle("Options")];
 
   // Calculate max width for alignment
   const maxWidth = Math.max(...optionList.map((opt) => opt.flags.length));
@@ -127,14 +127,14 @@ export function options(optionList: OptionInfo[]): string {
     lines.push(`  ${opt.flags.padEnd(padTo)} ${chalk.gray(opt.description)}`);
   }
 
-  return lines.join('\n');
+  return lines.join("\n");
 }
 
 /**
  * Format examples section
  */
 export function examples(programName: string, exampleList: ExampleInfo[]): string {
-  const lines: string[] = [sectionTitle('Examples')];
+  const lines: string[] = [sectionTitle("Examples")];
 
   for (const example of exampleList) {
     lines.push(`  $ ${programName} ${example.command}`);
@@ -143,7 +143,7 @@ export function examples(programName: string, exampleList: ExampleInfo[]): strin
     }
   }
 
-  return lines.join('\n');
+  return lines.join("\n");
 }
 
 /**
@@ -164,19 +164,19 @@ export function formatHelp(config: {
 
   // Header
   sections.push(header(config.title, config.tagline));
-  sections.push(''); // blank line
+  sections.push(""); // blank line
 
   // Usage
   sections.push(usage(config.programName, config.usage));
-  sections.push('');
+  sections.push("");
 
   // Commands (either grouped or simple)
   if (config.commandGroups && config.commandGroups.length > 0) {
     sections.push(commandGroups(config.commandGroups));
-    sections.push('');
+    sections.push("");
   } else if (config.commands && config.commands.length > 0) {
     sections.push(commands(config.commands));
-    sections.push('');
+    sections.push("");
   }
 
   // Additional sections (like Available Targets for polter)
@@ -184,7 +184,7 @@ export function formatHelp(config: {
     for (const section of config.additionalSections) {
       sections.push(sectionTitle(section.title));
       sections.push(section.content);
-      sections.push('');
+      sections.push("");
     }
   }
 
@@ -193,11 +193,11 @@ export function formatHelp(config: {
 
   // Examples
   if (config.examples && config.examples.length > 0) {
-    sections.push('');
+    sections.push("");
     sections.push(examples(config.programName, config.examples));
   }
 
-  return sections.join('\n');
+  return sections.join("\n");
 }
 
 /**
@@ -205,32 +205,32 @@ export function formatHelp(config: {
  */
 export function formatTarget(
   name: string,
-  status: 'success' | 'building' | 'failed' | 'not-running' | 'unknown',
-  outputPath?: string
+  status: "success" | "building" | "failed" | "not-running" | "unknown",
+  outputPath?: string,
 ): string {
-  let statusIcon = '';
-  let statusText = '';
+  let statusIcon = "";
+  let statusText = "";
 
   switch (status) {
-    case 'success':
-      statusIcon = chalk.green('✓');
-      statusText = chalk.gray(' (ready)');
+    case "success":
+      statusIcon = chalk.green("✓");
+      statusText = chalk.gray(" (ready)");
       break;
-    case 'building':
-      statusIcon = chalk.yellow('⟳');
-      statusText = chalk.yellow(' (building...)');
+    case "building":
+      statusIcon = chalk.yellow("⟳");
+      statusText = chalk.yellow(" (building...)");
       break;
-    case 'failed':
-      statusIcon = chalk.red('✗');
-      statusText = chalk.red(' (failed)');
+    case "failed":
+      statusIcon = chalk.red("✗");
+      statusText = chalk.red(" (failed)");
       break;
-    case 'not-running':
-      statusIcon = chalk.gray('○');
-      statusText = chalk.gray(' (poltergeist not running)');
+    case "not-running":
+      statusIcon = chalk.gray("○");
+      statusText = chalk.gray(" (poltergeist not running)");
       break;
     default:
-      statusIcon = chalk.gray('?');
-      statusText = chalk.gray(' (unknown)');
+      statusIcon = chalk.gray("?");
+      statusText = chalk.gray(" (unknown)");
   }
 
   const lines = [`  ${statusIcon} ${chalk.bold(name)}${statusText}`];
@@ -238,7 +238,7 @@ export function formatTarget(
     lines.push(chalk.gray(`    Output: ${outputPath}`));
   }
 
-  return lines.join('\n');
+  return lines.join("\n");
 }
 
 /**

@@ -1,14 +1,14 @@
-import type { ChildProcess } from 'child_process';
-import { createHash } from 'crypto';
-import { existsSync } from 'fs';
-import { mkdir, readFile, rm, writeFile } from 'fs/promises';
-import { dirname, join, sep } from 'path';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { DaemonManager } from '../dist/daemon/daemon-manager.js';
-import { createLogger } from '../dist/logger.js';
-import type { PoltergeistConfig } from '../dist/types.js';
-import { FileSystemUtils } from '../dist/utils/filesystem.js';
-import { ProcessManager } from '../dist/utils/process-manager.js';
+import type { ChildProcess } from "child_process";
+import { createHash } from "crypto";
+import { existsSync } from "fs";
+import { mkdir, readFile, rm, writeFile } from "fs/promises";
+import { dirname, join, sep } from "path";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { DaemonManager } from "../dist/daemon/daemon-manager.js";
+import { createLogger } from "../dist/logger.js";
+import type { PoltergeistConfig } from "../dist/types.js";
+import { FileSystemUtils } from "../dist/utils/filesystem.js";
+import { ProcessManager } from "../dist/utils/process-manager.js";
 
 // Stable mocks for child_process so vi.mock hoists safely
 const { spawnMock, forkMock } = vi.hoisted(() => {
@@ -16,14 +16,14 @@ const { spawnMock, forkMock } = vi.hoisted(() => {
   const f = vi.fn();
   return { spawnMock: s, forkMock: f };
 });
-vi.mock('child_process', () => ({ spawn: spawnMock, fork: forkMock }));
+vi.mock("child_process", () => ({ spawn: spawnMock, fork: forkMock }));
 
 // Helper function to get project hash (same logic as DaemonManager)
 function getProjectHash(projectPath: string): string {
-  return createHash('sha256').update(projectPath).digest('hex').substring(0, 8);
+  return createHash("sha256").update(projectPath).digest("hex").substring(0, 8);
 }
 
-describe('DaemonManager', () => {
+describe("DaemonManager", () => {
   let daemon: DaemonManager;
   let logger: ReturnType<typeof createLogger>;
   let testProjectPath: string;
@@ -33,7 +33,7 @@ describe('DaemonManager', () => {
     logger = createLogger();
     daemon = new DaemonManager(logger);
     // Use a more realistic test path that works on all platforms
-    testProjectPath = process.platform === 'win32' ? 'C:\\test\\project' : '/test/project';
+    testProjectPath = process.platform === "win32" ? "C:\\test\\project" : "/test/project";
     stateDir = FileSystemUtils.getStateDirectory();
 
     // Ensure state directory exists
@@ -45,7 +45,7 @@ describe('DaemonManager', () => {
 
   afterEach(async () => {
     // Clean up any test files
-    const projectName = testProjectPath.split(sep).pop() || 'unknown';
+    const projectName = testProjectPath.split(sep).pop() || "unknown";
     const hash = getProjectHash(testProjectPath);
     const daemonInfoPath = join(stateDir, `${projectName}-${hash}-daemon.json`);
     const logFilePath = join(stateDir, `${projectName}-${hash}-daemon.log`);
@@ -62,14 +62,14 @@ describe('DaemonManager', () => {
     }
   });
 
-  describe('isDaemonRunning', () => {
-    it('should return false when no daemon info file exists', async () => {
+  describe("isDaemonRunning", () => {
+    it("should return false when no daemon info file exists", async () => {
       const result = await daemon.isDaemonRunning(testProjectPath);
       expect(result).toBe(false);
     });
 
-    it('should return false when daemon info exists but process is dead', async () => {
-      const projectName = testProjectPath.split(sep).pop() || 'unknown';
+    it("should return false when daemon info exists but process is dead", async () => {
+      const projectName = testProjectPath.split(sep).pop() || "unknown";
       const hash = getProjectHash(testProjectPath);
       const daemonInfoPath = join(stateDir, `${projectName}-${hash}-daemon.json`);
 
@@ -91,8 +91,8 @@ describe('DaemonManager', () => {
       expect(existsSync(daemonInfoPath)).toBe(false);
     });
 
-    it('should return true when daemon is actually running', async () => {
-      const projectName = testProjectPath.split(sep).pop() || 'unknown';
+    it("should return true when daemon is actually running", async () => {
+      const projectName = testProjectPath.split(sep).pop() || "unknown";
       const hash = getProjectHash(testProjectPath);
       const daemonInfoPath = join(stateDir, `${projectName}-${hash}-daemon.json`);
 
@@ -108,7 +108,7 @@ describe('DaemonManager', () => {
       await writeFile(daemonInfoPath, JSON.stringify(daemonInfo));
 
       // Mock ProcessManager.isProcessAlive to return true for current process
-      vi.spyOn(ProcessManager, 'isProcessAlive').mockReturnValue(true);
+      vi.spyOn(ProcessManager, "isProcessAlive").mockReturnValue(true);
 
       const result = await daemon.isDaemonRunning(testProjectPath);
       expect(result).toBe(true);
@@ -118,18 +118,18 @@ describe('DaemonManager', () => {
     });
   });
 
-  describe('startDaemon', () => {
-    it('should successfully start a daemon', async () => {
+  describe("startDaemon", () => {
+    it("should successfully start a daemon", async () => {
       const config: PoltergeistConfig = {
-        version: '1.0',
-        projectType: 'node',
+        version: "1.0",
+        projectType: "node",
         targets: [
           {
-            name: 'test',
-            type: 'executable',
-            buildCommand: 'echo test',
-            outputPath: './test',
-            watchPaths: ['*.ts'],
+            name: "test",
+            type: "executable",
+            buildCommand: "echo test",
+            outputPath: "./test",
+            watchPaths: ["*.ts"],
           },
         ],
       };
@@ -138,9 +138,9 @@ describe('DaemonManager', () => {
       const mockChild = {
         pid: 12345,
         once: vi.fn((event, callback) => {
-          if (event === 'message') {
+          if (event === "message") {
             // Simulate successful startup message
-            setTimeout(() => callback({ type: 'started', pid: 12345 }), 10);
+            setTimeout(() => callback({ type: "started", pid: 12345 }), 10);
           }
         }),
         unref: vi.fn(),
@@ -158,27 +158,27 @@ describe('DaemonManager', () => {
       expect(pid).toBe(12345);
       expect(spawnMock).toHaveBeenCalledWith(
         process.execPath,
-        expect.arrayContaining([expect.stringContaining('daemon-worker.js')]),
+        expect.arrayContaining([expect.stringContaining("daemon-worker.js")]),
         expect.objectContaining({
           detached: true,
-          stdio: ['ignore', 'ignore', 'ignore', 'ipc'],
+          stdio: ["ignore", "ignore", "ignore", "ipc"],
           cwd: testProjectPath,
-        })
+        }),
       );
 
       // Verify daemon info was saved
-      const projectName = testProjectPath.split(sep).pop() || 'unknown';
+      const projectName = testProjectPath.split(sep).pop() || "unknown";
       const hash = getProjectHash(testProjectPath);
       const daemonInfoPath = join(stateDir, `${projectName}-${hash}-daemon.json`);
-      const savedInfo = JSON.parse(await readFile(daemonInfoPath, 'utf-8'));
+      const savedInfo = JSON.parse(await readFile(daemonInfoPath, "utf-8"));
 
       expect(savedInfo.pid).toBe(12345);
       expect(savedInfo.projectPath).toBe(testProjectPath);
     });
 
-    it('should fail if daemon is already running', async () => {
+    it("should fail if daemon is already running", async () => {
       // Set up existing daemon
-      const projectName = testProjectPath.split(sep).pop() || 'unknown';
+      const projectName = testProjectPath.split(sep).pop() || "unknown";
       const hash = getProjectHash(testProjectPath);
       const daemonInfoPath = join(stateDir, `${projectName}-${hash}-daemon.json`);
 
@@ -193,36 +193,36 @@ describe('DaemonManager', () => {
       await writeFile(daemonInfoPath, JSON.stringify(daemonInfo));
 
       // Mock ProcessManager.isProcessAlive to return true for current process
-      vi.spyOn(ProcessManager, 'isProcessAlive').mockReturnValue(true);
+      vi.spyOn(ProcessManager, "isProcessAlive").mockReturnValue(true);
 
       const config: PoltergeistConfig = {
-        version: '1.0',
-        projectType: 'node',
+        version: "1.0",
+        projectType: "node",
         targets: [],
       };
 
       await expect(
         daemon.startDaemon(config, {
           projectRoot: testProjectPath,
-        })
-      ).rejects.toThrow('Daemon already running for this project');
+        }),
+      ).rejects.toThrow("Daemon already running for this project");
 
       // Restore mock
       vi.restoreAllMocks();
     });
 
-    it('should handle daemon startup failure', async () => {
+    it("should handle daemon startup failure", async () => {
       const config: PoltergeistConfig = {
-        version: '1.0',
-        projectType: 'node',
+        version: "1.0",
+        projectType: "node",
         targets: [],
       };
 
       // Mock spawn to simulate error
       const mockChild = {
         once: vi.fn((event, callback) => {
-          if (event === 'message') {
-            setTimeout(() => callback({ type: 'error', error: 'Startup failed' }), 10);
+          if (event === "message") {
+            setTimeout(() => callback({ type: "error", error: "Startup failed" }), 10);
           }
         }),
         kill: vi.fn(),
@@ -233,19 +233,19 @@ describe('DaemonManager', () => {
       await expect(
         daemon.startDaemon(config, {
           projectRoot: testProjectPath,
-        })
-      ).rejects.toThrow('Startup failed');
+        }),
+      ).rejects.toThrow("Startup failed");
     });
 
-    it('should handle daemon startup timeout', async () => {
+    it("should handle daemon startup timeout", async () => {
       const config: PoltergeistConfig = {
-        version: '1.0',
-        projectType: 'node',
+        version: "1.0",
+        projectType: "node",
         targets: [],
       };
 
       // Set a short timeout for testing
-      process.env.POLTERGEIST_DAEMON_TIMEOUT = '100';
+      process.env.POLTERGEIST_DAEMON_TIMEOUT = "100";
 
       // Mock spawn to simulate timeout (don't send message)
       const mockChild = {
@@ -259,9 +259,9 @@ describe('DaemonManager', () => {
 
       // Simulate timeout by not calling the message callback
       mockChild.once.mockImplementation((event, _callback) => {
-        if (event === 'message') {
+        if (event === "message") {
           // Don't call the callback to simulate timeout
-        } else if (event === 'error') {
+        } else if (event === "error") {
           // Don't call error callback either
         }
       });
@@ -272,8 +272,8 @@ describe('DaemonManager', () => {
           {
             projectRoot: testProjectPath,
           },
-          1
-        ) // Only 1 attempt to speed up test
+          1,
+        ), // Only 1 attempt to speed up test
       ).rejects.toThrow(/Daemon startup timeout after 100ms/);
 
       expect(mockChild.kill).toHaveBeenCalled();
@@ -283,9 +283,9 @@ describe('DaemonManager', () => {
     }, 10000); // Increase test timeout
   });
 
-  describe('stopDaemon', () => {
-    it('should successfully stop a running daemon', async () => {
-      const projectName = testProjectPath.split(sep).pop() || 'unknown';
+  describe("stopDaemon", () => {
+    it("should successfully stop a running daemon", async () => {
+      const projectName = testProjectPath.split(sep).pop() || "unknown";
       const hash = getProjectHash(testProjectPath);
       const daemonInfoPath = join(stateDir, `${projectName}-${hash}-daemon.json`);
 
@@ -302,7 +302,7 @@ describe('DaemonManager', () => {
 
       // Mock ProcessManager.isProcessAlive to simulate process exists then dies
       let processAlive = true;
-      vi.spyOn(ProcessManager, 'isProcessAlive').mockImplementation(() => {
+      vi.spyOn(ProcessManager, "isProcessAlive").mockImplementation(() => {
         const wasAlive = processAlive;
         if (wasAlive) {
           processAlive = false; // Process dies after first check
@@ -313,7 +313,7 @@ describe('DaemonManager', () => {
       // Mock process.kill to simulate successful termination
       const originalKill = process.kill;
       process.kill = vi.fn((_pid, signal) => {
-        if (signal === 'SIGTERM') {
+        if (signal === "SIGTERM") {
           // Simulate termination
           return true;
         }
@@ -326,32 +326,32 @@ describe('DaemonManager', () => {
       }
       vi.spyOn(
         daemon as unknown as DaemonManagerWithPrivate,
-        'waitForProcessExit'
+        "waitForProcessExit",
       ).mockResolvedValue(undefined);
 
       await daemon.stopDaemon(testProjectPath);
 
-      expect(process.kill).toHaveBeenCalledWith(12345, 'SIGTERM');
+      expect(process.kill).toHaveBeenCalledWith(12345, "SIGTERM");
       expect(existsSync(daemonInfoPath)).toBe(false);
 
       process.kill = originalKill;
     });
 
-    it('should throw error if no daemon is running', async () => {
+    it("should throw error if no daemon is running", async () => {
       await expect(daemon.stopDaemon(testProjectPath)).rejects.toThrow(
-        'No daemon running for this project'
+        "No daemon running for this project",
       );
     });
   });
 
-  describe('readLogFile', () => {
-    it('should return empty array when log file does not exist', async () => {
+  describe("readLogFile", () => {
+    it("should return empty array when log file does not exist", async () => {
       const logs = await daemon.readLogFile(testProjectPath);
       expect(logs).toEqual([]);
     });
 
-    it('should read and return log lines', async () => {
-      const projectName = testProjectPath.split(sep).pop() || 'unknown';
+    it("should read and return log lines", async () => {
+      const projectName = testProjectPath.split(sep).pop() || "unknown";
       const hash = getProjectHash(testProjectPath);
       const logFilePath = join(stateDir, `${projectName}-${hash}-daemon.log`);
 
@@ -365,48 +365,48 @@ Line 5`;
       await writeFile(logFilePath, logContent);
 
       const logs = await daemon.readLogFile(testProjectPath);
-      expect(logs).toEqual(['Line 1', 'Line 2', 'Line 3', 'Line 4', 'Line 5']);
+      expect(logs).toEqual(["Line 1", "Line 2", "Line 3", "Line 4", "Line 5"]);
     });
 
-    it('should limit returned lines when specified', async () => {
-      const projectName = testProjectPath.split(sep).pop() || 'unknown';
+    it("should limit returned lines when specified", async () => {
+      const projectName = testProjectPath.split(sep).pop() || "unknown";
       const hash = getProjectHash(testProjectPath);
       const logFilePath = join(stateDir, `${projectName}-${hash}-daemon.log`);
 
-      const logContent = Array.from({ length: 10 }, (_, i) => `Line ${i + 1}`).join('\n');
+      const logContent = Array.from({ length: 10 }, (_, i) => `Line ${i + 1}`).join("\n");
 
       await mkdir(dirname(logFilePath), { recursive: true });
       await writeFile(logFilePath, logContent);
 
       const logs = await daemon.readLogFile(testProjectPath, 3);
-      expect(logs).toEqual(['Line 8', 'Line 9', 'Line 10']);
+      expect(logs).toEqual(["Line 8", "Line 9", "Line 10"]);
     });
   });
 
-  describe('getDaemonInfo', () => {
-    it('should return null when no daemon info exists', async () => {
+  describe("getDaemonInfo", () => {
+    it("should return null when no daemon info exists", async () => {
       const info = await daemon.getDaemonInfo(testProjectPath);
       expect(info).toBeNull();
     });
 
-    it('should return daemon info when daemon is running', async () => {
-      const projectName = testProjectPath.split(sep).pop() || 'unknown';
+    it("should return daemon info when daemon is running", async () => {
+      const projectName = testProjectPath.split(sep).pop() || "unknown";
       const hash = getProjectHash(testProjectPath);
       const daemonInfoPath = join(stateDir, `${projectName}-${hash}-daemon.json`);
 
       const daemonInfo = {
         pid: process.pid,
-        startTime: '2024-01-01T00:00:00.000Z',
+        startTime: "2024-01-01T00:00:00.000Z",
         logFile: join(stateDir, `${projectName}-${hash}-daemon.log`),
         projectPath: testProjectPath,
-        configPath: '/test/config.json',
+        configPath: "/test/config.json",
       };
 
       await mkdir(stateDir, { recursive: true });
       await writeFile(daemonInfoPath, JSON.stringify(daemonInfo));
 
       // Mock ProcessManager.isProcessAlive to return true for current process
-      vi.spyOn(ProcessManager, 'isProcessAlive').mockReturnValue(true);
+      vi.spyOn(ProcessManager, "isProcessAlive").mockReturnValue(true);
 
       const info = await daemon.getDaemonInfo(testProjectPath);
       expect(info).toEqual(daemonInfo);

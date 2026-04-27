@@ -1,6 +1,6 @@
-import { ConfigurationError } from '../config.js';
-import type { PoltergeistConfig } from '../types.js';
-import { ConfigurationManager } from '../utils/config-manager.js';
+import { ConfigurationError } from "../config.js";
+import type { PoltergeistConfig } from "../types.js";
+import { ConfigurationManager } from "../utils/config-manager.js";
 
 export interface LoadedConfiguration {
   config: PoltergeistConfig;
@@ -11,7 +11,7 @@ export interface LoadedConfiguration {
 export class ConfigurationLoadError extends Error {
   constructor(message: string) {
     super(message);
-    this.name = 'ConfigurationLoadError';
+    this.name = "ConfigurationLoadError";
   }
 }
 
@@ -37,14 +37,14 @@ export async function loadConfiguration(configPath?: string): Promise<LoadedConf
   }
 }
 
-export type GitSummaryMode = 'ai' | 'list' | undefined;
+export type GitSummaryMode = "ai" | "list" | undefined;
 
 export function parseGitSummaryModeOption(value?: string): GitSummaryMode {
   if (!value) {
     return undefined;
   }
   const normalized = value.toLowerCase();
-  if (normalized === 'ai' || normalized === 'list') {
+  if (normalized === "ai" || normalized === "list") {
     return normalized;
   }
   throw new Error(`Invalid git mode "${value}". Use "ai" or "list".`);

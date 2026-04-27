@@ -1,12 +1,12 @@
 // Windows-specific StateManager tests - sequential operations only
 
-import { existsSync, mkdirSync, rmSync } from 'fs';
-import { tmpdir } from 'os';
-import { join } from 'path';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { Logger } from '../src/logger.js';
-import { StateManager } from '../src/state.js';
-import type { BaseTarget } from '../src/types.js';
+import { existsSync, mkdirSync, rmSync } from "fs";
+import { tmpdir } from "os";
+import { join } from "path";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { Logger } from "../src/logger.js";
+import { StateManager } from "../src/state.js";
+import type { BaseTarget } from "../src/types.js";
 
 // Mock logger
 const mockLogger: Logger = {
@@ -17,12 +17,12 @@ const mockLogger: Logger = {
   success: vi.fn(),
 };
 
-describe.runIf(process.platform === 'win32' && !process.env.CI)(
-  'StateManager Windows Tests',
+describe.runIf(process.platform === "win32" && !process.env.CI)(
+  "StateManager Windows Tests",
   () => {
     let stateManager: StateManager;
     let testDir: string;
-    const projectRoot = '/test/project';
+    const projectRoot = "/test/project";
 
     beforeEach(() => {
       vi.clearAllMocks();
@@ -56,14 +56,14 @@ describe.runIf(process.platform === 'win32' && !process.env.CI)(
       }
     });
 
-    describe('Basic State Operations', () => {
-      it('should handle sequential state initialization and updates', async () => {
+    describe("Basic State Operations", () => {
+      it("should handle sequential state initialization and updates", async () => {
         const target: BaseTarget = {
-          name: 'windows-sequential-test',
-          type: 'executable',
+          name: "windows-sequential-test",
+          type: "executable",
           enabled: true,
-          buildCommand: 'echo test',
-          watchPaths: ['src/**/*'],
+          buildCommand: "echo test",
+          watchPaths: ["src/**/*"],
         };
 
         // Sequential operations to avoid Windows race conditions
@@ -72,26 +72,26 @@ describe.runIf(process.platform === 'win32' && !process.env.CI)(
         // Small delay between operations
         await new Promise((resolve) => setTimeout(resolve, 100));
 
-        await stateManager.updateBuildStatus('windows-sequential-test', {
-          targetName: 'windows-sequential-test',
-          status: 'success',
+        await stateManager.updateBuildStatus("windows-sequential-test", {
+          targetName: "windows-sequential-test",
+          status: "success",
           timestamp: new Date().toISOString(),
           duration: 1000,
         });
 
-        const state = await stateManager.readState('windows-sequential-test');
+        const state = await stateManager.readState("windows-sequential-test");
         expect(state).toBeDefined();
         expect(state?.process.pid).toBe(process.pid);
-        expect(state?.lastBuild?.status).toBe('success');
+        expect(state?.lastBuild?.status).toBe("success");
       });
 
-      it('should handle state directory recreation', async () => {
+      it("should handle state directory recreation", async () => {
         const target: BaseTarget = {
-          name: 'recreation-test',
-          type: 'executable',
+          name: "recreation-test",
+          type: "executable",
           enabled: true,
-          buildCommand: 'echo test',
-          watchPaths: ['src/**/*'],
+          buildCommand: "echo test",
+          watchPaths: ["src/**/*"],
         };
 
         // Remove state directory
@@ -101,17 +101,17 @@ describe.runIf(process.platform === 'win32' && !process.env.CI)(
         await stateManager.initializeState(target);
 
         expect(existsSync(testDir)).toBe(true);
-        const state = await stateManager.readState('recreation-test');
+        const state = await stateManager.readState("recreation-test");
         expect(state).toBeDefined();
       });
 
-      it('should handle state cleanup gracefully', async () => {
+      it("should handle state cleanup gracefully", async () => {
         const target: BaseTarget = {
-          name: 'cleanup-test',
-          type: 'executable',
+          name: "cleanup-test",
+          type: "executable",
           enabled: true,
-          buildCommand: 'echo test',
-          watchPaths: ['src/**/*'],
+          buildCommand: "echo test",
+          watchPaths: ["src/**/*"],
         };
 
         await stateManager.initializeState(target);
@@ -121,15 +121,15 @@ describe.runIf(process.platform === 'win32' && !process.env.CI)(
       });
     });
 
-    describe('Windows File System Edge Cases', () => {
-      it('should handle long file paths', async () => {
-        const longName = 'a'.repeat(100); // Reduced from 200 to avoid Windows path limits
+    describe("Windows File System Edge Cases", () => {
+      it("should handle long file paths", async () => {
+        const longName = "a".repeat(100); // Reduced from 200 to avoid Windows path limits
         const target: BaseTarget = {
           name: longName,
-          type: 'executable',
+          type: "executable",
           enabled: true,
-          buildCommand: 'echo test',
-          watchPaths: ['src/**/*'],
+          buildCommand: "echo test",
+          watchPaths: ["src/**/*"],
         };
 
         await stateManager.initializeState(target);
@@ -138,21 +138,21 @@ describe.runIf(process.platform === 'win32' && !process.env.CI)(
         expect(state?.target).toBe(longName);
       });
 
-      it('should handle state file locking gracefully', async () => {
+      it("should handle state file locking gracefully", async () => {
         const target: BaseTarget = {
-          name: 'lock-test',
-          type: 'executable',
+          name: "lock-test",
+          type: "executable",
           enabled: true,
-          buildCommand: 'echo test',
-          watchPaths: ['src/**/*'],
+          buildCommand: "echo test",
+          watchPaths: ["src/**/*"],
         };
 
         await stateManager.initializeState(target);
 
         // Check lock status
-        const isLocked = await stateManager.isLocked('lock-test');
+        const isLocked = await stateManager.isLocked("lock-test");
         expect(isLocked).toBe(false); // Own process shouldn't be locked
       });
     });
-  }
+  },
 );

@@ -1,16 +1,16 @@
-import chalk from 'chalk';
-import type { StatusObject } from '../status/types.js';
+import chalk from "chalk";
+import type { StatusObject } from "../status/types.js";
 
 export function formatStatus(status: string): string {
   switch (status) {
-    case 'success':
-      return chalk.green('✅ Success');
-    case 'failure':
-      return chalk.red('❌ Failed');
-    case 'building':
-      return chalk.yellow('🔨 Building');
-    case 'watching':
-      return chalk.blue('👀 Watching');
+    case "success":
+      return chalk.green("✅ Success");
+    case "failure":
+      return chalk.red("❌ Failed");
+    case "building":
+      return chalk.yellow("🔨 Building");
+    case "watching":
+      return chalk.blue("👀 Watching");
     default:
       return chalk.gray(status);
   }
@@ -27,7 +27,7 @@ export function printBuildLockHints(targetName: string): void {
 export function formatTargetStatus(name: string, status: unknown, verbose?: boolean): void {
   const statusObj = status as StatusObject;
   console.log(chalk.cyan(`Target: ${name}`));
-  console.log(`  Status: ${formatStatus(statusObj.status || 'unknown')}`);
+  console.log(`  Status: ${formatStatus(statusObj.status || "unknown")}`);
 
   const formatShortDuration = (ms?: number): string | undefined => {
     if (!ms || ms <= 0) {
@@ -55,7 +55,7 @@ export function formatTargetStatus(name: string, status: unknown, verbose?: bool
       console.log(`  Process: ${chalk.green(`Running (PID: ${pid} on ${hostname})`)}`);
       const heartbeatAge = lastHeartbeat ? Date.now() - new Date(lastHeartbeat).getTime() : 0;
       const heartbeatStatus =
-        heartbeatAge < 30000 ? chalk.green('✓ Active') : chalk.yellow('⚠ Stale');
+        heartbeatAge < 30000 ? chalk.green("✓ Active") : chalk.yellow("⚠ Stale");
       console.log(`  Heartbeat: ${heartbeatStatus} (${Math.round(heartbeatAge / 1000)}s ago)`);
 
       // Show uptime in verbose mode
@@ -66,13 +66,13 @@ export function formatTargetStatus(name: string, status: unknown, verbose?: bool
         console.log(`  Uptime: ${uptimeMinutes}m ${uptimeSeconds}s`);
       }
     } else {
-      console.log(`  Process: ${chalk.gray('Not running')}`);
+      console.log(`  Process: ${chalk.gray("Not running")}`);
     }
   } else if (statusObj.pid) {
     // Legacy format
     console.log(`  Process: ${chalk.green(`Running (PID: ${statusObj.pid})`)}`);
   } else {
-    console.log(`  Process: ${chalk.gray('Not running')}`);
+    console.log(`  Process: ${chalk.gray("Not running")}`);
   }
 
   // Build information
@@ -81,7 +81,7 @@ export function formatTargetStatus(name: string, status: unknown, verbose?: bool
     console.log(`  Build Status: ${formatStatus(statusObj.lastBuild.status)}`);
 
     // Show build command if building
-    if (statusObj.lastBuild.status === 'building' && statusObj.buildCommand) {
+    if (statusObj.lastBuild.status === "building" && statusObj.buildCommand) {
       console.log(`  Command: ${statusObj.buildCommand}`);
     }
 
@@ -90,7 +90,7 @@ export function formatTargetStatus(name: string, status: unknown, verbose?: bool
     }
 
     // Show elapsed time and estimate if building
-    if (statusObj.lastBuild.status === 'building') {
+    if (statusObj.lastBuild.status === "building") {
       const elapsed = Date.now() - new Date(statusObj.lastBuild.timestamp).getTime();
       const elapsedSec = Math.round(elapsed / 1000);
       let timeInfo = `  Elapsed: ${elapsedSec}s`;
@@ -143,10 +143,10 @@ export function formatTargetStatus(name: string, status: unknown, verbose?: bool
 
   // Build statistics (verbose mode)
   if (verbose && statusObj.buildStats) {
-    console.log(chalk.gray('  Build Statistics:'));
+    console.log(chalk.gray("  Build Statistics:"));
     if (statusObj.buildStats.averageDuration) {
       console.log(
-        `    Average Duration: ${Math.round(statusObj.buildStats.averageDuration / 1000)}s`
+        `    Average Duration: ${Math.round(statusObj.buildStats.averageDuration / 1000)}s`,
       );
     }
     if (statusObj.buildStats.minDuration !== undefined) {
@@ -166,13 +166,13 @@ export function formatTargetStatus(name: string, status: unknown, verbose?: bool
   }
 
   if (statusObj.postBuild?.length) {
-    console.log('  Post-build tasks:');
+    console.log("  Post-build tasks:");
     statusObj.postBuild.forEach((result) => {
       const summary =
-        result.summary || `${result.name}: ${result.status ?? 'pending'}`.replace(/\s+/g, ' ');
+        result.summary || `${result.name}: ${result.status ?? "pending"}`.replace(/\s+/g, " ");
       const duration = formatShortDuration(result.durationMs);
-      const exitInfo = result.exitCode !== undefined ? chalk.dim(` (exit ${result.exitCode})`) : '';
-      console.log(`    - ${summary}${duration ? chalk.dim(` [${duration}]`) : ''}${exitInfo}`);
+      const exitInfo = result.exitCode !== undefined ? chalk.dim(` (exit ${result.exitCode})`) : "";
+      console.log(`    - ${summary}${duration ? chalk.dim(` [${duration}]`) : ""}${exitInfo}`);
       result.lines?.slice(0, 3).forEach((line) => {
         console.log(chalk.gray(`      ${line}`));
       });
@@ -185,7 +185,7 @@ export function formatTargetStatus(name: string, status: unknown, verbose?: bool
   }
 
   // Show agent instructions if not in TTY and building
-  if (!process.stdout.isTTY && statusObj.lastBuild?.status === 'building') {
+  if (!process.stdout.isTTY && statusObj.lastBuild?.status === "building") {
     console.log();
     if (statusObj.buildStats?.averageDuration) {
       const avgSec = Math.round(statusObj.buildStats.averageDuration / 1000);

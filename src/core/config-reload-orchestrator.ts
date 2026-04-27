@@ -1,6 +1,6 @@
-import type { PoltergeistConfig } from '../types.js';
-import { type ConfigChanges, detectConfigChanges } from '../utils/config-diff.js';
-import { ConfigurationManager } from '../utils/config-manager.js';
+import type { PoltergeistConfig } from "../types.js";
+import { type ConfigChanges, detectConfigChanges } from "../utils/config-diff.js";
+import { ConfigurationManager } from "../utils/config-manager.js";
 
 interface ConfigReloadDeps {
   configPath?: string;
@@ -17,7 +17,7 @@ export class ConfigReloadOrchestrator {
   }
 
   public async reloadConfig(
-    current: PoltergeistConfig
+    current: PoltergeistConfig,
   ): Promise<{ config: PoltergeistConfig; changes: ConfigChanges } | null> {
     if (!this.configPath) return null;
     const newConfig = await this.loader(this.configPath);

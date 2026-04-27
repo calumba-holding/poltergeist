@@ -1,13 +1,13 @@
 // Tests for BuilderFactory and builders
 
-import { spawn } from 'child_process';
-import { EventEmitter } from 'events';
-import { join } from 'path';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { AppBundleBuilder, BuilderFactory, ExecutableBuilder } from '../src/builders/index.js';
-import type { Logger } from '../src/logger.js';
-import type { StateManager } from '../src/state.js';
-import type { AppBundleTarget, ExecutableTarget } from '../src/types.js';
+import { spawn } from "child_process";
+import { EventEmitter } from "events";
+import { join } from "path";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { AppBundleBuilder, BuilderFactory, ExecutableBuilder } from "../src/builders/index.js";
+import type { Logger } from "../src/logger.js";
+import type { StateManager } from "../src/state.js";
+import type { AppBundleTarget, ExecutableTarget } from "../src/types.js";
 
 // Mock child process
 class MockChildProcess extends EventEmitter {
@@ -22,12 +22,12 @@ class MockChildProcess extends EventEmitter {
 }
 
 // Mock modules
-vi.mock('child_process', () => ({
+vi.mock("child_process", () => ({
   spawn: vi.fn(),
-  execSync: vi.fn().mockReturnValue('abc123\n'),
+  execSync: vi.fn().mockReturnValue("abc123\n"),
 }));
-vi.mock('../src/notifier.js');
-vi.mock('fs', () => ({
+vi.mock("../src/notifier.js");
+vi.mock("fs", () => ({
   existsSync: vi.fn().mockReturnValue(true),
 }));
 
@@ -56,78 +56,78 @@ const mockStateManager = {
   cleanup: vi.fn(),
   // Additional StateManager-specific methods
   logger: mockLogger,
-  projectRoot: '/test/project',
+  projectRoot: "/test/project",
   heartbeatInterval: undefined,
   states: new Map(),
-  stateDir: '/tmp/poltergeist',
+  stateDir: "/tmp/poltergeist",
 } as StateManager;
 
-describe('BuilderFactory', () => {
+describe("BuilderFactory", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  describe('createBuilder', () => {
-    it('should create ExecutableBuilder for executable target', () => {
+  describe("createBuilder", () => {
+    it("should create ExecutableBuilder for executable target", () => {
       const target: ExecutableTarget = {
-        name: 'cli',
-        type: 'executable',
+        name: "cli",
+        type: "executable",
         enabled: true,
-        buildCommand: 'npm run build',
-        outputPath: './dist/cli',
-        watchPaths: ['src/**/*.ts'],
+        buildCommand: "npm run build",
+        outputPath: "./dist/cli",
+        watchPaths: ["src/**/*.ts"],
       };
 
       const builder = BuilderFactory.createBuilder(
         target,
-        '/test/project',
+        "/test/project",
         mockLogger,
-        mockStateManager
+        mockStateManager,
       );
 
       expect(builder).toBeInstanceOf(ExecutableBuilder);
     });
 
-    it('should create AppBundleBuilder for app-bundle target', () => {
+    it("should create AppBundleBuilder for app-bundle target", () => {
       const target: AppBundleTarget = {
-        name: 'mac-app',
-        type: 'app-bundle',
-        platform: 'macos',
+        name: "mac-app",
+        type: "app-bundle",
+        platform: "macos",
         enabled: true,
-        buildCommand: 'xcodebuild',
-        bundleId: 'com.example.app',
-        watchPaths: ['src/**/*.swift'],
+        buildCommand: "xcodebuild",
+        bundleId: "com.example.app",
+        watchPaths: ["src/**/*.swift"],
       };
 
       const builder = BuilderFactory.createBuilder(
         target,
-        '/test/project',
+        "/test/project",
         mockLogger,
-        mockStateManager
+        mockStateManager,
       );
 
       expect(builder).toBeInstanceOf(AppBundleBuilder);
     });
 
-    it('should throw error for unsupported target type', () => {
+    it("should throw error for unsupported target type", () => {
       const target = {
-        name: 'unknown',
-        type: 'unsupported-type' as 'executable',
+        name: "unknown",
+        type: "unsupported-type" as "executable",
         enabled: true,
-        buildCommand: 'echo test',
-        watchPaths: ['**/*'],
-        outputPath: './dist',
+        buildCommand: "echo test",
+        watchPaths: ["**/*"],
+        outputPath: "./dist",
         settlingDelay: 100,
       };
 
       expect(() => {
-        BuilderFactory.createBuilder(target, '/test/project', mockLogger, mockStateManager);
-      }).toThrow('Unknown target type: unsupported-type');
+        BuilderFactory.createBuilder(target, "/test/project", mockLogger, mockStateManager);
+      }).toThrow("Unknown target type: unsupported-type");
     });
   });
 });
 
-describe('ExecutableBuilder', () => {
+describe("ExecutableBuilder", () => {
   let builder: ExecutableBuilder;
   let target: ExecutableTarget;
 
@@ -135,20 +135,20 @@ describe('ExecutableBuilder', () => {
     vi.clearAllMocks();
 
     target = {
-      name: 'cli',
-      type: 'executable',
+      name: "cli",
+      type: "executable",
       enabled: true,
-      buildCommand: 'npm run build',
-      outputPath: './dist/cli',
-      watchPaths: ['src/**/*.ts'],
+      buildCommand: "npm run build",
+      outputPath: "./dist/cli",
+      watchPaths: ["src/**/*.ts"],
       settlingDelay: 100,
     };
 
-    builder = new ExecutableBuilder(target, '/test/project', mockLogger, mockStateManager);
+    builder = new ExecutableBuilder(target, "/test/project", mockLogger, mockStateManager);
   });
 
-  describe('build', () => {
-    it('should execute build command successfully', async () => {
+  describe("build", () => {
+    it("should execute build command successfully", async () => {
       const mockProcess = new MockChildProcess();
       vi.mocked(spawn).mockReturnValue(mockProcess as ReturnType<typeof spawn>);
 
@@ -156,11 +156,11 @@ describe('ExecutableBuilder', () => {
       vi.mocked(mockStateManager.isLocked).mockResolvedValue(false);
       vi.mocked(mockStateManager.initializeState).mockResolvedValue({
         target: target.name,
-        projectName: 'test-project',
-        projectRoot: '/test/project',
+        projectName: "test-project",
+        projectRoot: "/test/project",
         process: {
           pid: process.pid,
-          hostname: 'test-host',
+          hostname: "test-host",
           isActive: true,
           lastHeartbeat: new Date().toISOString(),
         },
@@ -171,23 +171,23 @@ describe('ExecutableBuilder', () => {
       vi.mocked(mockStateManager.updateAppInfo).mockResolvedValue(undefined);
 
       // Start the build
-      const buildPromise = builder.build(['src/main.ts']);
+      const buildPromise = builder.build(["src/main.ts"]);
 
       // Simulate successful build
       setTimeout(() => {
-        mockProcess.emit('close', 0);
+        mockProcess.emit("close", 0);
       }, 10);
 
       const result = await buildPromise;
 
-      expect(result.status).toBe('success');
-      expect(result.targetName).toBe('cli');
+      expect(result.status).toBe("success");
+      expect(result.targetName).toBe("cli");
       expect(mockLogger.info).toHaveBeenCalledWith(
-        expect.stringContaining('[cli] Building with 1 changed file(s)')
+        expect.stringContaining("[cli] Building with 1 changed file(s)"),
       );
     });
 
-    it('should handle build failure', async () => {
+    it("should handle build failure", async () => {
       const mockProcess = new MockChildProcess();
       vi.mocked(spawn).mockReturnValue(mockProcess as ReturnType<typeof spawn>);
 
@@ -195,11 +195,11 @@ describe('ExecutableBuilder', () => {
       vi.mocked(mockStateManager.isLocked).mockResolvedValue(false);
       vi.mocked(mockStateManager.initializeState).mockResolvedValue({
         target: target.name,
-        projectName: 'test-project',
-        projectRoot: '/test/project',
+        projectName: "test-project",
+        projectRoot: "/test/project",
         process: {
           pid: process.pid,
-          hostname: 'test-host',
+          hostname: "test-host",
           isActive: true,
           lastHeartbeat: new Date().toISOString(),
         },
@@ -209,21 +209,21 @@ describe('ExecutableBuilder', () => {
       vi.mocked(mockStateManager.updateBuildStatus).mockResolvedValue(undefined);
 
       // Start the build
-      const buildPromise = builder.build(['src/main.ts']);
+      const buildPromise = builder.build(["src/main.ts"]);
 
       // Simulate failed build
       setTimeout(() => {
-        mockProcess.emit('close', 1);
+        mockProcess.emit("close", 1);
       }, 10);
 
       const result = await buildPromise;
 
-      expect(result.status).toBe('failure');
-      expect(result.error).toContain('Build process exited with code 1');
-      expect(mockLogger.error).toHaveBeenCalledWith(expect.stringContaining('[cli] Build failed'));
+      expect(result.status).toBe("failure");
+      expect(result.error).toContain("Build process exited with code 1");
+      expect(mockLogger.error).toHaveBeenCalledWith(expect.stringContaining("[cli] Build failed"));
     });
 
-    it('should update state manager on successful build', async () => {
+    it("should update state manager on successful build", async () => {
       const mockProcess = new MockChildProcess();
       vi.mocked(spawn).mockReturnValue(mockProcess as ReturnType<typeof spawn>);
 
@@ -231,11 +231,11 @@ describe('ExecutableBuilder', () => {
       vi.mocked(mockStateManager.isLocked).mockResolvedValue(false);
       vi.mocked(mockStateManager.initializeState).mockResolvedValue({
         target: target.name,
-        projectName: 'test-project',
-        projectRoot: '/test/project',
+        projectName: "test-project",
+        projectRoot: "/test/project",
         process: {
           pid: process.pid,
-          hostname: 'test-host',
+          hostname: "test-host",
           isActive: true,
           lastHeartbeat: new Date().toISOString(),
         },
@@ -250,28 +250,28 @@ describe('ExecutableBuilder', () => {
 
       // Simulate successful build
       setTimeout(() => {
-        mockProcess.emit('close', 0);
+        mockProcess.emit("close", 0);
       }, 10);
 
       await buildPromise;
 
       expect(mockStateManager.updateBuildStatus).toHaveBeenCalledWith(
-        'cli',
+        "cli",
         expect.objectContaining({
-          status: 'success',
-          targetName: 'cli',
-        })
+          status: "success",
+          targetName: "cli",
+        }),
       );
 
       expect(mockStateManager.updateAppInfo).toHaveBeenCalledWith(
-        'cli',
+        "cli",
         expect.objectContaining({
-          outputPath: join('/test/project', './dist/cli'),
-        })
+          outputPath: join("/test/project", "./dist/cli"),
+        }),
       );
     });
 
-    it('should update state manager on failed build', async () => {
+    it("should update state manager on failed build", async () => {
       const mockProcess = new MockChildProcess();
       vi.mocked(spawn).mockReturnValue(mockProcess as ReturnType<typeof spawn>);
 
@@ -279,11 +279,11 @@ describe('ExecutableBuilder', () => {
       vi.mocked(mockStateManager.isLocked).mockResolvedValue(false);
       vi.mocked(mockStateManager.initializeState).mockResolvedValue({
         target: target.name,
-        projectName: 'test-project',
-        projectRoot: '/test/project',
+        projectName: "test-project",
+        projectRoot: "/test/project",
         process: {
           pid: process.pid,
-          hostname: 'test-host',
+          hostname: "test-host",
           isActive: true,
           lastHeartbeat: new Date().toISOString(),
         },
@@ -297,45 +297,45 @@ describe('ExecutableBuilder', () => {
 
       // Simulate failed build
       setTimeout(() => {
-        mockProcess.emit('close', 1);
+        mockProcess.emit("close", 1);
       }, 10);
 
       await buildPromise;
 
       expect(mockStateManager.updateBuildStatus).toHaveBeenLastCalledWith(
-        'cli',
+        "cli",
         expect.objectContaining({
-          status: 'failure',
-          targetName: 'cli',
-          error: expect.stringContaining('Build process exited with code 1'),
-        })
+          status: "failure",
+          targetName: "cli",
+          error: expect.stringContaining("Build process exited with code 1"),
+        }),
       );
     });
 
-    it('should skip build if already in progress', async () => {
+    it("should skip build if already in progress", async () => {
       vi.mocked(mockStateManager.isLocked).mockResolvedValue(true);
 
       const result = await builder.build([]);
 
-      expect(result.status).toBe('building');
+      expect(result.status).toBe("building");
       expect(mockLogger.warn).toHaveBeenCalledWith(
-        expect.stringContaining('[cli] Build already in progress')
+        expect.stringContaining("[cli] Build already in progress"),
       );
       expect(spawn).not.toHaveBeenCalled();
     });
 
-    it('should force unlock when force option is provided', async () => {
+    it("should force unlock when force option is provided", async () => {
       const mockProcess = new MockChildProcess();
       vi.mocked(spawn).mockReturnValue(mockProcess as ReturnType<typeof spawn>);
 
       vi.mocked(mockStateManager.forceUnlock).mockResolvedValue(true);
       vi.mocked(mockStateManager.initializeState).mockResolvedValue({
         target: target.name,
-        projectName: 'test-project',
-        projectRoot: '/test/project',
+        projectName: "test-project",
+        projectRoot: "/test/project",
         process: {
           pid: process.pid,
-          hostname: 'test-host',
+          hostname: "test-host",
           isActive: true,
           lastHeartbeat: new Date().toISOString(),
         },
@@ -345,45 +345,45 @@ describe('ExecutableBuilder', () => {
       vi.mocked(mockStateManager.updateBuildStatus).mockResolvedValue(undefined);
 
       const buildPromise = builder.build([], { force: true });
-      setTimeout(() => mockProcess.emit('close', 0), 10);
+      setTimeout(() => mockProcess.emit("close", 0), 10);
       await buildPromise;
 
-      expect(mockStateManager.forceUnlock).toHaveBeenCalledWith('cli');
+      expect(mockStateManager.forceUnlock).toHaveBeenCalledWith("cli");
       expect(mockStateManager.isLocked).not.toHaveBeenCalled();
     });
 
-    it('should invoke onLock callback when build is already running', async () => {
+    it("should invoke onLock callback when build is already running", async () => {
       vi.mocked(mockStateManager.isLocked).mockResolvedValue(true);
       const onLock = vi.fn();
 
       const result = await builder.build([], { onLock });
 
       expect(onLock).toHaveBeenCalled();
-      expect(result.status).toBe('building');
+      expect(result.status).toBe("building");
       expect(mockStateManager.initializeState).not.toHaveBeenCalled();
     });
   });
 
-  describe('validation', () => {
-    it('should validate required fields', async () => {
+  describe("validation", () => {
+    it("should validate required fields", async () => {
       const invalidTarget = {
         ...target,
-        buildCommand: '',
+        buildCommand: "",
       };
 
       const invalidBuilder = new ExecutableBuilder(
         invalidTarget,
-        '/test/project',
+        "/test/project",
         mockLogger,
-        mockStateManager
+        mockStateManager,
       );
 
-      await expect(invalidBuilder.validate()).rejects.toThrow('buildCommand is required');
+      await expect(invalidBuilder.validate()).rejects.toThrow("buildCommand is required");
     });
   });
 });
 
-describe('AppBundleBuilder', () => {
+describe("AppBundleBuilder", () => {
   let builder: AppBundleBuilder;
   let target: AppBundleTarget;
 
@@ -391,21 +391,21 @@ describe('AppBundleBuilder', () => {
     vi.clearAllMocks();
 
     target = {
-      name: 'mac-app',
-      type: 'app-bundle',
-      platform: 'macos',
+      name: "mac-app",
+      type: "app-bundle",
+      platform: "macos",
       enabled: true,
-      buildCommand: 'xcodebuild -scheme MyApp',
-      bundleId: 'com.example.myapp',
-      watchPaths: ['src/**/*.swift'],
+      buildCommand: "xcodebuild -scheme MyApp",
+      bundleId: "com.example.myapp",
+      watchPaths: ["src/**/*.swift"],
       autoRelaunch: false,
     };
 
-    builder = new AppBundleBuilder(target, '/test/project', mockLogger, mockStateManager);
+    builder = new AppBundleBuilder(target, "/test/project", mockLogger, mockStateManager);
   });
 
-  describe('build', () => {
-    it('should build macOS app successfully', async () => {
+  describe("build", () => {
+    it("should build macOS app successfully", async () => {
       const mockProcess = new MockChildProcess();
       vi.mocked(spawn).mockReturnValue(mockProcess as ReturnType<typeof spawn>);
 
@@ -413,11 +413,11 @@ describe('AppBundleBuilder', () => {
       vi.mocked(mockStateManager.isLocked).mockResolvedValue(false);
       vi.mocked(mockStateManager.initializeState).mockResolvedValue({
         target: target.name,
-        projectName: 'test-project',
-        projectRoot: '/test/project',
+        projectName: "test-project",
+        projectRoot: "/test/project",
         process: {
           pid: process.pid,
-          hostname: 'test-host',
+          hostname: "test-host",
           isActive: true,
           lastHeartbeat: new Date().toISOString(),
         },
@@ -432,18 +432,18 @@ describe('AppBundleBuilder', () => {
 
       // Simulate successful build
       setTimeout(() => {
-        mockProcess.emit('close', 0);
+        mockProcess.emit("close", 0);
       }, 10);
 
       const result = await buildPromise;
 
-      expect(result.status).toBe('success');
+      expect(result.status).toBe("success");
       expect(mockLogger.info).toHaveBeenCalledWith(
-        expect.stringContaining('[mac-app] Building with 0 changed file(s)')
+        expect.stringContaining("[mac-app] Building with 0 changed file(s)"),
       );
     });
 
-    it('should extract Xcode error summary', async () => {
+    it("should extract Xcode error summary", async () => {
       const mockProcess = new MockChildProcess();
       vi.mocked(spawn).mockReturnValue(mockProcess as ReturnType<typeof spawn>);
 
@@ -451,11 +451,11 @@ describe('AppBundleBuilder', () => {
       vi.mocked(mockStateManager.isLocked).mockResolvedValue(false);
       vi.mocked(mockStateManager.initializeState).mockResolvedValue({
         target: target.name,
-        projectName: 'test-project',
-        projectRoot: '/test/project',
+        projectName: "test-project",
+        projectRoot: "/test/project",
         process: {
           pid: process.pid,
-          hostname: 'test-host',
+          hostname: "test-host",
           isActive: true,
           lastHeartbeat: new Date().toISOString(),
         },
@@ -470,28 +470,28 @@ describe('AppBundleBuilder', () => {
       // Simulate failed build with error
       setTimeout(() => {
         mockProcess.emit(
-          'error',
+          "error",
           new Error(
-            "/Users/test/MyApp/ContentView.swift:42:5: error: cannot find 'unknownFunction' in scope"
-          )
+            "/Users/test/MyApp/ContentView.swift:42:5: error: cannot find 'unknownFunction' in scope",
+          ),
         );
-        mockProcess.emit('close', 1);
+        mockProcess.emit("close", 1);
       }, 10);
 
       await buildPromise;
 
       expect(mockStateManager.updateBuildStatus).toHaveBeenLastCalledWith(
-        'mac-app',
+        "mac-app",
         expect.objectContaining({
-          status: 'failure',
-          errorSummary: expect.stringContaining('error:'),
-        })
+          status: "failure",
+          errorSummary: expect.stringContaining("error:"),
+        }),
       );
     });
   });
 
-  describe('auto-relaunch', () => {
-    it('should not relaunch if autoRelaunch is false', async () => {
+  describe("auto-relaunch", () => {
+    it("should not relaunch if autoRelaunch is false", async () => {
       const mockProcess = new MockChildProcess();
       vi.mocked(spawn).mockReturnValue(mockProcess as ReturnType<typeof spawn>);
 
@@ -499,11 +499,11 @@ describe('AppBundleBuilder', () => {
       vi.mocked(mockStateManager.isLocked).mockResolvedValue(false);
       vi.mocked(mockStateManager.initializeState).mockResolvedValue({
         target: target.name,
-        projectName: 'test-project',
-        projectRoot: '/test/project',
+        projectName: "test-project",
+        projectRoot: "/test/project",
         process: {
           pid: process.pid,
-          hostname: 'test-host',
+          hostname: "test-host",
           isActive: true,
           lastHeartbeat: new Date().toISOString(),
         },
@@ -518,7 +518,7 @@ describe('AppBundleBuilder', () => {
 
       // Simulate successful build
       setTimeout(() => {
-        mockProcess.emit('close', 0);
+        mockProcess.emit("close", 0);
       }, 10);
 
       await buildPromise;
@@ -529,18 +529,18 @@ describe('AppBundleBuilder', () => {
   });
 });
 
-describe('Error Handling', () => {
-  it('should handle process spawn errors', async () => {
+describe("Error Handling", () => {
+  it("should handle process spawn errors", async () => {
     const target: ExecutableTarget = {
-      name: 'cli',
-      type: 'executable',
+      name: "cli",
+      type: "executable",
       enabled: true,
-      buildCommand: 'nonexistent-command',
-      outputPath: './dist/cli',
-      watchPaths: ['src/**/*.ts'],
+      buildCommand: "nonexistent-command",
+      outputPath: "./dist/cli",
+      watchPaths: ["src/**/*.ts"],
     };
 
-    const builder = new ExecutableBuilder(target, '/test/project', mockLogger, mockStateManager);
+    const builder = new ExecutableBuilder(target, "/test/project", mockLogger, mockStateManager);
 
     const mockProcess = new MockChildProcess();
     vi.mocked(spawn).mockReturnValue(mockProcess as ReturnType<typeof spawn>);
@@ -549,11 +549,11 @@ describe('Error Handling', () => {
     vi.mocked(mockStateManager.isLocked).mockResolvedValue(false);
     vi.mocked(mockStateManager.initializeState).mockResolvedValue({
       target: target.name,
-      projectName: 'test-project',
-      projectRoot: '/test/project',
+      projectName: "test-project",
+      projectRoot: "/test/project",
       process: {
         pid: process.pid,
-        hostname: 'test-host',
+        hostname: "test-host",
         isActive: true,
         lastHeartbeat: new Date().toISOString(),
       },
@@ -567,12 +567,12 @@ describe('Error Handling', () => {
 
     // Simulate spawn error
     setTimeout(() => {
-      mockProcess.emit('error', new Error('spawn nonexistent-command ENOENT'));
+      mockProcess.emit("error", new Error("spawn nonexistent-command ENOENT"));
     }, 10);
 
     const result = await buildPromise;
 
-    expect(result.status).toBe('failure');
-    expect(result.error).toContain('spawn nonexistent-command ENOENT');
+    expect(result.status).toBe("failure");
+    expect(result.error).toContain("spawn nonexistent-command ENOENT");
   });
 });

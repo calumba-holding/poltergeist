@@ -1,8 +1,8 @@
 // Builder for executable targets (CLI tools, binaries)
-import { existsSync } from 'fs';
-import { join } from 'path';
-import type { ExecutableTarget } from '../types.js';
-import { BaseBuilder } from './base-builder.js';
+import { existsSync } from "fs";
+import { join } from "path";
+import type { ExecutableTarget } from "../types.js";
+import { BaseBuilder } from "./base-builder.js";
 
 export class ExecutableBuilder extends BaseBuilder<ExecutableTarget> {
   public async validate(): Promise<void> {
@@ -32,7 +32,7 @@ export class ExecutableBuilder extends BaseBuilder<ExecutableTarget> {
   }
 
   protected getBuilderName(): string {
-    return 'Executable';
+    return "Executable";
   }
 
   public getOutputInfo(): string {

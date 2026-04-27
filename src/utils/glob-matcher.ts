@@ -3,8 +3,8 @@
 //  Poltergeist
 //
 
-import { regex as compileRegex } from 'arkregex';
-import { escapeRegExp } from 'es-toolkit/string';
+import { regex as compileRegex } from "arkregex";
+import { escapeRegExp } from "es-toolkit/string";
 
 /**
  * Cross-runtime glob pattern matcher.
@@ -15,9 +15,7 @@ import { escapeRegExp } from 'es-toolkit/string';
 declare global {
   const Bun:
     | {
-        Glob?: new (
-          pattern: string
-        ) => {
+        Glob?: new (pattern: string) => {
           match(path: string): boolean;
         };
       }
@@ -25,7 +23,7 @@ declare global {
 }
 
 // Check if we're running in Bun
-const isBun = typeof Bun !== 'undefined';
+const isBun = typeof Bun !== "undefined";
 
 /**
  * Creates a function that tests if a path matches a glob pattern.
@@ -60,7 +58,7 @@ function createMinimalMatcher(pattern: string): (path: string) => boolean {
  * Handles common glob patterns used in file watching.
  */
 function globToRegex(glob: string): RegExp {
-  let pattern = '';
+  let pattern = "";
   let inClass = false;
   let inBrace = false;
   let braceLevel = 0;
@@ -71,10 +69,10 @@ function globToRegex(glob: string): RegExp {
 
     if (inClass) {
       // Inside character class [...]
-      if (char === ']' && i > 0 && glob[i - 1] !== '\\') {
+      if (char === "]" && i > 0 && glob[i - 1] !== "\\") {
         inClass = false;
         pattern += char;
-      } else if (char === '-' && i > 0 && nextChar && nextChar !== ']') {
+      } else if (char === "-" && i > 0 && nextChar && nextChar !== "]") {
         // Range in character class
         pattern += char;
       } else {
@@ -85,19 +83,19 @@ function globToRegex(glob: string): RegExp {
 
     if (inBrace) {
       // Inside brace expansion {...}
-      if (char === '}') {
+      if (char === "}") {
         braceLevel--;
         if (braceLevel === 0) {
           inBrace = false;
-          pattern += ')';
+          pattern += ")";
         } else {
-          pattern += '}';
+          pattern += "}";
         }
-      } else if (char === '{') {
+      } else if (char === "{") {
         braceLevel++;
-        pattern += '{';
-      } else if (char === ',' && braceLevel === 1) {
-        pattern += '|';
+        pattern += "{";
+      } else if (char === "," && braceLevel === 1) {
+        pattern += "|";
       } else {
         pattern += escapeRegExp(char);
       }
@@ -105,72 +103,72 @@ function globToRegex(glob: string): RegExp {
     }
 
     switch (char) {
-      case '*':
-        if (nextChar === '*') {
+      case "*":
+        if (nextChar === "*") {
           // ** matches any number of directories (including zero)
           const prevChar = glob[i - 1];
           const nextNextChar = glob[i + 2];
 
           if (
-            (prevChar === '/' || prevChar === undefined) &&
-            (nextNextChar === '/' || nextNextChar === undefined)
+            (prevChar === "/" || prevChar === undefined) &&
+            (nextNextChar === "/" || nextNextChar === undefined)
           ) {
             // Handle **/ pattern - match zero or more path segments
-            if (nextNextChar === '/') {
+            if (nextNextChar === "/") {
               // Skip the / after ** and make it optional
-              pattern += '(?:.*/)?';
+              pattern += "(?:.*/)?";
               i += 2; // Skip ** and /
             } else {
               // Standalone ** at the end
-              pattern += '.*';
+              pattern += ".*";
               i++; // Skip the second *
             }
           } else {
             // Regular * in other contexts
-            pattern += '[^/]*';
+            pattern += "[^/]*";
           }
         } else {
           // * matches anything except path separator
-          pattern += '[^/]*';
+          pattern += "[^/]*";
         }
         break;
 
-      case '?':
+      case "?":
         // ? matches any single character except path separator
-        pattern += '[^/]';
+        pattern += "[^/]";
         break;
 
-      case '[':
+      case "[":
         // Start of character class
         inClass = true;
-        pattern += '[';
+        pattern += "[";
         // Handle negation
-        if (nextChar === '!' || nextChar === '^') {
-          pattern += '^';
+        if (nextChar === "!" || nextChar === "^") {
+          pattern += "^";
           i++;
         }
         break;
 
-      case '{':
+      case "{":
         // Start of brace expansion
         inBrace = true;
         braceLevel = 1;
-        pattern += '(';
+        pattern += "(";
         break;
 
-      case '/':
+      case "/":
         // Path separator
-        pattern += '\\/';
+        pattern += "\\/";
         break;
 
-      case '.':
-      case '(':
-      case ')':
-      case '+':
-      case '|':
-      case '^':
-      case '$':
-      case '\\':
+      case ".":
+      case "(":
+      case ")":
+      case "+":
+      case "|":
+      case "^":
+      case "$":
+      case "\\":
         // Escape regex special characters
         pattern += `\\${char}`;
         break;

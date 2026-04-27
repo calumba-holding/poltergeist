@@ -1,12 +1,12 @@
 // Edge case tests for StateManager - concurrent access, file corruption, etc.
 
-import { existsSync, mkdirSync, readdirSync, rmSync, unlinkSync, writeFileSync } from 'fs';
-import { tmpdir } from 'os';
-import { join } from 'path';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { Logger } from '../src/logger.js';
-import { StateManager } from '../src/state.js';
-import type { BaseTarget } from '../src/types.js';
+import { existsSync, mkdirSync, readdirSync, rmSync, unlinkSync, writeFileSync } from "fs";
+import { tmpdir } from "os";
+import { join } from "path";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { Logger } from "../src/logger.js";
+import { StateManager } from "../src/state.js";
+import type { BaseTarget } from "../src/types.js";
 
 // Mock logger
 const mockLogger: Logger = {
@@ -17,10 +17,10 @@ const mockLogger: Logger = {
   success: vi.fn(),
 };
 
-describe.skipIf(process.platform === 'win32')('StateManager Edge Cases', () => {
+describe.skipIf(process.platform === "win32")("StateManager Edge Cases", () => {
   let stateManager: StateManager;
   let testDir: string;
-  const projectRoot = '/test/project';
+  const projectRoot = "/test/project";
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -73,20 +73,20 @@ describe.skipIf(process.platform === 'win32')('StateManager Edge Cases', () => {
     }
   });
 
-  describe('Concurrent Access', () => {
-    it.skipIf(process.platform === 'win32')(
-      'should handle multiple concurrent reads safely',
+  describe("Concurrent Access", () => {
+    it.skipIf(process.platform === "win32")(
+      "should handle multiple concurrent reads safely",
       async () => {
         const target: BaseTarget = {
-          name: 'concurrent-test',
-          type: 'executable',
+          name: "concurrent-test",
+          type: "executable",
           enabled: true,
-          buildCommand: 'echo test',
-          watchPaths: ['src/**/*'],
+          buildCommand: "echo test",
+          watchPaths: ["src/**/*"],
         };
 
         // Initialize state with retry for Windows
-        const initRetries = process.platform === 'win32' ? 3 : 1;
+        const initRetries = process.platform === "win32" ? 3 : 1;
         let initSuccess = false;
 
         for (let attempt = 1; attempt <= initRetries; attempt++) {
@@ -103,10 +103,10 @@ describe.skipIf(process.platform === 'win32')('StateManager Edge Cases', () => {
         expect(initSuccess).toBe(true);
 
         // Perform multiple concurrent reads with reduced concurrency on Windows
-        const concurrency = process.platform === 'win32' ? 5 : 10;
+        const concurrency = process.platform === "win32" ? 5 : 10;
         const readPromises = Array(concurrency)
           .fill(null)
-          .map(() => stateManager.readState('concurrent-test'));
+          .map(() => stateManager.readState("concurrent-test"));
 
         const results = await Promise.all(readPromises);
 
@@ -114,25 +114,25 @@ describe.skipIf(process.platform === 'win32')('StateManager Edge Cases', () => {
         expect(results).toHaveLength(concurrency);
         results.forEach((result) => {
           expect(result).toBeDefined();
-          expect(result?.target).toBe('concurrent-test');
+          expect(result?.target).toBe("concurrent-test");
           expect(result?.process.pid).toBe(process.pid);
         });
-      }
+      },
     );
 
-    it.skipIf(process.platform === 'win32')(
-      'should handle concurrent writes with proper locking',
+    it.skipIf(process.platform === "win32")(
+      "should handle concurrent writes with proper locking",
       async () => {
         const target: BaseTarget = {
-          name: 'concurrent-write',
-          type: 'executable',
+          name: "concurrent-write",
+          type: "executable",
           enabled: true,
-          buildCommand: 'echo test',
-          watchPaths: ['src/**/*'],
+          buildCommand: "echo test",
+          watchPaths: ["src/**/*"],
         };
 
         // Initialize state with retry for Windows
-        const initRetries = process.platform === 'win32' ? 3 : 1;
+        const initRetries = process.platform === "win32" ? 3 : 1;
         for (let attempt = 1; attempt <= initRetries; attempt++) {
           try {
             await stateManager.initializeState(target);
@@ -144,58 +144,58 @@ describe.skipIf(process.platform === 'win32')('StateManager Edge Cases', () => {
         }
 
         // Perform multiple concurrent updates with reduced concurrency on Windows
-        const concurrency = process.platform === 'win32' ? 5 : 10;
+        const concurrency = process.platform === "win32" ? 5 : 10;
         const updatePromises = Array(concurrency)
           .fill(null)
           .map((_, index) =>
-            stateManager.updateBuildStatus('concurrent-write', {
-              targetName: 'concurrent-write',
-              status: index % 2 === 0 ? 'success' : 'failure',
+            stateManager.updateBuildStatus("concurrent-write", {
+              targetName: "concurrent-write",
+              status: index % 2 === 0 ? "success" : "failure",
               timestamp: new Date().toISOString(),
               duration: index * 100,
               buildNumber: index,
-            })
+            }),
           );
 
         await Promise.all(updatePromises);
 
         // Read final state
-        const finalState = await stateManager.readState('concurrent-write');
+        const finalState = await stateManager.readState("concurrent-write");
 
         expect(finalState).toBeDefined();
         // State should exist and have target name
-        expect(finalState?.target).toBe('concurrent-write');
-      }
+        expect(finalState?.target).toBe("concurrent-write");
+      },
     );
 
-    it.skipIf(process.platform === 'win32')(
-      'should handle race condition between initialization and update',
+    it.skipIf(process.platform === "win32")(
+      "should handle race condition between initialization and update",
       async () => {
         const target: BaseTarget = {
-          name: 'race-test',
-          type: 'executable',
+          name: "race-test",
+          type: "executable",
           enabled: true,
-          buildCommand: 'echo test',
-          watchPaths: ['src/**/*'],
+          buildCommand: "echo test",
+          watchPaths: ["src/**/*"],
         };
 
         // On Windows, run operations sequentially to avoid race conditions
-        if (process.platform === 'win32') {
+        if (process.platform === "win32") {
           await stateManager.initializeState(target);
           // Add small delay to avoid race condition
           await new Promise((resolve) => setTimeout(resolve, 50));
-          await stateManager.updateBuildStatus('race-test', {
-            targetName: 'race-test',
-            status: 'success',
+          await stateManager.updateBuildStatus("race-test", {
+            targetName: "race-test",
+            status: "success",
             timestamp: new Date().toISOString(),
             duration: 1000,
           });
         } else {
           // Start initialization and update simultaneously on Unix
           const initPromise = stateManager.initializeState(target);
-          const updatePromise = stateManager.updateBuildStatus('race-test', {
-            targetName: 'race-test',
-            status: 'success',
+          const updatePromise = stateManager.updateBuildStatus("race-test", {
+            targetName: "race-test",
+            status: "success",
             timestamp: new Date().toISOString(),
             duration: 1000,
           });
@@ -204,26 +204,26 @@ describe.skipIf(process.platform === 'win32')('StateManager Edge Cases', () => {
           await expect(Promise.all([initPromise, updatePromise])).resolves.toBeDefined();
         }
 
-        const state = await stateManager.readState('race-test');
+        const state = await stateManager.readState("race-test");
         expect(state).toBeDefined();
         expect(state?.process.pid).toBe(process.pid);
       },
-      10000
+      10000,
     ); // Increase timeout for Windows
 
-    it.skipIf(process.platform === 'win32')(
-      'should handle concurrent heartbeat updates',
+    it.skipIf(process.platform === "win32")(
+      "should handle concurrent heartbeat updates",
       async () => {
         const target: BaseTarget = {
-          name: 'heartbeat-test',
-          type: 'executable',
+          name: "heartbeat-test",
+          type: "executable",
           enabled: true,
-          buildCommand: 'echo test',
-          watchPaths: ['src/**/*'],
+          buildCommand: "echo test",
+          watchPaths: ["src/**/*"],
         };
 
         // Initialize state with retry for Windows
-        const initRetries = process.platform === 'win32' ? 3 : 1;
+        const initRetries = process.platform === "win32" ? 3 : 1;
         for (let attempt = 1; attempt <= initRetries; attempt++) {
           try {
             await stateManager.initializeState(target);
@@ -242,9 +242,9 @@ describe.skipIf(process.platform === 'win32')('StateManager Edge Cases', () => {
           .fill(null)
           .map(async () => {
             await new Promise((resolve) => setTimeout(resolve, 10));
-            const state = await stateManager.readState('heartbeat-test');
+            const state = await stateManager.readState("heartbeat-test");
             if (state) {
-              await stateManager.updateState('heartbeat-test', {
+              await stateManager.updateState("heartbeat-test", {
                 process: {
                   ...state.process,
                   lastHeartbeat: new Date().toISOString(),
@@ -256,61 +256,61 @@ describe.skipIf(process.platform === 'win32')('StateManager Edge Cases', () => {
         await Promise.all(heartbeatPromises);
 
         // Should not crash and state should be valid
-        const finalState = await stateManager.readState('heartbeat-test');
+        const finalState = await stateManager.readState("heartbeat-test");
         expect(finalState).toBeDefined();
         expect(finalState?.process.isActive).toBe(true);
-      }
+      },
     );
 
     // Windows-safe alternative tests
-    it.runIf(process.platform === 'win32')(
-      'should handle sequential state operations on Windows',
+    it.runIf(process.platform === "win32")(
+      "should handle sequential state operations on Windows",
       async () => {
         const target: BaseTarget = {
-          name: 'windows-test',
-          type: 'executable',
+          name: "windows-test",
+          type: "executable",
           enabled: true,
-          buildCommand: 'echo test',
-          watchPaths: ['src/**/*'],
+          buildCommand: "echo test",
+          watchPaths: ["src/**/*"],
         };
 
         // Run operations sequentially to avoid race conditions
         await stateManager.initializeState(target);
         await new Promise((resolve) => setTimeout(resolve, 100)); // Small delay
 
-        await stateManager.updateBuildStatus('windows-test', {
-          targetName: 'windows-test',
-          status: 'success',
+        await stateManager.updateBuildStatus("windows-test", {
+          targetName: "windows-test",
+          status: "success",
           timestamp: new Date().toISOString(),
           duration: 1000,
         });
 
-        const state = await stateManager.readState('windows-test');
+        const state = await stateManager.readState("windows-test");
         expect(state).toBeDefined();
         expect(state?.process.pid).toBe(process.pid);
-        expect(state?.lastBuild?.status).toBe('success');
-      }
+        expect(state?.lastBuild?.status).toBe("success");
+      },
     );
   });
 
-  describe('File Corruption Handling', () => {
-    it('should handle corrupted JSON files gracefully', async () => {
+  describe("File Corruption Handling", () => {
+    it("should handle corrupted JSON files gracefully", async () => {
       // First create a valid state to ensure the file exists
       const target: BaseTarget = {
-        name: 'test',
-        type: 'executable',
+        name: "test",
+        type: "executable",
         enabled: true,
-        buildCommand: 'echo test',
-        watchPaths: ['src/**/*'],
+        buildCommand: "echo test",
+        watchPaths: ["src/**/*"],
       };
       await stateManager.initializeState(target);
 
       // Find the actual state file
       const files = readdirSync(testDir);
-      const stateFile = files.find((f) => f.includes('test') && f.endsWith('.state'));
+      const stateFile = files.find((f) => f.includes("test") && f.endsWith(".state"));
       expect(stateFile).toBeDefined();
 
-      if (!stateFile) throw new Error('State file not found');
+      if (!stateFile) throw new Error("State file not found");
       const statePath = join(testDir, stateFile);
 
       // Write corrupted JSON
@@ -319,31 +319,31 @@ describe.skipIf(process.platform === 'win32')('StateManager Edge Cases', () => {
       // Clear any previous mock calls
       mockLogger.error.mockClear();
 
-      const result = await stateManager.readState('test');
+      const result = await stateManager.readState("test");
 
       expect(result).toBeNull();
       expect(mockLogger.error).toHaveBeenCalledWith(
-        expect.stringContaining('Failed to read state for test:')
+        expect.stringContaining("Failed to read state for test:"),
       );
     });
 
-    it('should handle partially written files', async () => {
+    it("should handle partially written files", async () => {
       // First create a valid state to get the correct filename
       const target: BaseTarget = {
-        name: 'test',
-        type: 'executable',
+        name: "test",
+        type: "executable",
         enabled: true,
-        buildCommand: 'echo test',
-        watchPaths: ['src/**/*'],
+        buildCommand: "echo test",
+        watchPaths: ["src/**/*"],
       };
       await stateManager.initializeState(target);
 
       // Find the actual state file
       const files = readdirSync(testDir);
-      const stateFile = files.find((f) => f.includes('test') && f.endsWith('.state'));
+      const stateFile = files.find((f) => f.includes("test") && f.endsWith(".state"));
       expect(stateFile).toBeDefined();
 
-      if (!stateFile) throw new Error('State file not found');
+      if (!stateFile) throw new Error("State file not found");
       const statePath = join(testDir, stateFile);
 
       // Now overwrite with incomplete JSON
@@ -352,49 +352,49 @@ describe.skipIf(process.platform === 'win32')('StateManager Edge Cases', () => {
       // Clear mocks after the successful write
       mockLogger.error.mockClear();
 
-      const result = await stateManager.readState('test');
+      const result = await stateManager.readState("test");
 
       expect(result).toBeNull();
       expect(mockLogger.error).toHaveBeenCalledWith(
-        expect.stringContaining('Failed to read state for test:')
+        expect.stringContaining("Failed to read state for test:"),
       );
     });
 
-    it('should handle files with invalid schema', async () => {
+    it("should handle files with invalid schema", async () => {
       // First create a valid state to get the correct filename
       const target: BaseTarget = {
-        name: 'test',
-        type: 'executable',
+        name: "test",
+        type: "executable",
         enabled: true,
-        buildCommand: 'echo test',
-        watchPaths: ['src/**/*'],
+        buildCommand: "echo test",
+        watchPaths: ["src/**/*"],
       };
       await stateManager.initializeState(target);
 
       // Find the actual state file
       const files = readdirSync(testDir);
-      const stateFile = files.find((f) => f.includes('test') && f.endsWith('.state'));
+      const stateFile = files.find((f) => f.includes("test") && f.endsWith(".state"));
       expect(stateFile).toBeDefined();
 
-      if (!stateFile) throw new Error('State file not found');
+      if (!stateFile) throw new Error("State file not found");
       const statePath = join(testDir, stateFile);
 
       // Write JSON with missing required fields
       writeFileSync(
         statePath,
         JSON.stringify({
-          target: 'test',
-          projectName: 'project',
+          target: "test",
+          projectName: "project",
           projectPath: projectRoot,
           // Missing process field will cause error
-          version: '1.0',
-        })
+          version: "1.0",
+        }),
       );
 
       // Clear mocks after the successful write
       mockLogger.error.mockClear();
 
-      const result = await stateManager.readState('test');
+      const result = await stateManager.readState("test");
 
       // Should return null because process.pid check will fail
       expect(result).toBeNull();
@@ -404,8 +404,8 @@ describe.skipIf(process.platform === 'win32')('StateManager Edge Cases', () => {
     // Write failure recovery test deleted - cannot mock fs module in ESM
   });
 
-  describe('File System Edge Cases', () => {
-    it('should handle missing state directory', async () => {
+  describe("File System Edge Cases", () => {
+    it("should handle missing state directory", async () => {
       // Remove the state directory
       rmSync(testDir, { recursive: true, force: true });
 
@@ -419,14 +419,14 @@ describe.skipIf(process.platform === 'win32')('StateManager Edge Cases', () => {
       expect(existsSync(testDir)).toBe(true);
     });
 
-    it('should handle very long file names', async () => {
-      const longTargetName = 'a'.repeat(200);
+    it("should handle very long file names", async () => {
+      const longTargetName = "a".repeat(200);
       const target: BaseTarget = {
         name: longTargetName,
-        type: 'executable',
+        type: "executable",
         enabled: true,
-        buildCommand: 'echo test',
-        watchPaths: ['src/**/*'],
+        buildCommand: "echo test",
+        watchPaths: ["src/**/*"],
       };
 
       await stateManager.initializeState(target);
@@ -436,14 +436,14 @@ describe.skipIf(process.platform === 'win32')('StateManager Edge Cases', () => {
       expect(state?.target).toBe(longTargetName);
     });
 
-    it('should handle special characters in target names', async () => {
+    it("should handle special characters in target names", async () => {
       const specialName = 'test@#$%^&*()_+{}|:"<>?';
       const target: BaseTarget = {
         name: specialName,
-        type: 'executable',
+        type: "executable",
         enabled: true,
-        buildCommand: 'echo test',
-        watchPaths: ['src/**/*'],
+        buildCommand: "echo test",
+        watchPaths: ["src/**/*"],
       };
 
       await stateManager.initializeState(target);
@@ -453,23 +453,23 @@ describe.skipIf(process.platform === 'win32')('StateManager Edge Cases', () => {
       expect(state?.target).toBe(specialName);
     });
 
-    it('should handle state file deletion during operation', async () => {
+    it("should handle state file deletion during operation", async () => {
       const target: BaseTarget = {
-        name: 'delete-test',
-        type: 'executable',
+        name: "delete-test",
+        type: "executable",
         enabled: true,
-        buildCommand: 'echo test',
-        watchPaths: ['src/**/*'],
+        buildCommand: "echo test",
+        watchPaths: ["src/**/*"],
       };
 
       await stateManager.initializeState(target);
 
       // Get all state files and find the one for delete-test
       const files = readdirSync(testDir);
-      const stateFile = files.find((f) => f.includes('delete-test') && f.endsWith('.state'));
+      const stateFile = files.find((f) => f.includes("delete-test") && f.endsWith(".state"));
       expect(stateFile).toBeDefined();
 
-      if (!stateFile) throw new Error('State file not found');
+      if (!stateFile) throw new Error("State file not found");
       const statePath = join(testDir, stateFile);
 
       // Verify file exists before deleting
@@ -479,49 +479,49 @@ describe.skipIf(process.platform === 'win32')('StateManager Edge Cases', () => {
       unlinkSync(statePath);
 
       // Should handle missing file gracefully
-      const state = await stateManager.readState('delete-test');
+      const state = await stateManager.readState("delete-test");
       expect(state).toBeNull();
     });
   });
 
-  describe('Memory and Resource Management', () => {
-    it('should handle large state files', async () => {
+  describe("Memory and Resource Management", () => {
+    it("should handle large state files", async () => {
       const target: BaseTarget = {
-        name: 'large-state',
-        type: 'executable',
+        name: "large-state",
+        type: "executable",
         enabled: true,
-        buildCommand: 'echo test',
-        watchPaths: ['src/**/*'],
+        buildCommand: "echo test",
+        watchPaths: ["src/**/*"],
       };
 
       await stateManager.initializeState(target);
 
       // Add many build history entries - reduced from 1000 to 100 for faster tests
       for (let i = 0; i < 100; i++) {
-        await stateManager.updateBuildStatus('large-state', {
-          targetName: 'large-state',
-          status: i % 2 === 0 ? 'success' : 'failure',
+        await stateManager.updateBuildStatus("large-state", {
+          targetName: "large-state",
+          status: i % 2 === 0 ? "success" : "failure",
           timestamp: new Date().toISOString(),
           duration: i * 100,
           buildNumber: i,
           // Add large output to increase file size
-          output: 'x'.repeat(1000),
+          output: "x".repeat(1000),
         });
       }
 
       // Should still be able to read
-      const state = await stateManager.readState('large-state');
+      const state = await stateManager.readState("large-state");
       expect(state).toBeDefined();
       expect(state?.lastBuild).toBeDefined();
     }, 10000);
 
-    it('should clean up old heartbeat intervals', async () => {
+    it("should clean up old heartbeat intervals", async () => {
       const target: BaseTarget = {
-        name: 'heartbeat-cleanup',
-        type: 'executable',
+        name: "heartbeat-cleanup",
+        type: "executable",
         enabled: true,
-        buildCommand: 'echo test',
-        watchPaths: ['src/**/*'],
+        buildCommand: "echo test",
+        watchPaths: ["src/**/*"],
       };
 
       await stateManager.initializeState(target);
@@ -543,24 +543,24 @@ describe.skipIf(process.platform === 'win32')('StateManager Edge Cases', () => {
     });
   });
 
-  describe('Lock Detection Edge Cases', () => {
-    it('should detect stale locks and override them', async () => {
+  describe("Lock Detection Edge Cases", () => {
+    it("should detect stale locks and override them", async () => {
       const _target: BaseTarget = {
-        name: 'stale-lock',
-        type: 'executable',
+        name: "stale-lock",
+        type: "executable",
         enabled: true,
-        buildCommand: 'echo test',
-        watchPaths: ['src/**/*'],
+        buildCommand: "echo test",
+        watchPaths: ["src/**/*"],
       };
 
       // Create a state with old heartbeat
       const staleState = {
-        target: 'stale-lock',
-        projectName: 'test-project',
+        target: "stale-lock",
+        projectName: "test-project",
         projectRoot,
         process: {
           pid: 99999, // Non-existent PID
-          hostname: 'old-host',
+          hostname: "old-host",
           platform: process.platform,
           arch: process.arch,
           nodeVersion: process.version,
@@ -579,32 +579,32 @@ describe.skipIf(process.platform === 'win32')('StateManager Edge Cases', () => {
 
       const statePath = join(
         testDir,
-        `${projectRoot.replace(/\//g, '-').substring(1)}-abc123-stale-lock.state`
+        `${projectRoot.replace(/\//g, "-").substring(1)}-abc123-stale-lock.state`,
       );
       writeFileSync(statePath, JSON.stringify(staleState));
 
       // Should not be locked (stale lock should be ignored)
-      const isLocked = await stateManager.isLocked('stale-lock');
+      const isLocked = await stateManager.isLocked("stale-lock");
       expect(isLocked).toBe(false);
     });
 
-    it('should handle hostname changes', async () => {
+    it("should handle hostname changes", async () => {
       const _target: BaseTarget = {
-        name: 'hostname-test',
-        type: 'executable',
+        name: "hostname-test",
+        type: "executable",
         enabled: true,
-        buildCommand: 'echo test',
-        watchPaths: ['src/**/*'],
+        buildCommand: "echo test",
+        watchPaths: ["src/**/*"],
       };
 
       // Create state with different hostname
       const state = {
-        target: 'hostname-test',
-        projectName: 'test-project',
+        target: "hostname-test",
+        projectName: "test-project",
         projectRoot,
         process: {
           pid: process.pid,
-          hostname: 'different-host',
+          hostname: "different-host",
           platform: process.platform,
           arch: process.arch,
           nodeVersion: process.version,
@@ -623,41 +623,41 @@ describe.skipIf(process.platform === 'win32')('StateManager Edge Cases', () => {
 
       const statePath = join(
         testDir,
-        `${projectRoot.replace(/\//g, '-').substring(1)}-abc123-hostname-test.state`
+        `${projectRoot.replace(/\//g, "-").substring(1)}-abc123-hostname-test.state`,
       );
       writeFileSync(statePath, JSON.stringify(state));
 
       // Should detect as not locked since hostname is different
-      const isLocked = await stateManager.isLocked('hostname-test');
+      const isLocked = await stateManager.isLocked("hostname-test");
       expect(isLocked).toBe(false);
     });
   });
 
-  describe('State Discovery Edge Cases', () => {
-    it('should handle mixed file types in state directory', async () => {
+  describe("State Discovery Edge Cases", () => {
+    it("should handle mixed file types in state directory", async () => {
       // Create various files in state directory
-      writeFileSync(join(testDir, 'not-a-state.txt'), 'text file');
-      writeFileSync(join(testDir, 'test.state.backup'), 'backup file');
-      mkdirSync(join(testDir, 'subdirectory'));
+      writeFileSync(join(testDir, "not-a-state.txt"), "text file");
+      writeFileSync(join(testDir, "test.state.backup"), "backup file");
+      mkdirSync(join(testDir, "subdirectory"));
 
       // Create valid state file
       const target: BaseTarget = {
-        name: 'valid-state',
-        type: 'executable',
+        name: "valid-state",
+        type: "executable",
         enabled: true,
-        buildCommand: 'echo test',
-        watchPaths: ['src/**/*'],
+        buildCommand: "echo test",
+        watchPaths: ["src/**/*"],
       };
       await stateManager.initializeState(target);
 
       // Should only find valid state files
       const files = await StateManager.listAllStates();
       const validStateFiles = files.filter(
-        (f) => f.endsWith('.state') && f.includes('valid-state')
+        (f) => f.endsWith(".state") && f.includes("valid-state"),
       );
 
       expect(validStateFiles).toHaveLength(1);
-      expect(validStateFiles[0]).toContain('valid-state');
+      expect(validStateFiles[0]).toContain("valid-state");
     });
 
     // Permission errors during discovery test deleted - cannot mock readdir in ESM

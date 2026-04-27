@@ -1,22 +1,22 @@
 // CMake project analyzer for auto-detection
-import { existsSync, readFileSync } from 'fs';
-import { glob } from 'glob';
-import { dirname, join } from 'path';
+import { existsSync, readFileSync } from "fs";
+import { glob } from "glob";
+import { dirname, join } from "path";
 import type {
   CMakeCustomTarget,
   CMakeExecutableTarget,
   CMakeLibraryTarget,
   Target,
-} from '../types.js';
-import { queryBuildSystem } from './cmake-build-query.js';
-import { parseCMakeFiles } from './cmake-parser.js';
-import { optimizeWatchPatterns } from './cmake-patterns.js';
-import type { CommandRunner } from './command-runner.js';
-import { ChildProcessRunner } from './command-runner.js';
+} from "../types.js";
+import { queryBuildSystem } from "./cmake-build-query.js";
+import { parseCMakeFiles } from "./cmake-parser.js";
+import { optimizeWatchPatterns } from "./cmake-patterns.js";
+import type { CommandRunner } from "./command-runner.js";
+import { ChildProcessRunner } from "./command-runner.js";
 
 export interface CMakeTarget {
   name: string;
-  type: 'executable' | 'static_library' | 'shared_library' | 'custom';
+  type: "executable" | "static_library" | "shared_library" | "custom";
   outputPath?: string;
   dependencies: string[];
   sourceFiles: string[];
@@ -37,13 +37,13 @@ export interface CMakeAnalysis {
   buildTypes: string[];
   presets?: CMakePreset[];
   sourceDirectories: string[];
-  language: 'cpp' | 'c' | 'mixed';
+  language: "cpp" | "c" | "mixed";
   buildDirectory?: string;
   errors?: CMakeProbeError[];
 }
 
 export interface CMakeProbeError {
-  stage: 'configure' | 'query-targets' | 'parse-cache' | 'detect-build-dir';
+  stage: "configure" | "query-targets" | "parse-cache" | "detect-build-dir";
   message: string;
   details?: string;
 }
@@ -60,7 +60,7 @@ export class CMakeProjectAnalyzer {
     deps: {
       parseCMakeFiles?: typeof parseCMakeFiles;
       queryBuildSystem?: typeof queryBuildSystem;
-    } = {}
+    } = {},
   ) {
     this.projectRoot = projectRoot;
     this.commandRunner = commandRunner;
@@ -70,9 +70,9 @@ export class CMakeProjectAnalyzer {
 
   async analyzeProject(options: { autoConfigure?: boolean } = {}): Promise<CMakeAnalysis> {
     const autoConfigure = options.autoConfigure ?? true;
-    const hasCMakeLists = existsSync(join(this.projectRoot, 'CMakeLists.txt'));
+    const hasCMakeLists = existsSync(join(this.projectRoot, "CMakeLists.txt"));
     if (!hasCMakeLists) {
-      throw new Error('No CMakeLists.txt found in project root');
+      throw new Error("No CMakeLists.txt found in project root");
     }
 
     // Parse CMakeLists.txt files
@@ -92,8 +92,8 @@ export class CMakeProjectAnalyzer {
       errors.push(...(buildInfo.errors ?? []));
     } catch (error) {
       errors.push({
-        stage: 'query-targets',
-        message: 'Could not query build system; falling back to parsed targets',
+        stage: "query-targets",
+        message: "Could not query build system; falling back to parsed targets",
         details: error instanceof Error ? error.message : String(error),
       });
     }
@@ -113,7 +113,7 @@ export class CMakeProjectAnalyzer {
     return {
       targets,
       generator,
-      buildTypes: ['Debug', 'Release', 'RelWithDebInfo', 'MinSizeRel'],
+      buildTypes: ["Debug", "Release", "RelWithDebInfo", "MinSizeRel"],
       presets,
       sourceDirectories,
       language,
@@ -147,10 +147,10 @@ export class CMakeProjectAnalyzer {
     return Array.from(merged.values());
   }
 
-  private async detectLanguage(): Promise<'cpp' | 'c' | 'mixed'> {
-    const sourceFiles = await glob('**/*.{c,cpp,cxx,cc,h,hpp,hxx}', {
+  private async detectLanguage(): Promise<"cpp" | "c" | "mixed"> {
+    const sourceFiles = await glob("**/*.{c,cpp,cxx,cc,h,hpp,hxx}", {
       cwd: this.projectRoot,
-      ignore: ['build/**', '_build/**', 'out/**', '**/CMakeFiles/**'],
+      ignore: ["build/**", "_build/**", "out/**", "**/CMakeFiles/**"],
     });
 
     let hasC = false;
@@ -159,18 +159,18 @@ export class CMakeProjectAnalyzer {
     for (const file of sourceFiles) {
       if (file.match(/\.(c|h)$/i)) hasC = true;
       if (file.match(/\.(cpp|cxx|cc|hpp|hxx)$/i)) hasCpp = true;
-      if (hasC && hasCpp) return 'mixed';
+      if (hasC && hasCpp) return "mixed";
     }
 
-    return hasCpp ? 'cpp' : 'c';
+    return hasCpp ? "cpp" : "c";
   }
 
   private async parsePresets(): Promise<CMakePreset[]> {
-    const presetsFile = join(this.projectRoot, 'CMakePresets.json');
+    const presetsFile = join(this.projectRoot, "CMakePresets.json");
     if (!existsSync(presetsFile)) return [];
 
     try {
-      const content = readFileSync(presetsFile, 'utf-8');
+      const content = readFileSync(presetsFile, "utf-8");
       const json = JSON.parse(content);
 
       return (json.configurePresets || []).map((preset: Record<string, unknown>) => ({
@@ -181,7 +181,7 @@ export class CMakeProjectAnalyzer {
         cacheVariables: preset.cacheVariables,
       }));
     } catch (error) {
-      console.warn('Failed to parse CMakePresets.json:', error);
+      console.warn("Failed to parse CMakePresets.json:", error);
       return [];
     }
   }
@@ -189,11 +189,11 @@ export class CMakeProjectAnalyzer {
   private async findSourceDirectories(): Promise<string[]> {
     const dirs = new Set<string>();
 
-    const sourcePatterns = ['src', 'source', 'lib', 'include', 'Sources'];
+    const sourcePatterns = ["src", "source", "lib", "include", "Sources"];
     for (const pattern of sourcePatterns) {
       const matches = await glob(`**/${pattern}`, {
         cwd: this.projectRoot,
-        ignore: ['build/**', '_build/**', 'out/**'],
+        ignore: ["build/**", "_build/**", "out/**"],
       });
 
       matches.forEach((dir) => {
@@ -202,44 +202,44 @@ export class CMakeProjectAnalyzer {
     }
 
     // Also find directories containing source files
-    const sourceFiles = await glob('**/*.{c,cpp,cxx,cc,h,hpp,hxx}', {
+    const sourceFiles = await glob("**/*.{c,cpp,cxx,cc,h,hpp,hxx}", {
       cwd: this.projectRoot,
-      ignore: ['build/**', '_build/**', 'out/**', '**/CMakeFiles/**'],
+      ignore: ["build/**", "_build/**", "out/**", "**/CMakeFiles/**"],
     });
 
     sourceFiles.forEach((file) => {
       const dir = dirname(file);
-      if (dir !== '.') dirs.add(dir);
+      if (dir !== ".") dirs.add(dir);
     });
 
     return Array.from(dirs).sort();
   }
 
   generateWatchPatterns(analysis: CMakeAnalysis): string[] {
-    const patterns: string[] = ['**/CMakeLists.txt', 'cmake/**/*.cmake'];
+    const patterns: string[] = ["**/CMakeLists.txt", "cmake/**/*.cmake"];
 
     // Add presets if they exist
     if (analysis.presets && analysis.presets.length > 0) {
-      patterns.push('CMakePresets.json');
-      patterns.push('CMakeUserPresets.json');
+      patterns.push("CMakePresets.json");
+      patterns.push("CMakeUserPresets.json");
     }
 
     // Add source patterns based on language
-    if (analysis.language === 'cpp' || analysis.language === 'mixed') {
-      patterns.push('**/*.{cpp,cxx,cc,hpp,h,hxx}');
+    if (analysis.language === "cpp" || analysis.language === "mixed") {
+      patterns.push("**/*.{cpp,cxx,cc,hpp,h,hxx}");
     }
-    if (analysis.language === 'c' || analysis.language === 'mixed') {
-      patterns.push('**/*.{c,h}');
+    if (analysis.language === "c" || analysis.language === "mixed") {
+      patterns.push("**/*.{c,h}");
     }
 
     // Add specific directories if found
     for (const dir of analysis.sourceDirectories) {
       const ext =
-        analysis.language === 'c'
-          ? '{c,h}'
-          : analysis.language === 'cpp'
-            ? '{cpp,cxx,cc,hpp,h,hxx}'
-            : '{c,cpp,cxx,cc,h,hpp,hxx}';
+        analysis.language === "c"
+          ? "{c,h}"
+          : analysis.language === "cpp"
+            ? "{cpp,cxx,cc,hpp,h,hxx}"
+            : "{c,cpp,cxx,cc,h,hpp,hxx}";
       patterns.push(`${dir}/**/*.${ext}`);
     }
 
@@ -256,36 +256,36 @@ export class CMakeProjectAnalyzer {
         settlingDelay: 1000,
       };
 
-      if (target.type === 'executable') {
+      if (target.type === "executable") {
         const config: CMakeExecutableTarget = {
           ...baseConfig,
-          type: 'cmake-executable',
+          type: "cmake-executable",
           targetName: target.name,
           outputPath: target.outputPath,
           generator: analysis.generator,
-          buildType: 'Debug',
+          buildType: "Debug",
           parallel: true,
         };
         return config;
-      } else if (target.type === 'static_library' || target.type === 'shared_library') {
+      } else if (target.type === "static_library" || target.type === "shared_library") {
         const config: CMakeLibraryTarget = {
           ...baseConfig,
-          type: 'cmake-library',
+          type: "cmake-library",
           targetName: target.name,
-          libraryType: target.type === 'shared_library' ? 'shared' : 'static',
+          libraryType: target.type === "shared_library" ? "shared" : "static",
           outputPath: target.outputPath,
           generator: analysis.generator,
-          buildType: 'Debug',
+          buildType: "Debug",
           parallel: true,
         };
         return config;
       } else {
         const config: CMakeCustomTarget = {
           ...baseConfig,
-          type: 'cmake-custom',
+          type: "cmake-custom",
           targetName: target.name,
           generator: analysis.generator,
-          buildType: 'Debug',
+          buildType: "Debug",
           parallel: true,
         };
         return config;
@@ -294,19 +294,19 @@ export class CMakeProjectAnalyzer {
   }
 
   generateTargetWatchPatterns(target: CMakeTarget, analysis: CMakeAnalysis): string[] {
-    const patterns: string[] = ['**/CMakeLists.txt'];
+    const patterns: string[] = ["**/CMakeLists.txt"];
 
     // Add source files for this target
     if (target.sourceFiles.length > 0) {
-      const dirs = new Set(target.sourceFiles.map((f) => dirname(f)).filter((d) => d !== '.'));
+      const dirs = new Set(target.sourceFiles.map((f) => dirname(f)).filter((d) => d !== "."));
       dirs.forEach((dir) => {
         patterns.push(`${dir}/**/*.{c,cpp,cxx,cc,h,hpp,hxx}`);
       });
     } else {
       // Fallback to general patterns with all C/C++ extensions
-      patterns.push('**/CMakeLists.txt');
-      patterns.push('cmake/**/*.cmake');
-      patterns.push('**/*.{c,cpp,cxx,cc,h,hpp,hxx}');
+      patterns.push("**/CMakeLists.txt");
+      patterns.push("cmake/**/*.cmake");
+      patterns.push("**/*.{c,cpp,cxx,cc,h,hpp,hxx}");
 
       // Add specific source directories
       for (const dir of analysis.sourceDirectories) {

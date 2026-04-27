@@ -1,9 +1,9 @@
 // CMake builder base class
-import { execSync, spawn, spawnSync } from 'child_process';
-import { existsSync } from 'fs';
-import { join } from 'path';
-import type { CMakeCustomTarget, CMakeExecutableTarget, CMakeLibraryTarget } from '../types.js';
-import { BaseBuilder } from './base-builder.js';
+import { execSync, spawn, spawnSync } from "child_process";
+import { existsSync } from "fs";
+import { join } from "path";
+import type { CMakeCustomTarget, CMakeExecutableTarget, CMakeLibraryTarget } from "../types.js";
+import { BaseBuilder } from "./base-builder.js";
 
 export type CMakeTarget = CMakeExecutableTarget | CMakeLibraryTarget | CMakeCustomTarget;
 
@@ -14,8 +14,8 @@ export abstract class CMakeBuilder<T extends CMakeTarget = CMakeTarget> extends 
   constructor(
     target: T,
     projectRoot: string,
-    logger: import('../logger.js').Logger,
-    stateManager: import('../state.js').StateManager
+    logger: import("../logger.js").Logger,
+    stateManager: import("../state.js").StateManager,
   ) {
     super(target, projectRoot, logger, stateManager);
     this.buildDirectory = this.getBuildDirectory();
@@ -23,15 +23,15 @@ export abstract class CMakeBuilder<T extends CMakeTarget = CMakeTarget> extends 
 
   protected getBuildDirectory(): string {
     // Check for existing build directories
-    const commonBuildDirs = ['build', '_build', 'cmake-build-debug', 'cmake-build-release'];
+    const commonBuildDirs = ["build", "_build", "cmake-build-debug", "cmake-build-release"];
     for (const dir of commonBuildDirs) {
       const fullPath = join(this.projectRoot, dir);
-      if (existsSync(join(fullPath, 'CMakeCache.txt'))) {
+      if (existsSync(join(fullPath, "CMakeCache.txt"))) {
         return dir;
       }
     }
     // Default to 'build'
-    return 'build';
+    return "build";
   }
 
   protected getGenerator(): string {
@@ -41,22 +41,22 @@ export abstract class CMakeBuilder<T extends CMakeTarget = CMakeTarget> extends 
   protected detectGenerator(): string {
     // Check if Ninja is available
     try {
-      execSync('ninja --version', { stdio: 'ignore' });
-      return 'Ninja';
+      execSync("ninja --version", { stdio: "ignore" });
+      return "Ninja";
     } catch {
       // Fallback to platform defaults
-      if (process.platform === 'win32') {
-        return 'Visual Studio 17 2022';
-      } else if (process.platform === 'darwin') {
-        return 'Unix Makefiles'; // Xcode generator can be problematic for automation
+      if (process.platform === "win32") {
+        return "Visual Studio 17 2022";
+      } else if (process.platform === "darwin") {
+        return "Unix Makefiles"; // Xcode generator can be problematic for automation
       } else {
-        return 'Unix Makefiles';
+        return "Unix Makefiles";
       }
     }
   }
 
   protected getBuildType(): string {
-    return this.target.buildType || 'Debug';
+    return this.target.buildType || "Debug";
   }
 
   protected getCMakeArgs(): string[] {
@@ -64,7 +64,7 @@ export abstract class CMakeBuilder<T extends CMakeTarget = CMakeTarget> extends 
 
     // Add build type for single-config generators
     const generator = this.getGenerator();
-    if (!generator.includes('Visual Studio') && !generator.includes('Xcode')) {
+    if (!generator.includes("Visual Studio") && !generator.includes("Xcode")) {
       args.push(`-DCMAKE_BUILD_TYPE=${this.getBuildType()}`);
     }
 
@@ -88,42 +88,42 @@ export abstract class CMakeBuilder<T extends CMakeTarget = CMakeTarget> extends 
 
   protected shouldReconfigure(changedFiles: string[]): boolean {
     // Always configure if build directory doesn't exist
-    if (!existsSync(join(this.projectRoot, this.buildDirectory, 'CMakeCache.txt'))) {
+    if (!existsSync(join(this.projectRoot, this.buildDirectory, "CMakeCache.txt"))) {
       return true;
     }
 
     // Reconfigure if CMake files changed
     return changedFiles.some(
       (file) =>
-        file.endsWith('CMakeLists.txt') ||
-        file.includes('/cmake/') ||
-        file.endsWith('.cmake') ||
-        file.endsWith('CMakePresets.json')
+        file.endsWith("CMakeLists.txt") ||
+        file.includes("/cmake/") ||
+        file.endsWith(".cmake") ||
+        file.endsWith("CMakePresets.json"),
     );
   }
 
   protected async configure(): Promise<void> {
     const args = [
-      '-B',
+      "-B",
       this.buildDirectory,
-      '-S',
-      '.',
-      '-G',
+      "-S",
+      ".",
+      "-G",
       this.getGenerator(),
       ...this.getCMakeArgs(),
     ];
 
-    const command = `cmake ${args.map((arg) => (arg.includes(' ') ? `"${arg}"` : arg)).join(' ')}`;
+    const command = `cmake ${args.map((arg) => (arg.includes(" ") ? `"${arg}"` : arg)).join(" ")}`;
 
     this.logger.info(`[${this.target.name}] Configuring: ${command}`);
 
     await new Promise<void>((resolve, reject) => {
-      const proc = spawn('cmake', args, {
+      const proc = spawn("cmake", args, {
         cwd: this.projectRoot,
-        stdio: 'inherit',
+        stdio: "inherit",
       });
 
-      proc.on('close', (code: number) => {
+      proc.on("close", (code: number) => {
         if (code === 0) {
           resolve();
         } else {
@@ -131,27 +131,27 @@ export abstract class CMakeBuilder<T extends CMakeTarget = CMakeTarget> extends 
         }
       });
 
-      proc.on('error', (error: Error) => {
+      proc.on("error", (error: Error) => {
         reject(error);
       });
     });
   }
 
   protected getExecutionCommand(): string {
-    const args: string[] = ['--build', this.buildDirectory, '--target', this.target.targetName];
+    const args: string[] = ["--build", this.buildDirectory, "--target", this.target.targetName];
 
     // Add config for multi-config generators
     const generator = this.getGenerator();
-    if (generator.includes('Visual Studio') || generator.includes('Xcode')) {
-      args.push('--config', this.getBuildType());
+    if (generator.includes("Visual Studio") || generator.includes("Xcode")) {
+      args.push("--config", this.getBuildType());
     }
 
     // Add parallel build flag
     if (this.target.parallel !== false) {
-      args.push('--parallel');
+      args.push("--parallel");
     }
 
-    return `cmake ${args.join(' ')}`;
+    return `cmake ${args.join(" ")}`;
   }
 
   protected getBuilderName(): string {
@@ -160,15 +160,15 @@ export abstract class CMakeBuilder<T extends CMakeTarget = CMakeTarget> extends 
 
   public async validate(): Promise<void> {
     // Check if CMake is available
-    const check = spawnSync('cmake', ['--version'], { stdio: 'ignore' });
+    const check = spawnSync("cmake", ["--version"], { stdio: "ignore" });
     if (check.error || check.status !== 0) {
-      const reason = check.error ? `: ${check.error.message}` : '';
+      const reason = check.error ? `: ${check.error.message}` : "";
       throw new Error(`CMake is not installed or not in PATH${reason}`);
     }
 
     // Check if CMakeLists.txt exists
-    if (!existsSync(join(this.projectRoot, 'CMakeLists.txt'))) {
-      throw new Error('No CMakeLists.txt found in project root');
+    if (!existsSync(join(this.projectRoot, "CMakeLists.txt"))) {
+      throw new Error("No CMakeLists.txt found in project root");
     }
 
     // Validate target name

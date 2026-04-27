@@ -1,6 +1,6 @@
-import type { FSWatcher } from 'fs';
-import { describe, expect, it, vi } from 'vitest';
-import { PanelWatchService } from '../../src/panel/panel-watch-service.js';
+import type { FSWatcher } from "fs";
+import { describe, expect, it, vi } from "vitest";
+import { PanelWatchService } from "../../src/panel/panel-watch-service.js";
 
 class FakeWatcher implements FSWatcher {
   close = vi.fn();
@@ -21,8 +21,8 @@ class FakeWatcher implements FSWatcher {
   eventNames = vi.fn() as any;
 }
 
-describe('panel-watch-service', () => {
-  it('wires state and config watchers and forwards callbacks', () => {
+describe("panel-watch-service", () => {
+  it("wires state and config watchers and forwards callbacks", () => {
     const fakeStateWatcher = new FakeWatcher();
     const fakeConfigWatcher = new FakeWatcher();
     const listeners: Array<(event: string, filename?: string | Buffer) => void> = [];
@@ -34,12 +34,12 @@ describe('panel-watch-service', () => {
       >()
       .mockImplementation((path, listener) => {
         listeners.push(listener);
-        return path.includes('config') ? fakeConfigWatcher : fakeStateWatcher;
+        return path.includes("config") ? fakeConfigWatcher : fakeStateWatcher;
       });
 
     const service = new PanelWatchService({
-      stateDir: '/tmp/state',
-      configPath: '/tmp/config',
+      stateDir: "/tmp/state",
+      configPath: "/tmp/config",
       logger: { warn: vi.fn() },
       onStateChange: () => calls.state++,
       onConfigChange: () => calls.config++,
@@ -50,8 +50,8 @@ describe('panel-watch-service', () => {
     expect(watchFactory).toHaveBeenCalledTimes(2);
 
     // trigger callbacks
-    listeners[0]('change', 'file');
-    listeners[1]('change', 'config');
+    listeners[0]("change", "file");
+    listeners[1]("change", "config");
     expect(calls).toEqual({ state: 1, config: 1 });
 
     service.stop();

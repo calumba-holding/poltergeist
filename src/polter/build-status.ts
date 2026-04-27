@@ -1,14 +1,14 @@
-import chalk from 'chalk';
-import { existsSync } from 'fs';
-import ora from 'ora';
+import chalk from "chalk";
+import { existsSync } from "fs";
+import ora from "ora";
 
-import type { PoltergeistState } from '../state.js';
-import type { Target } from '../types.js';
-import { BuildStatusManager } from '../utils/build-status-manager.js';
-import { FileSystemUtils } from '../utils/filesystem.js';
-import { poltergeistMessage } from '../utils/ghost.js';
-import { readLastLines } from './logs.js';
-import { hasRichTTY } from './terminal.js';
+import type { PoltergeistState } from "../state.js";
+import type { Target } from "../types.js";
+import { BuildStatusManager } from "../utils/build-status-manager.js";
+import { FileSystemUtils } from "../utils/filesystem.js";
+import { poltergeistMessage } from "../utils/ghost.js";
+import { readLastLines } from "./logs.js";
+import { hasRichTTY } from "./terminal.js";
 
 export function getStateFile(projectRoot: string, targetName: string): string | null {
   try {
@@ -35,60 +35,60 @@ export function isPoltergeistRunning(state: PoltergeistState | null): boolean {
 export async function getBuildStatus(
   projectRoot: string,
   target: Target,
-  options?: { checkProcessForBuilding?: boolean }
-): Promise<'building' | 'failed' | 'success' | 'unknown' | 'poltergeist-not-running'> {
+  options?: { checkProcessForBuilding?: boolean },
+): Promise<"building" | "failed" | "success" | "unknown" | "poltergeist-not-running"> {
   try {
     const stateFilePath = FileSystemUtils.getStateFilePath(projectRoot, target.name);
 
     if (!existsSync(stateFilePath)) {
-      return 'unknown';
+      return "unknown";
     }
 
     const state = FileSystemUtils.readJsonFileStrict<PoltergeistState>(stateFilePath);
 
     if (!state) {
-      return 'unknown';
+      return "unknown";
     }
 
     if (!isPoltergeistRunning(state)) {
-      return 'poltergeist-not-running';
+      return "poltergeist-not-running";
     }
 
     if (state.lastBuild) {
       if (BuildStatusManager.isBuilding(state.lastBuild)) {
         if (options?.checkProcessForBuilding && state.process && !state.process.isActive) {
-          return 'unknown';
+          return "unknown";
         }
-        return 'building';
+        return "building";
       }
 
       if (BuildStatusManager.isFailure(state.lastBuild)) {
-        return 'failed';
+        return "failed";
       }
 
       if (BuildStatusManager.isSuccess(state.lastBuild)) {
-        return 'success';
+        return "success";
       }
     }
 
-    return 'unknown';
+    return "unknown";
   } catch (error) {
     console.warn(
       chalk.yellow(
         poltergeistMessage(
-          'warning',
-          `⚠ Could not read build status: ${error instanceof Error ? error.message : error}`
-        )
-      )
+          "warning",
+          `⚠ Could not read build status: ${error instanceof Error ? error.message : error}`,
+        ),
+      ),
     );
-    return 'unknown';
+    return "unknown";
   }
 }
 
 export function warnIfBuildStaleByAge(
   projectRoot: string,
   targetName: string,
-  maxAgeMinutes = 10
+  maxAgeMinutes = 10,
 ): void {
   const statePath = getStateFile(projectRoot, targetName);
   if (!statePath || !existsSync(statePath)) return;
@@ -106,16 +106,16 @@ export function warnIfBuildStaleByAge(
     if (ageMs > threshold) {
       const ageMinutes = Math.floor(ageMs / 60_000);
       const formatted = new Date(ts).toLocaleTimeString([], {
-        hour: '2-digit',
-        minute: '2-digit',
+        hour: "2-digit",
+        minute: "2-digit",
       });
       console.warn(
         chalk.yellow(
           poltergeistMessage(
-            'warning',
-            `Build is ${ageMinutes}m old (last build ${formatted}); consider rebuilding.`
-          )
-        )
+            "warning",
+            `Build is ${ageMinutes}m old (last build ${formatted}); consider rebuilding.`,
+          ),
+        ),
       );
     }
   } catch {
@@ -127,17 +127,17 @@ export async function waitForBuildCompletion(
   projectRoot: string,
   target: Target,
   timeoutMs = 300_000,
-  logOptions: { showLogs: boolean; logLines: number } = { showLogs: true, logLines: 5 }
-): Promise<'success' | 'failed' | 'timeout'> {
+  logOptions: { showLogs: boolean; logLines: number } = { showLogs: true, logLines: 5 },
+): Promise<"success" | "failed" | "timeout"> {
   const startTime = Date.now();
   const supportsRichTTY = hasRichTTY();
   const shouldStreamLogs = supportsRichTTY && logOptions.showLogs;
 
   const spinner = supportsRichTTY
     ? ora({
-        text: 'Build in progress...',
-        color: 'cyan',
-        spinner: 'dots',
+        text: "Build in progress...",
+        color: "cyan",
+        spinner: "dots",
         isEnabled: true,
       })
     : null;
@@ -146,7 +146,7 @@ export async function waitForBuildCompletion(
     if (spinner) {
       spinner.succeed(message);
     } else {
-      console.log(chalk.green(poltergeistMessage('success', message)));
+      console.log(chalk.green(poltergeistMessage("success", message)));
     }
   };
 
@@ -154,7 +154,7 @@ export async function waitForBuildCompletion(
     if (spinner) {
       spinner.fail(message);
     } else {
-      console.error(chalk.red(poltergeistMessage('error', message)));
+      console.error(chalk.red(poltergeistMessage("error", message)));
     }
   };
 
@@ -164,19 +164,19 @@ export async function waitForBuildCompletion(
     console.log(
       chalk.cyan(
         poltergeistMessage(
-          'info',
-          '👻 [Poltergeist] Build in progress (non-interactive terminal, waiting quietly)'
-        )
-      )
+          "info",
+          "👻 [Poltergeist] Build in progress (non-interactive terminal, waiting quietly)",
+        ),
+      ),
     );
     if (logOptions.showLogs && !shouldStreamLogs) {
       console.log(
         chalk.gray(
           poltergeistMessage(
-            'info',
-            'Log streaming disabled automatically (TTY features unavailable)'
-          )
-        )
+            "info",
+            "Log streaming disabled automatically (TTY features unavailable)",
+          ),
+        ),
       );
     }
   }
@@ -192,7 +192,7 @@ export async function waitForBuildCompletion(
         const logLines = readLastLines(logFile, logOptions.logLines);
 
         if (logLines.length > 0) {
-          const logText = logLines.map((line) => `│ ${line.trim()}`).join('\n');
+          const logText = logLines.map((line) => `│ ${line.trim()}`).join("\n");
           spinner.text = `Build in progress... ${Math.round(elapsed / 100) / 10}s\n${logText}`;
         } else {
           spinner.text = `Build in progress... ${Math.round(elapsed / 100) / 10}s`;
@@ -214,34 +214,34 @@ export async function waitForBuildCompletion(
     while (Date.now() - startTime < timeoutMs) {
       const status = await getBuildStatus(projectRoot, target, { checkProcessForBuilding: true });
 
-      if (status === 'success') {
+      if (status === "success") {
         clearStatusInterval();
-        reportSuccess('Build completed successfully');
-        return 'success';
+        reportSuccess("Build completed successfully");
+        return "success";
       }
 
-      if (status === 'failed') {
+      if (status === "failed") {
         clearStatusInterval();
-        reportFailure('Build failed');
-        return 'failed';
+        reportFailure("Build failed");
+        return "failed";
       }
 
-      if (status !== 'building') {
+      if (status !== "building") {
         const finalStatus = await getBuildStatus(projectRoot, target, {
           checkProcessForBuilding: true,
         });
 
         clearStatusInterval();
 
-        if (finalStatus === 'success') {
-          reportSuccess('Build completed successfully');
-          return 'success';
-        } else if (finalStatus === 'failed') {
-          reportFailure('Build failed');
-          return 'failed';
+        if (finalStatus === "success") {
+          reportSuccess("Build completed successfully");
+          return "success";
+        } else if (finalStatus === "failed") {
+          reportFailure("Build failed");
+          return "failed";
         } else {
-          reportSuccess('Build process completed');
-          return 'success';
+          reportSuccess("Build process completed");
+          return "success";
         }
       }
 
@@ -249,11 +249,11 @@ export async function waitForBuildCompletion(
     }
 
     clearStatusInterval();
-    reportFailure('Build timeout');
-    return 'timeout';
+    reportFailure("Build timeout");
+    return "timeout";
   } catch (error) {
     clearStatusInterval();
-    reportFailure('Build error');
+    reportFailure("Build error");
     throw error;
   }
 }

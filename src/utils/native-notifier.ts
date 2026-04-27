@@ -3,9 +3,9 @@
 //  Poltergeist
 //
 
-import { exec } from 'node:child_process';
-import { platform } from 'node:os';
-import { promisify } from 'node:util';
+import { exec } from "node:child_process";
+import { platform } from "node:os";
+import { promisify } from "node:util";
 
 const execAsync = promisify(exec);
 
@@ -36,13 +36,13 @@ class NativeNotifier {
 
     try {
       switch (this.platform) {
-        case 'darwin':
+        case "darwin":
           await this.notifyMacOS(title, message, sound, appIcon || icon);
           break;
-        case 'linux':
+        case "linux":
           await this.notifyLinux(title, message, timeout, appIcon || icon);
           break;
-        case 'win32':
+        case "win32":
           await this.notifyWindows(title, message, appIcon || icon);
           break;
         default:
@@ -51,7 +51,7 @@ class NativeNotifier {
       }
     } catch (error) {
       // Silently fail - notifications are non-critical
-      console.debug('Notification failed:', error);
+      console.debug("Notification failed:", error);
     }
   }
 
@@ -59,13 +59,13 @@ class NativeNotifier {
     title: string,
     message: string,
     sound?: string | boolean,
-    _icon?: string
+    _icon?: string,
   ): Promise<void> {
     // Use osascript to display notifications on macOS
     let script = `display notification "${this.escapeString(message)}" with title "${this.escapeString(title)}"`;
 
     if (sound) {
-      const soundName = typeof sound === 'string' ? sound : 'default';
+      const soundName = typeof sound === "string" ? sound : "default";
       script += ` sound name "${soundName}"`;
     }
 
@@ -77,7 +77,7 @@ class NativeNotifier {
     title: string,
     message: string,
     timeout?: number,
-    icon?: string
+    icon?: string,
   ): Promise<void> {
     // Use notify-send on Linux (requires libnotify-bin)
     let command = `notify-send "${this.escapeShell(title)}" "${this.escapeShell(message)}"`;
@@ -86,7 +86,7 @@ class NativeNotifier {
       command += ` -t ${timeout * 1000}`; // Convert to milliseconds
     }
 
-    if (icon && !icon.includes('🔨') && !icon.includes('❌') && !icon.includes('✅')) {
+    if (icon && !icon.includes("🔨") && !icon.includes("❌") && !icon.includes("✅")) {
       // Only use icon parameter for file paths, not emojis
       command += ` -i "${this.escapeShell(icon)}"`;
     }
@@ -96,7 +96,7 @@ class NativeNotifier {
     } catch (error: any) {
       if (error.code === 127) {
         // notify-send not installed, silently ignore
-        console.debug('notify-send not found, notifications disabled on Linux');
+        console.debug("notify-send not found, notifications disabled on Linux");
       }
     }
   }
@@ -130,7 +130,7 @@ class NativeNotifier {
       [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($APP_ID).Show($toast)
     `;
 
-    const command = `powershell -NoProfile -NonInteractive -WindowStyle Hidden -Command "${script.replace(/\n/g, ' ')}"`;
+    const command = `powershell -NoProfile -NonInteractive -WindowStyle Hidden -Command "${script.replace(/\n/g, " ")}"`;
 
     try {
       await execAsync(command, {
@@ -150,17 +150,17 @@ class NativeNotifier {
 
   private escapeString(str: string): string {
     // Escape for AppleScript
-    return str.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    return str.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
   }
 
   private escapeShell(str: string): string {
     // Escape for shell commands
-    return str.replace(/"/g, '\\"').replace(/\$/g, '\\$').replace(/`/g, '\\`');
+    return str.replace(/"/g, '\\"').replace(/\$/g, "\\$").replace(/`/g, "\\`");
   }
 
   private escapePowerShell(str: string): string {
     // Escape for PowerShell
-    return str.replace(/"/g, '`"').replace(/\$/g, '`$');
+    return str.replace(/"/g, '`"').replace(/\$/g, "`$");
   }
 }
 

@@ -1,8 +1,8 @@
 // Poltergeist v1.0 - Watchman client for generic target system
 
-import { EventEmitter } from 'events';
-import type { Logger } from './logger.js';
-import { createWatchmanClient } from './utils/watchman-wrapper.js';
+import { EventEmitter } from "events";
+import type { Logger } from "./logger.js";
+import { createWatchmanClient } from "./utils/watchman-wrapper.js";
 
 export interface FileChange {
   path: string;
@@ -36,25 +36,25 @@ export class WatchmanClient extends EventEmitter {
     this.client = createWatchmanClient();
 
     // Add global subscription logging for debugging
-    this.client.on('subscription', (data: unknown) => {
+    this.client.on("subscription", (data: unknown) => {
       this.logger.debug(`[GLOBAL] Received subscription event: ${JSON.stringify(data)}`);
     });
 
-    this.client.on('error', (error: unknown) => {
+    this.client.on("error", (error: unknown) => {
       const err = error instanceof Error ? error : new Error(String(error));
-      this.logger.error('Watchman client error:', err);
-      this.emit('error', err);
+      this.logger.error("Watchman client error:", err);
+      this.emit("error", err);
     });
 
-    this.client.on('end', () => {
-      this.logger.error('Watchman connection ended unexpectedly');
-      this.emit('disconnected');
+    this.client.on("end", () => {
+      this.logger.error("Watchman connection ended unexpectedly");
+      this.emit("disconnected");
     });
 
-    this.client.on('subscription', (data: unknown) => {
+    this.client.on("subscription", (data: unknown) => {
       // Use INFO level to ensure we see this
       this.logger.info(
-        `[GLOBAL] Raw subscription event received: ${JSON.stringify(data).substring(0, 200)}`
+        `[GLOBAL] Raw subscription event received: ${JSON.stringify(data).substring(0, 200)}`,
       );
     });
   }
@@ -62,22 +62,22 @@ export class WatchmanClient extends EventEmitter {
   async connect(): Promise<void> {
     return new Promise((resolve, reject) => {
       this.client.capabilityCheck(
-        { optional: [], required: ['relative_root'] },
+        { optional: [], required: ["relative_root"] },
         (error: Error | null) => {
           if (error) {
             reject(new Error(`Watchman capability check failed: ${error.message}`));
           } else {
-            this.logger.info('Connected to Watchman');
+            this.logger.info("Connected to Watchman");
             resolve();
           }
-        }
+        },
       );
     });
   }
 
   async watchProject(projectRoot: string): Promise<void> {
     return new Promise((resolve, reject) => {
-      this.client.command(['watch-project', projectRoot], (error: Error | null, resp?: unknown) => {
+      this.client.command(["watch-project", projectRoot], (error: Error | null, resp?: unknown) => {
         if (error) {
           reject(new Error(`Failed to watch project: ${error.message}`));
           return;
@@ -98,7 +98,7 @@ export class WatchmanClient extends EventEmitter {
         // Attempt to retrieve the initial clock, but don't block startup if unavailable
         try {
           this.client.command(
-            ['clock', this.watchRoot],
+            ["clock", this.watchRoot],
             (clockError: Error | null, clockResp?: unknown) => {
               if (clockError) {
                 this.logger.warn(`Failed to get initial clock: ${clockError.message}`);
@@ -112,13 +112,13 @@ export class WatchmanClient extends EventEmitter {
                 this.logger.debug(`Initial clock obtained: ${this.clock}`);
               }
               finish();
-            }
+            },
           );
 
           // Some mocked environments never call the callback. Fall back gracefully.
           setTimeout(() => {
             if (!settled) {
-              this.logger.debug('Clock request did not respond, continuing without initial clock');
+              this.logger.debug("Clock request did not respond, continuing without initial clock");
               finish();
             }
           }, 0);
@@ -135,10 +135,10 @@ export class WatchmanClient extends EventEmitter {
     subscriptionName: string,
     subscription: { expression: Array<string | Array<string>>; fields: string[] },
     callback: (files: Array<{ name: string; exists: boolean; type?: string }>) => void,
-    exclusionExpressions?: Array<[string, string[]]>
+    exclusionExpressions?: Array<[string, string[]]>,
   ): Promise<void> {
     if (!this.watchRoot) {
-      throw new Error('No project is being watched');
+      throw new Error("No project is being watched");
     }
 
     this.logger.debug(`Creating subscription ${subscriptionName}`);
@@ -150,7 +150,7 @@ export class WatchmanClient extends EventEmitter {
       // Build proper Watchman expression: ["allof", originalExpression, ...exclusions]
       // Use any to handle complex nested Watchman expression structure
       enhancedExpression = [
-        'allof',
+        "allof",
         subscription.expression, // Original expression as single element
         ...exclusionExpressions, // Exclusion expressions as separate elements
       ];
@@ -158,7 +158,7 @@ export class WatchmanClient extends EventEmitter {
     } else {
       // No exclusions, use original expression
       enhancedExpression = subscription.expression;
-      this.logger.debug('No exclusion expressions provided, using original expression');
+      this.logger.debug("No exclusion expressions provided, using original expression");
     }
 
     const enhancedSubscription = {
@@ -172,7 +172,7 @@ export class WatchmanClient extends EventEmitter {
     if (this.clock) {
       this.logger.debug(`Using clock for incremental updates: ${this.clock}`);
     } else {
-      this.logger.debug('No clock available, will receive initial full sync');
+      this.logger.debug("No clock available, will receive initial full sync");
     }
 
     return new Promise((resolve, reject) => {
@@ -202,7 +202,7 @@ export class WatchmanClient extends EventEmitter {
 
           // Log all fields for debugging
           this.logger.info(
-            `  unilateral: ${resp.unilateral}, is_fresh: ${resp.is_fresh_instance}, state: ${resp.state}, files: ${resp.files?.length || 0}`
+            `  unilateral: ${resp.unilateral}, is_fresh: ${resp.is_fresh_instance}, state: ${resp.state}, files: ${resp.files?.length || 0}`,
           );
 
           // Update the clock for next incremental update
@@ -226,33 +226,33 @@ export class WatchmanClient extends EventEmitter {
           const changes = resp.files.map((file) => ({
             name: file.name,
             exists: file.exists,
-            type: file.new ? 'new' : undefined,
+            type: file.new ? "new" : undefined,
           }));
 
           this.logger.info(`  Processing ${changes.length} file changes`);
           callback(changes);
         } else {
           this.logger.info(
-            `[SKIP] Event for different subscription: ${resp.subscription} (wanted: ${subscriptionName})`
+            `[SKIP] Event for different subscription: ${resp.subscription} (wanted: ${subscriptionName})`,
           );
         }
       };
 
       // Register the handler
       this.logger.debug(`Registering handler for subscription: ${subscriptionName}`);
-      this.client.on('subscription', handler);
+      this.client.on("subscription", handler);
       // Note: fb-watchman Client doesn't have listenerCount, so we skip this debug log
 
       // Create the subscription
       this.logger.debug(
-        `Sending subscribe command: ${JSON.stringify(['subscribe', this.watchRoot, subscriptionName, enhancedSubscription])}`
+        `Sending subscribe command: ${JSON.stringify(["subscribe", this.watchRoot, subscriptionName, enhancedSubscription])}`,
       );
       this.client.command(
-        ['subscribe', this.watchRoot, subscriptionName, enhancedSubscription],
+        ["subscribe", this.watchRoot, subscriptionName, enhancedSubscription],
         (error: Error | null, resp?: unknown) => {
           if (error) {
             this.logger.error(`Subscription creation failed: ${error.message}`);
-            this.client.removeListener('subscription', handler);
+            this.client.removeListener("subscription", handler);
             reject(new Error(`Failed to create subscription: ${error.message}`));
             return;
           }
@@ -261,10 +261,10 @@ export class WatchmanClient extends EventEmitter {
           this.subscriptions.set(subscriptionName, projectRoot);
           this.logger.info(`Subscription created: ${subscriptionName}`);
           this.logger.debug(
-            `Active subscriptions: ${Array.from(this.subscriptions.keys()).join(', ')}`
+            `Active subscriptions: ${Array.from(this.subscriptions.keys()).join(", ")}`,
           );
           resolve();
-        }
+        },
       );
     });
   }
@@ -276,14 +276,14 @@ export class WatchmanClient extends EventEmitter {
 
     return new Promise((resolve) => {
       this.client.command(
-        ['unsubscribe', this.watchRoot, subscriptionName],
+        ["unsubscribe", this.watchRoot, subscriptionName],
         (error: Error | null) => {
           if (error) {
             this.logger.warn(`Failed to unsubscribe ${subscriptionName}: ${error.message}`);
           }
           this.subscriptions.delete(subscriptionName);
           resolve();
-        }
+        },
       );
     });
   }
@@ -297,7 +297,7 @@ export class WatchmanClient extends EventEmitter {
     // Remove the watch
     if (this.watchRoot) {
       await new Promise<void>((resolve) => {
-        this.client.command(['watch-del', this.watchRoot], () => {
+        this.client.command(["watch-del", this.watchRoot], () => {
           resolve();
         });
       });

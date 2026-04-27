@@ -1,6 +1,6 @@
-import { appendFileSync, existsSync, mkdirSync, renameSync, statSync, unlinkSync } from 'fs';
-import { dirname, resolve } from 'path';
-import type { ScriptEvent } from './types.js';
+import { appendFileSync, existsSync, mkdirSync, renameSync, statSync, unlinkSync } from "fs";
+import { dirname, resolve } from "path";
+import type { ScriptEvent } from "./types.js";
 
 const DEFAULT_MAX_BYTES = 200 * 1024; // 200 KB
 
@@ -15,9 +15,9 @@ export interface ScriptEventLogOptions {
  * When the file exceeds the size cap, it is truncated by deletion.
  */
 export function createScriptEventFileSink(
-  options: ScriptEventLogOptions = {}
+  options: ScriptEventLogOptions = {},
 ): (event: ScriptEvent) => void {
-  const path = resolve(options.path ?? '/tmp/poltergeist-script-events.log');
+  const path = resolve(options.path ?? "/tmp/poltergeist-script-events.log");
   const maxBytes = options.maxBytes ?? DEFAULT_MAX_BYTES;
   const maxFiles = Math.max(1, options.maxFiles ?? 2);
 
@@ -25,7 +25,7 @@ export function createScriptEventFileSink(
 
   return (event: ScriptEvent) => {
     try {
-      appendFileSync(path, `${JSON.stringify(event)}\n`, 'utf-8');
+      appendFileSync(path, `${JSON.stringify(event)}\n`, "utf-8");
       if (existsSync(path) && statSync(path).size > maxBytes) {
         rotateFiles(path, maxFiles);
       }

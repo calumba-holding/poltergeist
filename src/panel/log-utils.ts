@@ -1,7 +1,7 @@
-import wrapAnsi from 'wrap-ansi';
-import { colors } from './render-utils.js';
-import { centerText } from './text-utils.js';
-import type { TargetPanelEntry } from './types.js';
+import wrapAnsi from "wrap-ansi";
+import { colors } from "./render-utils.js";
+import { centerText } from "./text-utils.js";
+import type { TargetPanelEntry } from "./types.js";
 
 // blank spacer + header + divider inside formatLogs
 export const LOG_OVERHEAD_LINES = 3;
@@ -24,28 +24,28 @@ export function formatLogs(
   lines: string[],
   width: number,
   maxLines: number,
-  viewMode: 'all' | 'tests',
-  banner?: string
+  viewMode: "all" | "tests",
+  banner?: string,
 ): string {
   const safeLines = Array.isArray(lines) ? lines : [];
-  const targetName = entry?.name ?? 'Unknown';
+  const targetName = entry?.name ?? "Unknown";
   const statusLabel =
     entry?.status?.lastBuild?.status ??
     entry?.status?.status ??
     entry?.status?.lastBuild?.status ??
-    '';
+    "";
   const header = colors.header(
-    `Logs — ${targetName}${statusLabel ? ` (${statusLabel})` : ''} · ${channel}${
-      viewMode === 'tests' ? ' [tests]' : ''
-    }`
+    `Logs — ${targetName}${statusLabel ? ` (${statusLabel})` : ""} · ${channel}${
+      viewMode === "tests" ? " [tests]" : ""
+    }`,
   );
-  const divider = colors.line('─'.repeat(Math.max(4, width)));
+  const divider = colors.line("─".repeat(Math.max(4, width)));
   const wrapped: string[] = [];
   const wrapWidth = Math.max(1, width - 2);
   for (const line of safeLines) {
-    const logicalLines = String(line ?? '').split(/\r?\n/);
+    const logicalLines = String(line ?? "").split(/\r?\n/);
     for (const logical of logicalLines) {
-      const segments = wrapAnsi(logical, wrapWidth, { hard: false, trim: false }).split('\n');
+      const segments = wrapAnsi(logical, wrapWidth, { hard: false, trim: false }).split("\n");
       wrapped.push(...segments);
     }
   }
@@ -53,8 +53,8 @@ export function formatLogs(
     maxLines > 0 && wrapped.length > maxLines ? wrapped.slice(wrapped.length - maxLines) : wrapped;
   const content =
     limited.length > 0
-      ? limited.map((line) => colors.accent(line)).join('\n')
-      : colors.muted(centerText('(no logs)', Math.max(1, width - 2))); // Keep empty state visually balanced.
-  const bannerBlock = banner ? `${colors.failure(banner)}\n` : '';
+      ? limited.map((line) => colors.accent(line)).join("\n")
+      : colors.muted(centerText("(no logs)", Math.max(1, width - 2))); // Keep empty state visually balanced.
+  const bannerBlock = banner ? `${colors.failure(banner)}\n` : "";
   return `\n${header}\n${bannerBlock}${divider}\n${content}`;
 }

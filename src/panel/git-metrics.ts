@@ -1,5 +1,5 @@
-import { execFile, spawn } from 'child_process';
-import { promisify } from 'util';
+import { execFile, spawn } from "child_process";
+import { promisify } from "util";
 
 const execFileAsync = promisify(execFile);
 
@@ -19,7 +19,7 @@ export interface GitMetrics {
   hasRepo: boolean;
   lastUpdated: number;
   summary?: string[];
-  summaryMode?: 'list' | 'ai';
+  summaryMode?: "list" | "ai";
   /** True when the current working tree is a git submodule of another repo. */
   isSubmodule?: boolean;
   /** Absolute path to the superproject root when inside a submodule. */
@@ -31,12 +31,12 @@ type GitCommandRunner = (args: string[], cwd: string) => Promise<string>;
 export interface GitMetricsOptions {
   throttleMs?: number;
   runner?: GitCommandRunner;
-  summaryMode?: 'list' | 'ai';
+  summaryMode?: "list" | "ai";
   logger?: { warn(message: string): void };
 }
 
 function defaultRunner(args: string[], cwd: string): Promise<string> {
-  return execFileAsync('git', args, {
+  return execFileAsync("git", args, {
     cwd,
     timeout: 2000,
     maxBuffer: 1024 * 1024,
@@ -48,7 +48,7 @@ export class GitMetricsCollector {
   private inflight = new Map<string, Promise<GitMetrics>>();
   private readonly throttleMs: number;
   private readonly runner: GitCommandRunner;
-  private readonly summaryMode: 'list' | 'ai';
+  private readonly summaryMode: "list" | "ai";
   private readonly logger?: { warn(message: string): void };
   private summaryJobs = new Map<string, Promise<void>>();
   private summaryCooldownUntil = new Map<string, number>();
@@ -59,7 +59,7 @@ export class GitMetricsCollector {
   constructor(options: GitMetricsOptions = {}) {
     this.throttleMs = options.throttleMs ?? 5000;
     this.runner = options.runner ?? defaultRunner;
-    this.summaryMode = options.summaryMode ?? 'ai';
+    this.summaryMode = options.summaryMode ?? "ai";
     this.logger = options.logger;
   }
 
@@ -96,18 +96,18 @@ export class GitMetricsCollector {
   private async collect(projectRoot: string): Promise<GitMetrics> {
     try {
       const statusRaw = await this.runner(
-        ['status', '--porcelain=v2', '--branch', '-z'],
-        projectRoot
+        ["status", "--porcelain=v2", "--branch", "-z"],
+        projectRoot,
       );
       const { count: dirtyFiles, files: dirtyFileNames } = this.parseDirtyFiles(statusRaw);
       const branch = this.parseBranch(statusRaw);
       const superprojectRoot = await this.detectSuperproject(projectRoot);
 
-      const diffRaw = await this.runner(['diff', '--shortstat', 'HEAD'], projectRoot).catch(
-        () => ''
+      const diffRaw = await this.runner(["diff", "--shortstat", "HEAD"], projectRoot).catch(
+        () => "",
       );
       const { insertions, deletions } = this.parseDiffStats(diffRaw);
-      const summary = this.summaryMode === 'ai' ? this.summaryCache.get(projectRoot) : undefined;
+      const summary = this.summaryMode === "ai" ? this.summaryCache.get(projectRoot) : undefined;
       const upstream = await this.maybeRefreshUpstream(projectRoot, branch);
 
       const metrics: GitMetrics = {
@@ -158,7 +158,7 @@ export class GitMetricsCollector {
 
   private async maybeRefreshUpstream(
     projectRoot: string,
-    branch?: string
+    branch?: string,
   ): Promise<{ ahead: number; behind: number; upstream: string; lastFetchedAt: number } | null> {
     if (!branch) return null;
     const now = Date.now();
@@ -180,26 +180,26 @@ export class GitMetricsCollector {
     try {
       const upstream = `origin/${branch}`;
       await this.runner(
-        ['fetch', '--quiet', '--no-tags', '--depth=1', 'origin', branch],
-        projectRoot
+        ["fetch", "--quiet", "--no-tags", "--depth=1", "origin", branch],
+        projectRoot,
       );
       const aheadRaw = await this.runner(
-        ['rev-list', '--count', `${upstream}..HEAD`],
-        projectRoot
-      ).catch(() => '0');
+        ["rev-list", "--count", `${upstream}..HEAD`],
+        projectRoot,
+      ).catch(() => "0");
       const behindRaw = await this.runner(
-        ['rev-list', '--count', `HEAD..${upstream}`],
-        projectRoot
-      ).catch(() => '0');
+        ["rev-list", "--count", `HEAD..${upstream}`],
+        projectRoot,
+      ).catch(() => "0");
       return {
-        ahead: Number.parseInt(aheadRaw.trim() || '0', 10) || 0,
-        behind: Number.parseInt(behindRaw.trim() || '0', 10) || 0,
+        ahead: Number.parseInt(aheadRaw.trim() || "0", 10) || 0,
+        behind: Number.parseInt(behindRaw.trim() || "0", 10) || 0,
         upstream,
         lastFetchedAt: Date.now(),
       };
     } catch (error) {
       this.logger?.warn?.(
-        `[Panel] Failed to refresh upstream status: ${error instanceof Error ? error.message : error}`
+        `[Panel] Failed to refresh upstream status: ${error instanceof Error ? error.message : error}`,
       );
       return null;
     }
@@ -207,7 +207,7 @@ export class GitMetricsCollector {
 
   private parseDirtyFiles(raw: string): { count: number; files: string[] } {
     if (!raw) return { count: 0, files: [] };
-    const entries = raw.split('\0').filter((line) => line.length > 0);
+    const entries = raw.split("\0").filter((line) => line.length > 0);
     const files: string[] = [];
     for (const line of entries) {
       // git status --porcelain=v2 codes:
@@ -226,18 +226,18 @@ export class GitMetricsCollector {
   }
 
   private extractPathFromStatus(line: string): string | null {
-    if (line.startsWith('?')) {
-      return line.replace(/^\?\s+/, '').trim() || null;
+    if (line.startsWith("?")) {
+      return line.replace(/^\?\s+/, "").trim() || null;
     }
-    if (line.startsWith('S')) {
+    if (line.startsWith("S")) {
       // Submodule entry format: "S <xy> <sub> <path>"
       const parts = line.trim().split(/\s+/);
       return parts[parts.length - 1] || null;
     }
-    const tabIndex = line.indexOf('\t');
+    const tabIndex = line.indexOf("\t");
     if (tabIndex >= 0) {
       const remainder = line.slice(tabIndex + 1);
-      const parts = remainder.split('\t');
+      const parts = remainder.split("\t");
       return parts[parts.length - 1]?.trim() || null;
     }
     const segments = line.trim().split(/\s+/);
@@ -247,8 +247,8 @@ export class GitMetricsCollector {
   private async detectSuperproject(projectRoot: string): Promise<string | null> {
     try {
       const output = await this.runner(
-        ['rev-parse', '--show-superproject-working-tree'],
-        projectRoot
+        ["rev-parse", "--show-superproject-working-tree"],
+        projectRoot,
       );
       const path = output.trim();
       return path.length > 0 ? path : null;
@@ -259,10 +259,10 @@ export class GitMetricsCollector {
 
   private parseBranch(raw: string): string | undefined {
     if (!raw) return undefined;
-    const branchLine = raw.split('\0').find((line) => line.startsWith('# branch.head '));
+    const branchLine = raw.split("\0").find((line) => line.startsWith("# branch.head "));
     if (!branchLine) return undefined;
-    const parts = branchLine.split(' ');
-    return parts[2] && parts[2] !== '(detached)' ? parts[2] : undefined;
+    const parts = branchLine.split(" ");
+    return parts[2] && parts[2] !== "(detached)" ? parts[2] : undefined;
   }
 
   private parseDiffStats(raw: string): { insertions: number; deletions: number } {
@@ -281,9 +281,9 @@ export class GitMetricsCollector {
     projectRoot: string,
     dirtyCount: number,
     insertions: number,
-    deletions: number
+    deletions: number,
   ): void {
-    if (this.summaryMode !== 'ai' || dirtyCount === 0) {
+    if (this.summaryMode !== "ai" || dirtyCount === 0) {
       return;
     }
     if (this.summaryJobs.has(projectRoot)) {
@@ -319,7 +319,7 @@ export class GitMetricsCollector {
         this.logger?.warn?.(
           `[Panel] Failed to summarize dirty files via Claude: ${
             error instanceof Error ? error.message : error
-          }`
+          }`,
         );
         this.summaryCache.set(projectRoot, undefined);
       })
@@ -334,35 +334,35 @@ export class GitMetricsCollector {
   private runClaudeSummary(projectRoot: string): Promise<string[] | undefined> {
     return new Promise((resolve, reject) => {
       const child = spawn(
-        'bash',
+        "bash",
         [
-          '-lc',
+          "-lc",
           `claude -p ${JSON.stringify(
-            CLAUDE_SUMMARY_PROMPT
+            CLAUDE_SUMMARY_PROMPT,
           )} --dangerously-skip-permissions --model haiku`,
         ],
         {
           cwd: projectRoot,
-          stdio: ['ignore', 'pipe', 'pipe'],
-        }
+          stdio: ["ignore", "pipe", "pipe"],
+        },
       );
 
-      let stdout = '';
-      let stderr = '';
+      let stdout = "";
+      let stderr = "";
 
-      child.stdout.on('data', (chunk) => {
+      child.stdout.on("data", (chunk) => {
         stdout += chunk.toString();
       });
 
-      child.stderr.on('data', (chunk) => {
+      child.stderr.on("data", (chunk) => {
         stderr += chunk.toString();
       });
 
-      child.once('error', (error) => {
+      child.once("error", (error) => {
         reject(error);
       });
 
-      child.once('close', (code) => {
+      child.once("close", (code) => {
         if (code !== 0) {
           const message = stderr.trim() || `Claude exited with code ${code ?? -1}`;
           reject(new Error(message));

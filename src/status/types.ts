@@ -17,7 +17,7 @@ export interface StatusObject {
     gitHash?: string;
     builder?: string;
     error?: string;
-    progress?: import('../types.js').BuildProgress;
+    progress?: import("../types.js").BuildProgress;
   };
   app?: {
     bundleId?: string;
@@ -40,7 +40,7 @@ export interface StatusObject {
   type?: string;
   postBuild?: Array<{
     name: string;
-    status?: 'pending' | 'running' | 'success' | 'failure';
+    status?: "pending" | "running" | "success" | "failure";
     summary?: string;
     lines?: string[];
     startedAt?: string;

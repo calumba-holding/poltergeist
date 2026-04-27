@@ -1,5 +1,5 @@
-import { describe, expect, it, vi } from 'vitest';
-import { LifecycleHooks } from '../src/core/lifecycle-hooks.js';
+import { describe, expect, it, vi } from "vitest";
+import { LifecycleHooks } from "../src/core/lifecycle-hooks.js";
 
 const logger = {
   error: vi.fn(),
@@ -9,8 +9,8 @@ const logger = {
   success: vi.fn(),
 };
 
-describe('LifecycleHooks', () => {
-  it('runs handlers once when ready is notified', () => {
+describe("LifecycleHooks", () => {
+  it("runs handlers once when ready is notified", () => {
     const hooks = new LifecycleHooks({ logger });
     const handler = vi.fn();
     hooks.onReady(handler);
@@ -21,7 +21,7 @@ describe('LifecycleHooks', () => {
     expect(handler).toHaveBeenCalledTimes(1);
   });
 
-  it('immediately invokes handler if already ready', () => {
+  it("immediately invokes handler if already ready", () => {
     const hooks = new LifecycleHooks({ logger });
     hooks.notifyReady();
     const handler = vi.fn();
@@ -29,13 +29,13 @@ describe('LifecycleHooks', () => {
     expect(handler).toHaveBeenCalledTimes(1);
   });
 
-  it('logs errors thrown by handlers', () => {
+  it("logs errors thrown by handlers", () => {
     const hooks = new LifecycleHooks({ logger });
     const erroring = vi.fn(() => {
-      throw new Error('boom');
+      throw new Error("boom");
     });
     hooks.onReady(erroring);
     hooks.notifyReady();
-    expect(logger.error).toHaveBeenCalledWith('Ready handler failed:', expect.any(Error));
+    expect(logger.error).toHaveBeenCalledWith("Ready handler failed:", expect.any(Error));
   });
 });

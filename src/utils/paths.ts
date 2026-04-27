@@ -4,7 +4,7 @@
  * which breaks bytecode compilation
  */
 
-import { dirname } from 'path';
+import { dirname } from "path";
 
 /**
  * Get the directory name of the current module
@@ -12,7 +12,7 @@ import { dirname } from 'path';
  */
 export function getDirname(): string {
   // In Bun compiled binaries, __dirname is available
-  if (typeof __dirname !== 'undefined') {
+  if (typeof __dirname !== "undefined") {
     return __dirname;
   }
 
@@ -20,9 +20,9 @@ export function getDirname(): string {
   // We wrap this in eval to prevent static analysis issues
   try {
     // biome-ignore lint/security/noGlobalEval: Required for Bun bytecode compilation compatibility
-    const metaUrl = eval('import.meta.url');
+    const metaUrl = eval("import.meta.url");
     if (metaUrl) {
-      return dirname(metaUrl.replace('file://', ''));
+      return dirname(metaUrl.replace("file://", ""));
     }
   } catch {
     // import.meta not available
@@ -38,23 +38,23 @@ export function getDirname(): string {
  */
 export function getFilename(): string {
   // In Bun compiled binaries, __filename is available
-  if (typeof __filename !== 'undefined') {
+  if (typeof __filename !== "undefined") {
     return __filename;
   }
 
   // Try to use import.meta.url if available (non-compiled mode)
   try {
     // biome-ignore lint/security/noGlobalEval: Required for Bun bytecode compilation compatibility
-    const metaUrl = eval('import.meta.url');
+    const metaUrl = eval("import.meta.url");
     if (metaUrl) {
-      return metaUrl.replace('file://', '');
+      return metaUrl.replace("file://", "");
     }
   } catch {
     // import.meta not available
   }
 
   // Fallback to process.argv[1] for compiled binaries
-  return process.argv[1] || 'unknown';
+  return process.argv[1] || "unknown";
 }
 
 /**
@@ -65,15 +65,15 @@ export function isMainModule(): boolean {
   // Check various conditions to determine if this is the main module
 
   // For Node.js compatibility
-  if (typeof require !== 'undefined' && require.main === module) {
+  if (typeof require !== "undefined" && require.main === module) {
     return true;
   }
 
   // Try import.meta.main if available
   try {
     // biome-ignore lint/security/noGlobalEval: Required for Bun bytecode compilation compatibility
-    const metaMain = eval('import.meta.main');
-    if (typeof metaMain === 'boolean') {
+    const metaMain = eval("import.meta.main");
+    if (typeof metaMain === "boolean") {
       return metaMain;
     }
   } catch {
@@ -90,7 +90,7 @@ export function isMainModule(): boolean {
       mainFile === filename ||
       mainFile.endsWith(filename) ||
       filename.endsWith(mainFile) ||
-      mainFile.replace(/\.(js|ts)$/, '') === filename.replace(/\.(js|ts)$/, '')
+      mainFile.replace(/\.(js|ts)$/, "") === filename.replace(/\.(js|ts)$/, "")
     );
   }
 
@@ -102,19 +102,19 @@ export function isMainModule(): boolean {
  */
 export function isCompiledBinary(): boolean {
   // Check for Bun's virtual filesystem paths
-  if (process.argv[0]?.includes('/$bunfs/')) {
+  if (process.argv[0]?.includes("/$bunfs/")) {
     return true;
   }
 
   // Check if process.execPath points to our binary (not 'bun')
-  if (process.execPath && !process.execPath.endsWith('bun')) {
+  if (process.execPath && !process.execPath.endsWith("bun")) {
     return true;
   }
 
   // Check for the absence of import.meta (indicates compilation)
   try {
     // biome-ignore lint/security/noGlobalEval: Required for Bun bytecode compilation compatibility
-    eval('import.meta.url');
+    eval("import.meta.url");
     return false;
   } catch {
     // If import.meta is not available, likely compiled

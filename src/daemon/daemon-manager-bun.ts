@@ -4,7 +4,7 @@ export async function spawnBunDaemon(
   argsFile: string,
   projectRoot: string,
   logFile: string | undefined,
-  logger: any
+  logger: any,
 ): Promise<number> {
   const BunRuntime = (globalThis as any).Bun;
 
@@ -14,30 +14,30 @@ export async function spawnBunDaemon(
   return new Promise((resolve, reject) => {
     const timeoutId = setTimeout(() => {
       if (!daemonStarted) {
-        reject(new Error('Daemon startup timeout after 10 seconds'));
+        reject(new Error("Daemon startup timeout after 10 seconds"));
       }
     }, 10000);
 
     try {
       // Use Bun.spawn with IPC
-      const proc = BunRuntime.spawn([execPath, '--daemon-mode', argsFile], {
+      const proc = BunRuntime.spawn([execPath, "--daemon-mode", argsFile], {
         cwd: projectRoot,
         env: process.env,
         stdio: [
-          'ignore',
-          logFile ? BunRuntime.file(logFile) : 'pipe',
-          logFile ? BunRuntime.file(logFile) : 'pipe',
+          "ignore",
+          logFile ? BunRuntime.file(logFile) : "pipe",
+          logFile ? BunRuntime.file(logFile) : "pipe",
         ],
         ipc: (message: any) => {
           // Handle IPC messages from daemon
-          logger.debug('Received IPC message from daemon:', message);
-          if (message.type === 'started' && message.pid) {
+          logger.debug("Received IPC message from daemon:", message);
+          if (message.type === "started" && message.pid) {
             daemonStarted = true;
             clearTimeout(timeoutId);
             resolve(message.pid);
-          } else if (message.type === 'error') {
+          } else if (message.type === "error") {
             clearTimeout(timeoutId);
-            reject(new Error(message.error || 'Daemon startup failed'));
+            reject(new Error(message.error || "Daemon startup failed"));
           }
         },
       });
@@ -45,7 +45,7 @@ export async function spawnBunDaemon(
       const pid = proc.pid;
       if (!pid) {
         clearTimeout(timeoutId);
-        reject(new Error('Failed to start daemon process - no PID returned'));
+        reject(new Error("Failed to start daemon process - no PID returned"));
         return;
       }
 

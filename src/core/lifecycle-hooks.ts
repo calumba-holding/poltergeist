@@ -1,4 +1,4 @@
-import type { Logger } from '../logger.js';
+import type { Logger } from "../logger.js";
 
 interface LifecycleHooksDeps {
   logger: Logger;
@@ -18,7 +18,7 @@ export class LifecycleHooks {
       try {
         handler();
       } catch (error) {
-        this.logger.error('Ready handler failed:', error);
+        this.logger.error("Ready handler failed:", error);
       }
       return;
     }
@@ -34,7 +34,7 @@ export class LifecycleHooks {
       try {
         handler();
       } catch (error) {
-        this.logger.error('Ready handler failed:', error);
+        this.logger.error("Ready handler failed:", error);
       }
     }
   }

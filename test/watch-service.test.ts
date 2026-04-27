@@ -1,8 +1,8 @@
-import { describe, expect, it, vi } from 'vitest';
-import type { TargetState } from '../src/core/target-state.js';
-import { WatchService } from '../src/core/watch-service.js';
-import type { PoltergeistConfig } from '../src/types.js';
-import { createTestConfig } from './helpers.js';
+import { describe, expect, it, vi } from "vitest";
+import type { TargetState } from "../src/core/target-state.js";
+import { WatchService } from "../src/core/watch-service.js";
+import type { PoltergeistConfig } from "../src/types.js";
+import { createTestConfig } from "./helpers.js";
 
 const makeMockWatchman = () => ({
   subscribe: vi.fn().mockResolvedValue(undefined),
@@ -36,12 +36,12 @@ const makeTargetState = (config: PoltergeistConfig, pattern: string): TargetStat
   };
 };
 
-describe('WatchService', () => {
-  it('resubscribes on refreshTargets', async () => {
+describe("WatchService", () => {
+  it("resubscribes on refreshTargets", async () => {
     const config = createTestConfig();
     const watchman = makeMockWatchman();
     const service = new WatchService({
-      projectRoot: '/project',
+      projectRoot: "/project",
       config,
       logger: noopLogger,
       watchman,
@@ -49,26 +49,26 @@ describe('WatchService', () => {
       onFilesChanged: vi.fn(),
     });
 
-    const initialState = makeTargetState(config, 'src/**/*.ts');
-    await service.subscribeTargets(new Map([['t1', initialState]]));
+    const initialState = makeTargetState(config, "src/**/*.ts");
+    await service.subscribeTargets(new Map([["t1", initialState]]));
 
     expect(watchman.subscribe).toHaveBeenCalledTimes(1);
     const firstSubName = watchman.subscribe.mock.calls[0]?.[1];
 
-    const refreshedState = makeTargetState(config, 'lib/**/*.ts');
-    await service.refreshTargets(new Map([['t1', refreshedState]]));
+    const refreshedState = makeTargetState(config, "lib/**/*.ts");
+    await service.refreshTargets(new Map([["t1", refreshedState]]));
 
     expect(watchman.unsubscribe).toHaveBeenCalledWith(firstSubName);
     expect(watchman.subscribe).toHaveBeenCalledTimes(2);
     const secondSubName = watchman.subscribe.mock.calls[1]?.[1];
-    expect(secondSubName).toContain('lib');
+    expect(secondSubName).toContain("lib");
   });
 
-  it('unsubscribes only empty subscriptions for removed targets', async () => {
+  it("unsubscribes only empty subscriptions for removed targets", async () => {
     const config = createTestConfig();
     const watchman = makeMockWatchman();
     const service = new WatchService({
-      projectRoot: '/project',
+      projectRoot: "/project",
       config,
       logger: noopLogger,
       watchman,
@@ -76,23 +76,23 @@ describe('WatchService', () => {
       onFilesChanged: vi.fn(),
     });
 
-    const state1 = makeTargetState(config, 'src.ts');
-    state1.target.name = 't1';
-    const state2 = makeTargetState(config, 'lib.ts');
-    state2.target.name = 't2';
+    const state1 = makeTargetState(config, "src.ts");
+    state1.target.name = "t1";
+    const state2 = makeTargetState(config, "lib.ts");
+    state2.target.name = "t2";
 
     await service.subscribeTargets(
       new Map([
-        ['t1', state1],
-        ['t2', state2],
-      ])
+        ["t1", state1],
+        ["t2", state2],
+      ]),
     );
 
-    await service.unsubscribeTargets(['t1']);
-    expect(watchman.unsubscribe).toHaveBeenCalledWith('poltergeist_src_ts');
-    expect(watchman.unsubscribe).not.toHaveBeenCalledWith('poltergeist_lib_ts');
+    await service.unsubscribeTargets(["t1"]);
+    expect(watchman.unsubscribe).toHaveBeenCalledWith("poltergeist_src_ts");
+    expect(watchman.unsubscribe).not.toHaveBeenCalledWith("poltergeist_lib_ts");
 
-    await service.unsubscribeTargets(['t2']);
-    expect(watchman.unsubscribe).toHaveBeenCalledWith('poltergeist_lib_ts');
+    await service.unsubscribeTargets(["t2"]);
+    expect(watchman.unsubscribe).toHaveBeenCalledWith("poltergeist_lib_ts");
   });
 });

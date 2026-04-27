@@ -1,53 +1,53 @@
-import chalk from 'chalk';
-import type { Command } from 'commander';
-import { existsSync, writeFileSync } from 'fs';
-import path, { join } from 'path';
-import { createLogger } from '../../logger.js';
-import type { AppBundleTarget, PoltergeistConfig, ProjectType, Target } from '../../types.js';
-import { CMakeProjectAnalyzer } from '../../utils/cmake-analyzer.js';
-import { FileSystemUtils } from '../../utils/filesystem.js';
-import { ghost, poltergeistMessage } from '../../utils/ghost.js';
-import { WatchmanConfigManager } from '../../watchman-config.js';
+import chalk from "chalk";
+import type { Command } from "commander";
+import { existsSync, writeFileSync } from "fs";
+import path, { join } from "path";
+import { createLogger } from "../../logger.js";
+import type { AppBundleTarget, PoltergeistConfig, ProjectType, Target } from "../../types.js";
+import { CMakeProjectAnalyzer } from "../../utils/cmake-analyzer.js";
+import { FileSystemUtils } from "../../utils/filesystem.js";
+import { ghost, poltergeistMessage } from "../../utils/ghost.js";
+import { WatchmanConfigManager } from "../../watchman-config.js";
 import {
   augmentConfigWithDetectedTargets,
   findXcodeProjects,
   generateDefaultConfig,
   guessBundleId,
-} from '../init-helpers.js';
-import { instantiateStateManager } from '../loaders.js';
-import { applyConfigOption } from '../options.js';
-import { exitWithError, loadConfigOrExit } from '../shared.js';
+} from "../init-helpers.js";
+import { instantiateStateManager } from "../loaders.js";
+import { applyConfigOption } from "../options.js";
+import { exitWithError, loadConfigOrExit } from "../shared.js";
 
 export const registerProjectCommands = (program: Command): void => {
   program
-    .command('init')
-    .description('Initialize Poltergeist configuration for your project')
-    .option('--cmake', 'Initialize for CMake project')
-    .option('--auto', 'Auto-detect project type')
-    .option('--cmake-no-configure', 'Do not run cmake -B when no build dir exists')
-    .option('--preset <name>', 'Use specific CMake preset')
-    .option('--generator <gen>', 'CMake generator to use')
-    .option('--build-dir <dir>', 'Build directory', 'build')
-    .option('--dry-run', 'Show what would be generated without creating config')
-    .option('--no-auto-add', 'Skip auto-adding inferred targets when none are enabled')
+    .command("init")
+    .description("Initialize Poltergeist configuration for your project")
+    .option("--cmake", "Initialize for CMake project")
+    .option("--auto", "Auto-detect project type")
+    .option("--cmake-no-configure", "Do not run cmake -B when no build dir exists")
+    .option("--preset <name>", "Use specific CMake preset")
+    .option("--generator <gen>", "CMake generator to use")
+    .option("--build-dir <dir>", "Build directory", "build")
+    .option("--dry-run", "Show what would be generated without creating config")
+    .option("--no-auto-add", "Skip auto-adding inferred targets when none are enabled")
     .action(async (options) => {
       const projectRoot = process.cwd();
-      const configPath = join(projectRoot, 'poltergeist.config.json');
+      const configPath = join(projectRoot, "poltergeist.config.json");
       const initLogger = createLogger();
       const watchmanManager = new WatchmanConfigManager(projectRoot, initLogger);
 
       if (existsSync(configPath) && !options.dryRun) {
         exitWithError(
-          '❌ poltergeist.config.json already exists!\nRemove it first or use --dry-run to preview changes.'
+          "❌ poltergeist.config.json already exists!\nRemove it first or use --dry-run to preview changes.",
         );
       }
 
-      console.log(chalk.gray(poltergeistMessage('info', 'Initializing configuration...')));
+      console.log(chalk.gray(poltergeistMessage("info", "Initializing configuration...")));
 
       let projectType: ProjectType;
 
       if (options.cmake) {
-        projectType = 'cmake';
+        projectType = "cmake";
       } else if (options.auto) {
         projectType = await watchmanManager.detectProjectType();
         console.log(chalk.blue(`Auto-detected project type: ${projectType}`));
@@ -58,10 +58,10 @@ export const registerProjectCommands = (program: Command): void => {
 
       let config!: PoltergeistConfig;
 
-      if (projectType === 'cmake') {
+      if (projectType === "cmake") {
         try {
           const analyzer = new CMakeProjectAnalyzer(projectRoot);
-          console.log(chalk.gray('Analyzing CMake project...'));
+          console.log(chalk.gray("Analyzing CMake project..."));
           const analysis = await analyzer.analyzeProject({
             autoConfigure: !options.cmakeNoConfigure,
           });
@@ -69,7 +69,7 @@ export const registerProjectCommands = (program: Command): void => {
           if (analysis.errors?.length) {
             analysis.errors.forEach((err) => {
               initLogger.warn(
-                `[CMake] ${err.stage}: ${err.message}${err.details ? ` — ${err.details}` : ''}`
+                `[CMake] ${err.stage}: ${err.message}${err.details ? ` — ${err.details}` : ""}`,
               );
             });
           }
@@ -82,21 +82,21 @@ export const registerProjectCommands = (program: Command): void => {
           const targets = analyzer.generatePoltergeistTargets(analysis);
 
           config = {
-            version: '1.0',
-            projectType: 'cmake',
+            version: "1.0",
+            projectType: "cmake",
             targets,
             watchman: {
-              excludeDirs: [analysis.buildDirectory || 'build'],
+              excludeDirs: [analysis.buildDirectory || "build"],
             },
             notifications: {
-              successSound: 'Glass',
-              failureSound: 'Basso',
+              successSound: "Glass",
+              failureSound: "Basso",
             },
           } as PoltergeistConfig;
 
           if (options.generator) {
             targets.forEach((target) => {
-              if ('generator' in target && target.generator !== undefined) {
+              if ("generator" in target && target.generator !== undefined) {
                 target.generator = options.generator;
               }
             });
@@ -105,7 +105,7 @@ export const registerProjectCommands = (program: Command): void => {
           exitWithError(`Failed to analyze CMake project: ${error}`);
         }
       } else {
-        if (projectType === 'swift' || projectType === 'mixed') {
+        if (projectType === "swift" || projectType === "mixed") {
           const xcodeProjects = await findXcodeProjects(projectRoot);
 
           if (xcodeProjects.length > 0) {
@@ -117,16 +117,16 @@ export const registerProjectCommands = (program: Command): void => {
             for (const project of xcodeProjects) {
               const projectDir = path.dirname(project.path);
               const projectName = path.basename(project.path, path.extname(project.path));
-              const relativeDir = path.relative(projectRoot, projectDir) || '.';
+              const relativeDir = path.relative(projectRoot, projectDir) || ".";
               const isIOS =
-                projectName.toLowerCase().includes('ios') ||
-                project.path.toLowerCase().includes('/ios/');
+                projectName.toLowerCase().includes("ios") ||
+                project.path.toLowerCase().includes("/ios/");
 
               const targetName =
                 projectName
                   .toLowerCase()
-                  .replace(/[^a-z0-9]/g, '')
-                  .replace(/ios$/, '') || 'app';
+                  .replace(/[^a-z0-9]/g, "")
+                  .replace(/ios$/, "") || "app";
 
               let finalTargetName = isIOS ? `${targetName}-ios` : targetName;
               let suffix = 2;
@@ -136,16 +136,16 @@ export const registerProjectCommands = (program: Command): void => {
               }
               usedNames.add(finalTargetName);
 
-              const buildScript = existsSync(path.join(projectDir, 'scripts', 'build.sh'));
+              const buildScript = existsSync(path.join(projectDir, "scripts", "build.sh"));
               const buildCommand = buildScript
                 ? `cd ${relativeDir} && ./scripts/build.sh --configuration Debug`
-                : project.type === 'xcworkspace'
+                : project.type === "xcworkspace"
                   ? `cd ${relativeDir} && xcodebuild -workspace ${path.basename(project.path)} -scheme ${project.scheme || projectName} -configuration Debug build`
                   : `cd ${relativeDir} && xcodebuild -project ${path.basename(project.path)} -scheme ${project.scheme || projectName} -configuration Debug build`;
 
               const target: AppBundleTarget = {
                 name: finalTargetName,
-                type: 'app-bundle',
+                type: "app-bundle",
                 buildCommand,
                 bundleId: guessBundleId(projectName, project.path),
                 watchPaths: [
@@ -156,7 +156,7 @@ export const registerProjectCommands = (program: Command): void => {
                   `${relativeDir}/**/*.plist`,
                 ],
                 environment: {
-                  CONFIGURATION: 'Debug',
+                  CONFIGURATION: "Debug",
                 },
               };
 
@@ -168,8 +168,8 @@ export const registerProjectCommands = (program: Command): void => {
             }
 
             config = {
-              version: '1.0',
-              projectType: 'swift',
+              version: "1.0",
+              projectType: "swift",
               targets,
             };
           } else {
@@ -187,67 +187,67 @@ export const registerProjectCommands = (program: Command): void => {
       const configJson = JSON.stringify(config, null, 2);
 
       if (options.dryRun) {
-        console.log(chalk.yellow('\n--dry-run mode, would create:'));
-        console.log(chalk.gray('poltergeist.config.json:'));
+        console.log(chalk.yellow("\n--dry-run mode, would create:"));
+        console.log(chalk.gray("poltergeist.config.json:"));
         console.log(configJson);
         if (detectedTargets.length > 0) {
           console.log(
             chalk.gray(
               `Auto-detected targets (not written): ${detectedTargets
                 .map((t) => `${t.name} (${t.reason})`)
-                .join(', ')}`
-            )
+                .join(", ")}`,
+            ),
           );
         }
       } else {
-        writeFileSync(configPath, configJson, 'utf-8');
-        console.log(chalk.green('✅ Created poltergeist.config.json'));
+        writeFileSync(configPath, configJson, "utf-8");
+        console.log(chalk.green("✅ Created poltergeist.config.json"));
         if (detectedTargets.length > 0) {
           console.log(
             chalk.gray(
               `Auto-added targets: ${detectedTargets
                 .map((t) => `${t.name} (${t.reason})`)
-                .join(', ')}`
-            )
+                .join(", ")}`,
+            ),
           );
         }
 
-        console.log(chalk.blue('\n📋 For AI Agent Integration (Claude, Cursor, etc.):'));
-        console.log(chalk.gray('  Consider adding a CLAUDE.md file with instructions like:'));
+        console.log(chalk.blue("\n📋 For AI Agent Integration (Claude, Cursor, etc.):"));
+        console.log(chalk.gray("  Consider adding a CLAUDE.md file with instructions like:"));
         console.log(
-          chalk.gray('  • NEVER manually run build commands when Poltergeist is running')
+          chalk.gray("  • NEVER manually run build commands when Poltergeist is running"),
         );
         console.log(chalk.gray('  • ALWAYS use "polter <target>" to ensure fresh builds'));
-        console.log(chalk.gray('  • Poltergeist automatically detects changes and rebuilds'));
-        console.log(chalk.gray('  This helps AI agents work better with your project!'));
+        console.log(chalk.gray("  • Poltergeist automatically detects changes and rebuilds"));
+        console.log(chalk.gray("  This helps AI agents work better with your project!"));
 
         console.log(chalk.blue(`\nNext steps:`));
-        console.log(chalk.gray('  1. Review and adjust the configuration as needed'));
+        console.log(chalk.gray("  1. Review and adjust the configuration as needed"));
         console.log(chalk.gray('  2. Run "poltergeist haunt" to start watching'));
       }
     });
 
   const listCmd = program
-    .command('list')
-    .description('List all configured targets')
+    .command("list")
+    .description("List all configured targets")
     .action(async (options) => {
       const { config } = await loadConfigOrExit(options.config);
 
       console.log(chalk.cyan(`${ghost.brand()} Configured Targets`));
-      console.log(chalk.gray('═'.repeat(50)));
+      console.log(chalk.gray("═".repeat(50)));
 
       if (config.targets.length === 0) {
-        console.log(chalk.gray('No targets configured'));
+        console.log(chalk.gray("No targets configured"));
       } else {
         config.targets.forEach((target) => {
-          const status = target.enabled ? chalk.green('✓') : chalk.red('✗');
+          const status = target.enabled ? chalk.green("✓") : chalk.red("✗");
           console.log(`${status} ${chalk.cyan(target.name)} (${target.type})`);
           console.log(`  Build: ${target.buildCommand}`);
-          console.log(`  Watch: ${target.watchPaths.join(', ')}`);
+          console.log(`  Watch: ${target.watchPaths.join(", ")}`);
 
-          if (target.type === 'executable' && 'outputPath' in target) {
+          if (target.type === "executable" && "outputPath" in target) {
             console.log(`  Output: ${target.outputPath}`);
-          } else if (target.type === 'app-bundle' && 'bundleId' in target) {
+          } else if (target.type === "app-bundle" && "bundleId" in target) {
             console.log(`  Bundle ID: ${target.bundleId}`);
             if (target.platform) {
               console.log(`  Platform: ${target.platform}`);
@@ -261,21 +261,21 @@ export const registerProjectCommands = (program: Command): void => {
   applyConfigOption(listCmd);
 
   program
-    .command('clean')
-    .description('Clean up stale state files')
-    .option('-a, --all', 'Remove all state files, not just stale ones')
-    .option('-d, --days <number>', 'Remove state files older than N days', '7')
-    .option('--dry-run', 'Show what would be removed without actually removing')
-    .option('--json', 'Output a JSON summary (non-dry-run only removes files)')
+    .command("clean")
+    .description("Clean up stale state files")
+    .option("-a, --all", "Remove all state files, not just stale ones")
+    .option("-d, --days <number>", "Remove state files older than N days", "7")
+    .option("--dry-run", "Show what would be removed without actually removing")
+    .option("--json", "Output a JSON summary (non-dry-run only removes files)")
     .action(async (options) => {
       try {
-        console.log(chalk.gray(poltergeistMessage('info', 'Cleaning up state files...')));
+        console.log(chalk.gray(poltergeistMessage("info", "Cleaning up state files...")));
 
-        const { StateManager } = await import('../../state.js');
+        const { StateManager } = await import("../../state.js");
         const stateFiles = await StateManager.listAllStates();
 
         if (stateFiles.length === 0) {
-          console.log(chalk.green('No state files found'));
+          console.log(chalk.green("No state files found"));
           return;
         }
 
@@ -288,8 +288,8 @@ export const registerProjectCommands = (program: Command): void => {
         let candidateCount = 0;
         const jsonReport: Array<Record<string, unknown>> = [];
 
-        if (process.env.POLTERGEIST_DEBUG_CLEAN === 'true') {
-          console.log('CLEAN files', JSON.stringify(stateFiles));
+        if (process.env.POLTERGEIST_DEBUG_CLEAN === "true") {
+          console.log("CLEAN files", JSON.stringify(stateFiles));
         }
 
         const deriveTargetName = (fileName: string): string => {
@@ -298,17 +298,17 @@ export const registerProjectCommands = (program: Command): void => {
           if (match) {
             return match[3];
           }
-          return fileName.replace(/\.state$/i, '');
+          return fileName.replace(/\.state$/i, "");
         };
 
         const readStateForFile = async (
           manager: any,
           file: string,
-          targetName: string
+          targetName: string,
         ): Promise<any> => {
           let state = await manager.readState(targetName);
           if (!state) {
-            const fallbackName = file.replace(/\.state$/i, '');
+            const fallbackName = file.replace(/\.state$/i, "");
             if (fallbackName && fallbackName !== targetName) {
               state = await manager.readState(fallbackName);
             }
@@ -326,9 +326,9 @@ export const registerProjectCommands = (program: Command): void => {
             continue;
           }
 
-          if (process.env.POLTERGEIST_DEBUG_CLEAN === 'true') {
+          if (process.env.POLTERGEIST_DEBUG_CLEAN === "true") {
             console.log(
-              'CLEAN state',
+              "CLEAN state",
               JSON.stringify(
                 {
                   file,
@@ -337,17 +337,17 @@ export const registerProjectCommands = (program: Command): void => {
                   options,
                 },
                 null,
-                2
-              )
+                2,
+              ),
             );
           }
 
           let shouldRemove = false;
-          let reason = '';
+          let reason = "";
 
           if (options.all) {
             shouldRemove = true;
-            reason = 'all files';
+            reason = "all files";
           } else if (!state.process?.isActive) {
             const heartbeat = state.process?.lastHeartbeat
               ? new Date(state.process.lastHeartbeat).getTime()
@@ -364,10 +364,10 @@ export const registerProjectCommands = (program: Command): void => {
 
           candidateCount++;
 
-          const actionLabel = options.dryRun ? 'Would remove' : 'Removing';
+          const actionLabel = options.dryRun ? "Would remove" : "Removing";
           const message = `${actionLabel}: ${file}`;
           console.log(options.dryRun ? chalk.blue(message) : chalk.yellow(message));
-          console.log(`    Project: ${state.projectName || 'unknown'}`);
+          console.log(`    Project: ${state.projectName || "unknown"}`);
           console.log(`    Target: ${state.target || targetName}`);
 
           if (state.process?.lastHeartbeat) {
@@ -389,7 +389,7 @@ export const registerProjectCommands = (program: Command): void => {
 
           jsonReport.push({
             file,
-            project: state.projectName || 'unknown',
+            project: state.projectName || "unknown",
             target: state.target || targetName,
             reason,
           });
@@ -399,21 +399,21 @@ export const registerProjectCommands = (program: Command): void => {
           console.log(chalk.blue(`Would remove ${candidateCount} state file(s)`));
         } else {
           console.log(
-            chalk.green(poltergeistMessage('success', `Removed ${removedCount} state file(s)`))
+            chalk.green(poltergeistMessage("success", `Removed ${removedCount} state file(s)`)),
           );
           if (options.json) {
             console.log(
               JSON.stringify(
                 { removed: removedCount, candidates: candidateCount, files: jsonReport },
                 null,
-                2
-              )
+                2,
+              ),
             );
           }
         }
       } catch (error) {
-        if (process.env.POLTERGEIST_DEBUG_CLEAN === 'true') {
-          console.error('CLEAN command failed:', error);
+        if (process.env.POLTERGEIST_DEBUG_CLEAN === "true") {
+          console.error("CLEAN command failed:", error);
         }
         throw error;
       }

@@ -1,12 +1,12 @@
 // Tests for poltergeist.ts wrapper script functionality
 
-import { spawn } from 'child_process';
-import { existsSync } from 'fs';
-import { resolve } from 'path';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { spawn } from "child_process";
+import { existsSync } from "fs";
+import { resolve } from "path";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-describe('Poltergeist Wrapper Script', () => {
-  const wrapperScript = resolve(process.cwd(), 'poltergeist.ts');
+describe("Poltergeist Wrapper Script", () => {
+  const wrapperScript = resolve(process.cwd(), "poltergeist.ts");
 
   beforeEach(() => {
     // Ensure the wrapper script exists
@@ -22,7 +22,7 @@ describe('Poltergeist Wrapper Script', () => {
   // Helper function to run the wrapper script
   function runWrapper(
     args: string[] = [],
-    timeout = 5000
+    timeout = 15000,
   ): Promise<{
     stdout: string;
     stderr: string;
@@ -30,27 +30,27 @@ describe('Poltergeist Wrapper Script', () => {
   }> {
     return new Promise((resolve, reject) => {
       // Use platform-specific command
-      const isWindows = process.platform === 'win32';
-      const npxCmd = isWindows ? 'npx.cmd' : 'npx';
+      const isWindows = process.platform === "win32";
+      const npxCmd = isWindows ? "npx.cmd" : "npx";
 
-      const child = spawn(npxCmd, ['tsx', wrapperScript, ...args], {
-        stdio: 'pipe',
+      const child = spawn(npxCmd, ["tsx", wrapperScript, ...args], {
+        stdio: "pipe",
         timeout,
         shell: isWindows, // Use shell on Windows
       });
 
-      let stdout = '';
-      let stderr = '';
+      let stdout = "";
+      let stderr = "";
 
-      child.stdout?.on('data', (data) => {
+      child.stdout?.on("data", (data) => {
         stdout += data.toString();
       });
 
-      child.stderr?.on('data', (data) => {
+      child.stderr?.on("data", (data) => {
         stderr += data.toString();
       });
 
-      child.on('close', (code) => {
+      child.on("close", (code) => {
         resolve({
           stdout: stdout.trim(),
           stderr: stderr.trim(),
@@ -58,65 +58,65 @@ describe('Poltergeist Wrapper Script', () => {
         });
       });
 
-      child.on('error', (error) => {
+      child.on("error", (error) => {
         reject(error);
       });
 
       // Set timeout. Under CI (especially ubuntu + Node 24) the wrapper can start
       // a bit slower; allow extra headroom so the help test doesn’t flake.
-      const maxTimeout = process.env.CI ? Math.max(timeout, 10000) : timeout;
+      const maxTimeout = process.env.CI ? Math.max(timeout, 15000) : timeout;
       setTimeout(() => {
-        child.kill('SIGTERM');
+        child.kill("SIGTERM");
         reject(new Error(`Wrapper script timed out after ${maxTimeout}ms`));
       }, maxTimeout);
     });
   }
 
-  describe('Help Menu', () => {
-    it('should display help menu when no arguments provided', async () => {
+  describe("Help Menu", () => {
+    it("should display help menu when no arguments provided", async () => {
       const result = await runWrapper([]);
 
       // Should show help and exit with non-zero code
       expect(result.exitCode).toBe(1);
-      expect(result.stderr).toContain('USAGE');
-      expect(result.stderr).toContain('poltergeist <command> [options]');
-      expect(result.stderr).toContain('The ghost that keeps your projects fresh');
-      expect(result.stderr).toContain('COMMANDS');
-      expect(result.stderr).toContain('start, haunt');
-      expect(result.stderr).toContain('status');
-      expect(result.stderr).toContain('stop, rest');
-      expect(result.stderr).toContain('list');
-      expect(result.stderr).toContain('clean');
+      expect(result.stderr).toContain("USAGE");
+      expect(result.stderr).toContain("poltergeist <command> [options]");
+      expect(result.stderr).toContain("The ghost that keeps your projects fresh");
+      expect(result.stderr).toContain("COMMANDS");
+      expect(result.stderr).toContain("start, haunt");
+      expect(result.stderr).toContain("status");
+      expect(result.stderr).toContain("stop, rest");
+      expect(result.stderr).toContain("list");
+      expect(result.stderr).toContain("clean");
     });
 
-    it('should display help when --help is provided', async () => {
-      const result = await runWrapper(['--help']);
+    it("should display help when --help is provided", async () => {
+      const result = await runWrapper(["--help"]);
 
       expect(result.exitCode).toBe(0);
-      expect(result.stdout).toContain('USAGE');
-      expect(result.stdout).toContain('poltergeist <command> [options]');
-      expect(result.stdout).toContain('The ghost that keeps your projects fresh');
+      expect(result.stdout).toContain("USAGE");
+      expect(result.stdout).toContain("poltergeist <command> [options]");
+      expect(result.stdout).toContain("The ghost that keeps your projects fresh");
     });
 
-    it('should display version when --version is provided', async () => {
-      const result = await runWrapper(['--version']);
+    it("should display version when --version is provided", async () => {
+      const result = await runWrapper(["--version"]);
 
       expect(result.exitCode).toBe(0);
       expect(result.stdout).toMatch(/\d+\.\d+\.\d+/);
     });
   });
 
-  describe('Status Command', () => {
-    it('should execute status command', async () => {
-      const result = await runWrapper(['status']);
+  describe("Status Command", () => {
+    it("should execute status command", async () => {
+      const result = await runWrapper(["status"]);
 
       expect(result.exitCode).toBe(0);
-      expect(result.stdout).toContain('Poltergeist Status');
-      expect(result.stdout).toContain('Target:');
+      expect(result.stdout).toContain("Poltergeist Status");
+      expect(result.stdout).toContain("Target:");
     });
 
-    it('should support status with JSON output', async () => {
-      const result = await runWrapper(['status', '--json']);
+    it("should support status with JSON output", async () => {
+      const result = await runWrapper(["status", "--json"]);
 
       expect(result.exitCode).toBe(0);
 
@@ -127,57 +127,57 @@ describe('Poltergeist Wrapper Script', () => {
       }).not.toThrow();
 
       expect(json).toBeDefined();
-      expect(typeof json).toBe('object');
+      expect(typeof json).toBe("object");
     });
   });
 
-  describe('List Command', () => {
-    it('should execute list command', async () => {
-      const result = await runWrapper(['list']);
+  describe("List Command", () => {
+    it("should execute list command", async () => {
+      const result = await runWrapper(["list"]);
 
       expect(result.exitCode).toBe(0);
-      expect(result.stdout).toContain('Configured Targets');
+      expect(result.stdout).toContain("Configured Targets");
     });
   });
 
-  describe('Wrapper Integration', () => {
-    it('should properly detect wrapper execution', async () => {
+  describe("Wrapper Integration", () => {
+    it("should properly detect wrapper execution", async () => {
       // This test ensures the wrapper detection logic works
       // by verifying that the CLI actually executes when called through the wrapper
-      const result = await runWrapper(['--help']);
+      const result = await runWrapper(["--help"]);
 
       expect(result.exitCode).toBe(0);
       // If wrapper detection failed, we wouldn't get help output
       expect(result.stdout).toBeTruthy();
     });
 
-    it('should handle unknown commands gracefully', async () => {
-      const result = await runWrapper(['unknown-command']);
+    it("should handle unknown commands gracefully", async () => {
+      const result = await runWrapper(["unknown-command"]);
 
       expect(result.exitCode).toBe(1);
-      expect(result.stderr).toContain('unknown command');
+      expect(result.stderr).toContain("unknown command");
     });
 
-    it('should handle invalid options gracefully', async () => {
-      const result = await runWrapper(['status', '--invalid-option']);
+    it("should handle invalid options gracefully", async () => {
+      const result = await runWrapper(["status", "--invalid-option"]);
 
       expect(result.exitCode).toBe(1);
-      expect(result.stderr).toContain('unknown option');
+      expect(result.stderr).toContain("unknown option");
     });
   });
 
-  describe('Import Detection Logic', () => {
-    it('should detect wrapper script in process.argv[1]', () => {
+  describe("Import Detection Logic", () => {
+    it("should detect wrapper script in process.argv[1]", () => {
       // Test the detection logic that was added to fix the wrapper
       const testCases = [
-        { argv1: '/path/to/poltergeist.ts', expected: true },
-        { argv1: '/path/to/poltergeist', expected: true },
-        { argv1: '/path/to/other-script.ts', expected: false },
-        { argv1: '/path/to/cli.js', expected: false },
+        { argv1: "/path/to/poltergeist.ts", expected: true },
+        { argv1: "/path/to/poltergeist", expected: true },
+        { argv1: "/path/to/other-script.ts", expected: false },
+        { argv1: "/path/to/cli.js", expected: false },
       ];
 
       testCases.forEach(({ argv1, expected }) => {
-        const isWrapperRun = argv1?.endsWith('poltergeist.ts') || argv1?.endsWith('poltergeist');
+        const isWrapperRun = argv1?.endsWith("poltergeist.ts") || argv1?.endsWith("poltergeist");
         expect(isWrapperRun).toBe(expected);
       });
     });

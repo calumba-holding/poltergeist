@@ -1,34 +1,34 @@
-import { existsSync, mkdirSync, rmSync } from 'fs';
-import { tmpdir } from 'os';
-import { join } from 'path';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { DaemonManager } from '../src/daemon/daemon-manager.js';
-import { createLogger } from '../src/logger.js';
-import type { PoltergeistConfig } from '../src/types.js';
+import { existsSync, mkdirSync, rmSync } from "fs";
+import { tmpdir } from "os";
+import { join } from "path";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { DaemonManager } from "../src/daemon/daemon-manager.js";
+import { createLogger } from "../src/logger.js";
+import type { PoltergeistConfig } from "../src/types.js";
 
 // Mock child_process module (Node path uses spawn with IPC)
-vi.mock('child_process', () => {
+vi.mock("child_process", () => {
   const spawn = vi.fn();
   return { spawn };
 });
 
 // Mock ProcessManager
-vi.mock('../src/utils/process-manager.js', () => ({
+vi.mock("../src/utils/process-manager.js", () => ({
   ProcessManager: {
     isProcessAlive: vi.fn(),
   },
 }));
 
 // Import after mocking
-import { spawn } from 'child_process';
-import { ProcessManager } from '../src/utils/process-manager.js';
+import { spawn } from "child_process";
+import { ProcessManager } from "../src/utils/process-manager.js";
 
 const mockSpawn: ReturnType<typeof vi.fn> = spawn as ReturnType<typeof vi.fn>;
 const mockIsProcessAlive: ReturnType<typeof vi.fn> = ProcessManager.isProcessAlive as ReturnType<
   typeof vi.fn
 >;
 
-const skipLongRuns = process.env.CI === 'true' || process.env.POLTERGEIST_COVERAGE_MODE === 'true';
+const skipLongRuns = process.env.CI === "true" || process.env.POLTERGEIST_COVERAGE_MODE === "true";
 const createMockChild = (pid = 12345) => ({
   pid,
   once: vi.fn(),
@@ -38,7 +38,7 @@ const createMockChild = (pid = 12345) => ({
   kill: vi.fn(),
 });
 
-describe.skipIf(skipLongRuns)('daemon resilience', () => {
+describe.skipIf(skipLongRuns)("daemon resilience", () => {
   let testDir: string;
   let daemonManager: DaemonManager;
   let logger: ReturnType<typeof createLogger>;
@@ -49,7 +49,7 @@ describe.skipIf(skipLongRuns)('daemon resilience', () => {
     mkdirSync(testDir, { recursive: true });
 
     // Create logger
-    logger = createLogger(join(testDir, 'test.log'), 'error');
+    logger = createLogger(join(testDir, "test.log"), "error");
 
     // Create daemon manager
     daemonManager = new DaemonManager(logger);
@@ -68,7 +68,7 @@ describe.skipIf(skipLongRuns)('daemon resilience', () => {
         rmSync(testDir, { recursive: true, force: true });
       } catch (error: any) {
         // On Windows, sometimes files are still locked - wait and retry
-        if (error.code === 'ENOTEMPTY' || error.code === 'EBUSY') {
+        if (error.code === "ENOTEMPTY" || error.code === "EBUSY") {
           await new Promise((resolve) => setTimeout(resolve, 100));
           try {
             rmSync(testDir, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
@@ -80,8 +80,8 @@ describe.skipIf(skipLongRuns)('daemon resilience', () => {
     }
   });
 
-  describe('timeout configuration', () => {
-    it('should use default timeout of 30 seconds', async () => {
+  describe("timeout configuration", () => {
+    it("should use default timeout of 30 seconds", async () => {
       vi.useFakeTimers();
 
       // Mock fork to simulate slow daemon startup
@@ -91,14 +91,14 @@ describe.skipIf(skipLongRuns)('daemon resilience', () => {
 
       // Set up the mock to not send a message (simulating timeout)
       mockChild.once.mockImplementation((event, _callback) => {
-        if (event === 'message') {
+        if (event === "message") {
           // Don't call the callback to simulate timeout
         }
       });
 
       const config: PoltergeistConfig = {
-        version: '1.0',
-        projectType: 'node',
+        version: "1.0",
+        projectType: "node",
         targets: [],
       };
 
@@ -108,7 +108,7 @@ describe.skipIf(skipLongRuns)('daemon resilience', () => {
         {
           projectRoot: testDir,
         },
-        1
+        1,
       ); // Only 1 retry to speed up test
 
       // Advance timers by 30 seconds
@@ -120,9 +120,9 @@ describe.skipIf(skipLongRuns)('daemon resilience', () => {
       vi.useRealTimers();
     });
 
-    it('should respect POLTERGEIST_DAEMON_TIMEOUT environment variable', async () => {
+    it("should respect POLTERGEIST_DAEMON_TIMEOUT environment variable", async () => {
       // Set custom timeout
-      process.env.POLTERGEIST_DAEMON_TIMEOUT = '5000';
+      process.env.POLTERGEIST_DAEMON_TIMEOUT = "5000";
 
       // Mock fork to simulate slow daemon startup
       const mockChild = createMockChild();
@@ -131,14 +131,14 @@ describe.skipIf(skipLongRuns)('daemon resilience', () => {
 
       // Set up the mock to not send a message (simulating timeout)
       mockChild.once.mockImplementation((event, _callback) => {
-        if (event === 'message') {
+        if (event === "message") {
           // Don't call the callback to simulate timeout
         }
       });
 
       const config: PoltergeistConfig = {
-        version: '1.0',
-        projectType: 'node',
+        version: "1.0",
+        projectType: "node",
         targets: [],
       };
 
@@ -151,8 +151,8 @@ describe.skipIf(skipLongRuns)('daemon resilience', () => {
           {
             projectRoot: testDir,
           },
-          1
-        ) // Only 1 retry to speed up test
+          1,
+        ), // Only 1 retry to speed up test
       ).rejects.toThrow(/Daemon startup timeout after 5000ms/);
 
       const elapsed = Date.now() - startTime;
@@ -166,8 +166,8 @@ describe.skipIf(skipLongRuns)('daemon resilience', () => {
     }, 15000); // Increase test timeout
   });
 
-  describe('retry logic', () => {
-    it('should retry daemon startup on failure', async () => {
+  describe("retry logic", () => {
+    it("should retry daemon startup on failure", async () => {
       let attemptCount = 0;
 
       // Mock fork to simulate failures then success
@@ -177,14 +177,14 @@ describe.skipIf(skipLongRuns)('daemon resilience', () => {
         const mockChild = createMockChild();
 
         mockChild.once.mockImplementation((event, callback) => {
-          if (event === 'message') {
+          if (event === "message") {
             setTimeout(() => {
               if (attemptCount < 3) {
                 // Fail first 2 attempts
-                callback({ type: 'error', error: 'Startup failed' });
+                callback({ type: "error", error: "Startup failed" });
               } else {
                 // Succeed on 3rd attempt
-                callback({ type: 'started', pid: 12345 });
+                callback({ type: "started", pid: 12345 });
               }
             }, 100);
           }
@@ -194,8 +194,8 @@ describe.skipIf(skipLongRuns)('daemon resilience', () => {
       });
 
       const config: PoltergeistConfig = {
-        version: '1.0',
-        projectType: 'node',
+        version: "1.0",
+        projectType: "node",
         targets: [],
       };
 
@@ -208,7 +208,7 @@ describe.skipIf(skipLongRuns)('daemon resilience', () => {
       expect(attemptCount).toBe(3);
     });
 
-    it('should use exponential backoff between retries', async () => {
+    it("should use exponential backoff between retries", async () => {
       let attemptCount = 0;
       const attemptTimes: number[] = [];
 
@@ -220,9 +220,9 @@ describe.skipIf(skipLongRuns)('daemon resilience', () => {
         const mockChild = createMockChild();
 
         mockChild.once.mockImplementation((event, callback) => {
-          if (event === 'message') {
+          if (event === "message") {
             setTimeout(() => {
-              callback({ type: 'error', error: 'Startup failed' });
+              callback({ type: "error", error: "Startup failed" });
             }, 50);
           }
         });
@@ -231,8 +231,8 @@ describe.skipIf(skipLongRuns)('daemon resilience', () => {
       });
 
       const config: PoltergeistConfig = {
-        version: '1.0',
-        projectType: 'node',
+        version: "1.0",
+        projectType: "node",
         targets: [],
       };
 
@@ -243,8 +243,8 @@ describe.skipIf(skipLongRuns)('daemon resilience', () => {
           {
             projectRoot: testDir,
           },
-          3
-        )
+          3,
+        ),
       ).rejects.toThrow(/Failed to start daemon after 3 attempts/);
 
       expect(attemptCount).toBe(3);
@@ -262,8 +262,8 @@ describe.skipIf(skipLongRuns)('daemon resilience', () => {
     }, 10000); // Increase test timeout
   });
 
-  describe('concurrent startup handling', () => {
-    it('should prevent concurrent daemon startups', async () => {
+  describe("concurrent startup handling", () => {
+    it("should prevent concurrent daemon startups", async () => {
       // Mock fork to simulate successful startup
       const mockChild = createMockChild();
 
@@ -271,14 +271,14 @@ describe.skipIf(skipLongRuns)('daemon resilience', () => {
 
       const messageCallbacks: any[] = [];
       mockChild.once.mockImplementation((event, callback) => {
-        if (event === 'message') {
+        if (event === "message") {
           messageCallbacks.push(callback);
         }
       });
 
       const config: PoltergeistConfig = {
-        version: '1.0',
-        projectType: 'node',
+        version: "1.0",
+        projectType: "node",
         targets: [],
       };
 
@@ -289,7 +289,7 @@ describe.skipIf(skipLongRuns)('daemon resilience', () => {
 
       // Wait a bit and complete the first startup
       await new Promise((resolve) => setTimeout(resolve, 100));
-      messageCallbacks[0]({ type: 'started', pid: 12345 });
+      messageCallbacks[0]({ type: "started", pid: 12345 });
 
       // Wait for first to complete
       const firstPid = await firstPromise;
@@ -302,21 +302,21 @@ describe.skipIf(skipLongRuns)('daemon resilience', () => {
       await expect(
         daemonManager.startDaemonWithRetry(config, {
           projectRoot: testDir,
-        })
+        }),
       ).rejects.toThrow(/Daemon already running for this project/);
     }, 10000); // Increase timeout for this test
   });
 
-  describe('error handling', () => {
-    it('should handle fork errors gracefully', async () => {
+  describe("error handling", () => {
+    it("should handle fork errors gracefully", async () => {
       // Mock fork to throw an error
       mockSpawn.mockImplementation(() => {
-        throw new Error('Fork failed: ENOMEM');
+        throw new Error("Fork failed: ENOMEM");
       });
 
       const config: PoltergeistConfig = {
-        version: '1.0',
-        projectType: 'node',
+        version: "1.0",
+        projectType: "node",
         targets: [],
       };
 
@@ -327,23 +327,23 @@ describe.skipIf(skipLongRuns)('daemon resilience', () => {
           {
             projectRoot: testDir,
           },
-          2
-        )
+          2,
+        ),
       ).rejects.toThrow(/Failed to start daemon after 2 attempts.*Fork failed: ENOMEM/);
     }, 10000);
 
-    it('should handle daemon crash during startup', async () => {
+    it("should handle daemon crash during startup", async () => {
       // Mock fork to simulate crash
       mockSpawn.mockImplementation(() => {
         const mockChild = createMockChild();
 
         const errorCallbacks: any[] = [];
         mockChild.once.mockImplementation((event, callback) => {
-          if (event === 'error') {
+          if (event === "error") {
             errorCallbacks.push(callback);
             // Simulate crash after a delay
             setTimeout(() => {
-              callback(new Error('Daemon crashed'));
+              callback(new Error("Daemon crashed"));
             }, 100);
           }
         });
@@ -352,8 +352,8 @@ describe.skipIf(skipLongRuns)('daemon resilience', () => {
       });
 
       const config: PoltergeistConfig = {
-        version: '1.0',
-        projectType: 'node',
+        version: "1.0",
+        projectType: "node",
         targets: [],
       };
 
@@ -364,14 +364,14 @@ describe.skipIf(skipLongRuns)('daemon resilience', () => {
           {
             projectRoot: testDir,
           },
-          1
-        )
+          1,
+        ),
       ).rejects.toThrow(/Failed to start daemon after 1 attempts/);
     });
 
-    it('should provide helpful error message on timeout', async () => {
+    it("should provide helpful error message on timeout", async () => {
       // Set a short timeout for testing
-      process.env.POLTERGEIST_DAEMON_TIMEOUT = '1000';
+      process.env.POLTERGEIST_DAEMON_TIMEOUT = "1000";
 
       // Mock fork to simulate slow startup
       mockSpawn.mockImplementation(() => {
@@ -385,8 +385,8 @@ describe.skipIf(skipLongRuns)('daemon resilience', () => {
       });
 
       const config: PoltergeistConfig = {
-        version: '1.0',
-        projectType: 'node',
+        version: "1.0",
+        projectType: "node",
         targets: [],
       };
 
@@ -397,10 +397,10 @@ describe.skipIf(skipLongRuns)('daemon resilience', () => {
           {
             projectRoot: testDir,
           },
-          1
-        )
+          1,
+        ),
       ).rejects.toThrow(
-        /Daemon startup timeout after 1000ms.*Try setting POLTERGEIST_DAEMON_TIMEOUT/
+        /Daemon startup timeout after 1000ms.*Try setting POLTERGEIST_DAEMON_TIMEOUT/,
       );
 
       // Clean up environment variable

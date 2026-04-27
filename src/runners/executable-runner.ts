@@ -1,7 +1,7 @@
-import { type ChildProcess, spawn } from 'child_process';
-import type { Logger } from '../logger.js';
-import type { BuildStatus, ExecutableTarget } from '../types.js';
-import { LaunchPreparationError, prepareLaunchInfo } from '../utils/launch.js';
+import { type ChildProcess, spawn } from "child_process";
+import type { Logger } from "../logger.js";
+import type { BuildStatus, ExecutableTarget } from "../types.js";
+import { LaunchPreparationError, prepareLaunchInfo } from "../utils/launch.js";
 
 export interface ExecutableRunnerOptions {
   projectRoot: string;
@@ -21,11 +21,11 @@ export class ExecutableRunner {
 
   constructor(
     private readonly target: ExecutableTarget,
-    private readonly options: ExecutableRunnerOptions
+    private readonly options: ExecutableRunnerOptions,
   ) {
     const cfg = target.autoRun ?? {};
     const restartSignal = cfg.restartSignal as NodeJS.Signals | undefined;
-    this.restartSignal = restartSignal ?? 'SIGINT';
+    this.restartSignal = restartSignal ?? "SIGINT";
     this.restartDelay = Math.max(0, cfg.restartDelayMs ?? 250);
     this.args = Array.isArray(cfg.args) ? cfg.args : [];
     this.env = cfg.env;
@@ -37,7 +37,7 @@ export class ExecutableRunner {
       return;
     }
     if (!this.child) {
-      await this.launch('initial-success');
+      await this.launch("initial-success");
       return;
     }
     this.scheduleRestart();
@@ -48,7 +48,7 @@ export class ExecutableRunner {
       return;
     }
     this.options.logger.warn(
-      `[${this.target.name}] Auto-run skipped due to build failure (${status.errorSummary ?? 'unknown error'})`
+      `[${this.target.name}] Auto-run skipped due to build failure (${status.errorSummary ?? "unknown error"})`,
     );
   }
 
@@ -59,7 +59,7 @@ export class ExecutableRunner {
     }
     this.pendingRestart = false;
     this.shuttingDown = true;
-    await this.stopChild('SIGTERM');
+    await this.stopChild("SIGTERM");
   }
 
   private scheduleRestart(): void {
@@ -80,7 +80,7 @@ export class ExecutableRunner {
     this.pendingRestart = false;
     this.restartTimer = null;
     await this.stopChild(this.restartSignal);
-    await this.launch('rebuild');
+    await this.launch("rebuild");
   }
 
   private async launch(reason: string): Promise<void> {
@@ -90,16 +90,16 @@ export class ExecutableRunner {
     try {
       const launchInfo = this.resolveLaunchInfo();
       this.options.logger.info(
-        `[${this.target.name}] Auto-run starting (${reason}) · ${launchInfo.command} ${launchInfo.commandArgs.join(' ')}`
+        `[${this.target.name}] Auto-run starting (${reason}) · ${launchInfo.command} ${launchInfo.commandArgs.join(" ")}`,
       );
 
       this.child = spawn(launchInfo.command, launchInfo.commandArgs, {
         cwd: this.options.projectRoot,
-        stdio: 'inherit',
+        stdio: "inherit",
         env: this.env ? { ...process.env, ...this.env } : process.env,
       });
 
-      this.child.on('exit', (code, signal) => {
+      this.child.on("exit", (code, signal) => {
         if (this.restartTimer) {
           clearTimeout(this.restartTimer);
           this.restartTimer = null;
@@ -109,25 +109,25 @@ export class ExecutableRunner {
         if (!this.shuttingDown) {
           const status = signal ? `signal ${signal}` : `code ${code}`;
           this.options.logger.info(
-            `[${this.target.name}] Auto-run process exited (${status}). Waiting for next successful build.`
+            `[${this.target.name}] Auto-run process exited (${status}). Waiting for next successful build.`,
           );
         }
       });
 
-      this.child.on('error', (error: Error) => {
+      this.child.on("error", (error: Error) => {
         this.options.logger.error(
-          `[${this.target.name}] Auto-run failed to start: ${error.message}`
+          `[${this.target.name}] Auto-run failed to start: ${error.message}`,
         );
       });
     } catch (error) {
       if (error instanceof LaunchPreparationError) {
-        if (error.code === 'NO_OUTPUT_PATH') {
+        if (error.code === "NO_OUTPUT_PATH") {
           this.options.logger.error(
-            `[${this.target.name}] Auto-run requires outputPath for executable targets`
+            `[${this.target.name}] Auto-run requires outputPath for executable targets`,
           );
         } else {
           this.options.logger.error(
-            `[${this.target.name}] Auto-run binary missing: ${error.binaryPath ?? '<unknown>'}`
+            `[${this.target.name}] Auto-run binary missing: ${error.binaryPath ?? "<unknown>"}`,
           );
         }
       } else {
@@ -165,18 +165,18 @@ export class ExecutableRunner {
 
       const forceKillTimer = setTimeout(() => {
         if (!child.killed) {
-          child.kill('SIGKILL');
+          child.kill("SIGKILL");
         }
       }, 5000);
 
       const exitHandler = () => {
         clearTimeout(forceKillTimer);
-        child.removeListener('error', exitHandler);
+        child.removeListener("error", exitHandler);
         finalize();
       };
 
-      child.once('exit', exitHandler);
-      child.once('error', exitHandler);
+      child.once("exit", exitHandler);
+      child.once("error", exitHandler);
 
       if (child.exitCode !== null || child.signalCode) {
         exitHandler();

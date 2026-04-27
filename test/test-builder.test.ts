@@ -1,11 +1,11 @@
-import fs from 'fs';
-import os from 'os';
-import path from 'path';
-import { afterEach, beforeEach, describe, expect, test } from 'vitest';
-import { BuilderFactory } from '../src/builders/index.js';
-import { TestBuilder } from '../src/builders/test-builder.js';
-import { createLogger } from '../src/logger.js';
-import type { TestTarget } from '../src/types.js';
+import fs from "fs";
+import os from "os";
+import path from "path";
+import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import { BuilderFactory } from "../src/builders/index.js";
+import { TestBuilder } from "../src/builders/test-builder.js";
+import { createLogger } from "../src/logger.js";
+import type { TestTarget } from "../src/types.js";
 
 const logger = createLogger();
 const projectRoot = process.cwd();
@@ -18,19 +18,19 @@ const stateManager = {
   isLocked: () => Promise.resolve(false),
 } as any;
 
-describe('TestBuilder', () => {
+describe("TestBuilder", () => {
   let outputFile: string;
   let target: TestTarget;
 
   beforeEach(() => {
     outputFile = path.join(os.tmpdir(), `poltergeist-test-builder-${Date.now()}.txt`);
     target = {
-      name: 'unit-tests',
-      type: 'test',
+      name: "unit-tests",
+      type: "test",
       enabled: true,
       testCommand:
         "node -e \"const fs=require('fs');fs.writeFileSync(process.env.TEST_OUTPUT,'ran')\"",
-      watchPaths: ['src/**/*.ts'],
+      watchPaths: ["src/**/*.ts"],
       environment: {
         TEST_OUTPUT: outputFile,
       },
@@ -46,15 +46,15 @@ describe('TestBuilder', () => {
     }
   });
 
-  test('executes provided test command', async () => {
+  test("executes provided test command", async () => {
     const builder = new TestBuilder(target, projectRoot, logger, stateManager);
-    await builder.build(['src/foo.ts']);
+    await builder.build(["src/foo.ts"]);
 
     expect(fs.existsSync(outputFile)).toBe(true);
-    expect(fs.readFileSync(outputFile, 'utf8')).toBe('ran');
+    expect(fs.readFileSync(outputFile, "utf8")).toBe("ran");
   });
 
-  test('builder factory returns TestBuilder for test targets', () => {
+  test("builder factory returns TestBuilder for test targets", () => {
     const builder = BuilderFactory.createBuilder(target, projectRoot, logger, stateManager);
     expect(builder).toBeInstanceOf(TestBuilder);
   });

@@ -1,18 +1,18 @@
 // Test helpers for Poltergeist tests
 
-import { EventEmitter } from 'events';
-import { vi } from 'vitest';
-import type { BaseBuilder } from '../src/builders/index.js';
+import { EventEmitter } from "events";
+import { vi } from "vitest";
+import type { BaseBuilder } from "../src/builders/index.js";
 import type {
   IBuilderFactory,
   IStateManager,
   IWatchmanClient,
   IWatchmanConfigManager,
   PoltergeistDependencies,
-} from '../src/interfaces.js';
-import type { Logger } from '../src/logger.js';
-import type { BuildNotifier } from '../src/notifier.js';
-import type { BuildStatus, PoltergeistConfig, Target } from '../src/types.js';
+} from "../src/interfaces.js";
+import type { Logger } from "../src/logger.js";
+import type { BuildNotifier } from "../src/notifier.js";
+import type { BuildStatus, PoltergeistConfig, Target } from "../src/types.js";
 
 /**
  * Create a mock logger
@@ -60,15 +60,15 @@ export function createMockWatchmanConfigManager(): IWatchmanConfigManager {
 export function createMockStateManager(): IStateManager {
   return {
     initializeState: vi.fn().mockResolvedValue({
-      version: '1.0',
-      projectPath: '/test/project',
-      projectName: 'test',
-      target: 'test-target',
-      targetType: 'executable',
-      configPath: '/test/project/.poltergeist.json',
+      version: "1.0",
+      projectPath: "/test/project",
+      projectName: "test",
+      target: "test-target",
+      targetType: "executable",
+      configPath: "/test/project/.poltergeist.json",
       process: {
         pid: process.pid,
-        hostname: 'test-host',
+        hostname: "test-host",
         isActive: true,
         startTime: new Date().toISOString(),
         lastHeartbeat: new Date().toISOString(),
@@ -79,7 +79,7 @@ export function createMockStateManager(): IStateManager {
     updateBuildStatus: vi.fn().mockImplementation(async (...args: any[]) => {
       if (process.env.VITEST && process.env.DEBUG_WAITS) {
         // eslint-disable-next-line no-console
-        console.log('updateBuildStatus', ...args);
+        console.log("updateBuildStatus", ...args);
       }
       return undefined;
     }),
@@ -102,7 +102,7 @@ export function createMockBuilder(
     delay?: number;
     shouldFail?: boolean;
     buildDuration?: number;
-  } = {}
+  } = {},
 ): BaseBuilder {
   const { delay = 50, shouldFail = false, buildDuration = 100 } = options;
 
@@ -113,23 +113,23 @@ export function createMockBuilder(
           setTimeout(
             () =>
               resolve({
-                status: shouldFail ? 'failure' : 'success',
+                status: shouldFail ? "failure" : "success",
                 targetName,
                 timestamp: new Date().toISOString(),
                 duration: buildDuration,
-                ...(shouldFail && { error: 'Mock build failure' }),
+                ...(shouldFail && { error: "Mock build failure" }),
               } as BuildStatus),
-            delay
-          )
-        )
+            delay,
+          ),
+        ),
     ),
     validate: vi.fn().mockResolvedValue(undefined),
     stop: vi.fn(),
     getOutputInfo: vi.fn().mockReturnValue(`Built ${targetName}`),
-    getProjectRoot: vi.fn().mockReturnValue('/test/project'),
+    getProjectRoot: vi.fn().mockReturnValue("/test/project"),
     // Add required properties from BaseBuilder
     target: { name: targetName } as Target,
-    projectRoot: '/test/project',
+    projectRoot: "/test/project",
     logger: createMockLogger(),
     stateManager: {} as IStateManager,
     currentProcess: undefined,
@@ -163,14 +163,14 @@ export function createControllableMockBuilder(targetName: string): {
       () =>
         new Promise<BuildStatus>((resolve) => {
           resolver = resolve;
-        })
+        }),
     ),
     validate: vi.fn().mockResolvedValue(undefined),
     stop: vi.fn(),
     getOutputInfo: vi.fn().mockReturnValue(`Built ${targetName}`),
-    getProjectRoot: vi.fn().mockReturnValue('/test/project'),
+    getProjectRoot: vi.fn().mockReturnValue("/test/project"),
     target: { name: targetName } as Target,
-    projectRoot: '/test/project',
+    projectRoot: "/test/project",
     logger: createMockLogger(),
     stateManager: {} as IStateManager,
     currentProcess: undefined,
@@ -183,7 +183,7 @@ export function createControllableMockBuilder(targetName: string): {
     complete: (result = {}) => {
       if (resolver) {
         resolver({
-          status: 'success',
+          status: "success",
           targetName,
           timestamp: new Date().toISOString(),
           duration: 100,
@@ -191,10 +191,10 @@ export function createControllableMockBuilder(targetName: string): {
         } as BuildStatus);
       }
     },
-    fail: (error = 'Mock build failure') => {
+    fail: (error = "Mock build failure") => {
       if (resolver) {
         resolver({
-          status: 'failure',
+          status: "failure",
           targetName,
           timestamp: new Date().toISOString(),
           duration: 100,
@@ -230,30 +230,30 @@ export function createMockBuilderFactory(): MockBuilderFactory {
  */
 export function createTestConfig(overrides?: Partial<PoltergeistConfig>): PoltergeistConfig {
   return {
-    version: '1.0',
-    projectType: 'node',
+    version: "1.0",
+    projectType: "node",
     targets: [
       {
-        name: 'test-target',
-        type: 'executable',
+        name: "test-target",
+        type: "executable",
         enabled: true,
-        buildCommand: 'pnpm run build',
-        outputPath: './dist',
-        watchPaths: ['src/**/*.ts'],
+        buildCommand: "pnpm run build",
+        outputPath: "./dist",
+        watchPaths: ["src/**/*.ts"],
         settlingDelay: 100,
       },
     ],
     watchman: {
       useDefaultExclusions: true,
       excludeDirs: [],
-      projectType: 'node',
+      projectType: "node",
       maxFileEvents: 10000,
       recrawlThreshold: 5,
       settlingDelay: 1000,
       rules: [],
     },
     performance: {
-      mode: 'balanced',
+      mode: "balanced",
       reportInterval: 300,
     },
     ...overrides,
@@ -286,7 +286,7 @@ export function createMockDependencies(): PoltergeistDependencies {
 export function simulateFileChange(
   watchmanClient: IWatchmanClient & EventEmitter,
   files: string[],
-  subscriptionIndex = 0
+  subscriptionIndex = 0,
 ): void {
   const subscribeCalls = vi.mocked(watchmanClient.subscribe).mock.calls;
   const callback = subscribeCalls[subscriptionIndex]?.[3];
@@ -298,7 +298,7 @@ export function simulateFileChange(
   const fileChanges = files.map((name) => ({
     name,
     exists: true,
-    type: 'f' as const,
+    type: "f" as const,
   }));
 
   callback(fileChanges);
@@ -309,7 +309,7 @@ export function simulateFileChange(
  */
 export async function waitForAsync(ms?: number, options?: { drainAll?: boolean }): Promise<void> {
   const drainAll = options?.drainAll ?? true;
-  if (typeof ms === 'number') {
+  if (typeof ms === "number") {
     await vi.advanceTimersByTimeAsync(ms);
   }
   if (drainAll) {
@@ -351,7 +351,7 @@ export function createTestHarness(configOverrides?: Partial<PoltergeistConfig>):
 export function expectBuilderCalledWith(
   builder: BaseBuilder,
   expectedFiles: string[],
-  callIndex = 0
+  callIndex = 0,
 ): void {
   expect(builder.build).toHaveBeenCalledTimes(callIndex + 1);
   const call = vi.mocked(builder.build).mock.calls[callIndex];
@@ -363,8 +363,8 @@ export function expectBuilderCalledWith(
  */
 export function expectBuildStatus(
   buildStatus: BuildStatus,
-  expectedStatus: 'success' | 'failure' | 'building',
-  targetName?: string
+  expectedStatus: "success" | "failure" | "building",
+  targetName?: string,
 ): void {
   expect(buildStatus.status).toBe(expectedStatus);
   if (targetName) {

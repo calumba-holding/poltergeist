@@ -1,36 +1,36 @@
-import { describe, expect, test, vi } from 'vitest';
-import { createMockDependencies } from '../src/factories.js';
-import { createLogger } from '../src/logger.js';
-import { Poltergeist } from '../src/poltergeist.js';
-import type { PoltergeistConfig, Target } from '../src/types.js';
+import { describe, expect, test, vi } from "vitest";
+import { createMockDependencies } from "../src/factories.js";
+import { createLogger } from "../src/logger.js";
+import { Poltergeist } from "../src/poltergeist.js";
+import type { PoltergeistConfig, Target } from "../src/types.js";
 
 const logger = createLogger();
 
 const baseConfig: PoltergeistConfig = {
-  version: '1.0',
-  projectType: 'node',
+  version: "1.0",
+  projectType: "node",
   targets: [
     {
-      name: 'alpha',
-      type: 'executable',
+      name: "alpha",
+      type: "executable",
       enabled: true,
-      buildCommand: 'npm run build:alpha',
-      outputPath: './dist/alpha.js',
-      watchPaths: ['alpha/**/*.ts'],
+      buildCommand: "npm run build:alpha",
+      outputPath: "./dist/alpha.js",
+      watchPaths: ["alpha/**/*.ts"],
     },
     {
-      name: 'beta',
-      type: 'executable',
+      name: "beta",
+      type: "executable",
       enabled: true,
-      buildCommand: 'npm run build:beta',
-      outputPath: './dist/beta.js',
-      watchPaths: ['beta/**/*.ts'],
+      buildCommand: "npm run build:beta",
+      outputPath: "./dist/beta.js",
+      watchPaths: ["beta/**/*.ts"],
     },
   ],
   watchman: {
     useDefaultExclusions: true,
     excludeDirs: [],
-    projectType: 'node',
+    projectType: "node",
     maxFileEvents: 1000,
     recrawlThreshold: 3,
     settlingDelay: 1000,
@@ -38,10 +38,10 @@ const baseConfig: PoltergeistConfig = {
   notifications: { enabled: false },
 };
 
-describe('Initial Builds', () => {
-  test('queues builds for each target when build queue is enabled', async () => {
+describe("Initial Builds", () => {
+  test("queues builds for each target when build queue is enabled", async () => {
     const deps = createMockDependencies();
-    const poltergeist = new Poltergeist(baseConfig, '/project', logger, deps, '/tmp/config');
+    const poltergeist = new Poltergeist(baseConfig, "/project", logger, deps, "/tmp/config");
     const queueMock = {
       queueTargetBuild: vi.fn().mockResolvedValue(undefined),
     } as any;
@@ -59,7 +59,7 @@ describe('Initial Builds', () => {
 
     const fakeBuilder = {
       build: vi.fn(),
-      getProjectRoot: () => '/project',
+      getProjectRoot: () => "/project",
     };
 
     const targetStates = new Map(
@@ -71,7 +71,7 @@ describe('Initial Builds', () => {
           watching: false,
           pendingFiles: new Set<string>(),
         },
-      ])
+      ]),
     );
 
     (poltergeist as any).targetStates = targetStates;
@@ -79,7 +79,7 @@ describe('Initial Builds', () => {
     await (poltergeist as any).performInitialBuilds();
 
     expect(queueMock.queueTargetBuild).toHaveBeenCalledTimes(baseConfig.targets.length);
-    expect(queueMock.queueTargetBuild).toHaveBeenCalledWith(baseConfig.targets[0], 'initial-build');
-    expect(queueMock.queueTargetBuild).toHaveBeenCalledWith(baseConfig.targets[1], 'initial-build');
+    expect(queueMock.queueTargetBuild).toHaveBeenCalledWith(baseConfig.targets[0], "initial-build");
+    expect(queueMock.queueTargetBuild).toHaveBeenCalledWith(baseConfig.targets[1], "initial-build");
   });
 });

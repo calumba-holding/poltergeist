@@ -1,5 +1,5 @@
-import type { NotificationOptions } from './utils/notifier-wrapper.js';
-import notifier from './utils/notifier-wrapper.js';
+import type { NotificationOptions } from "./utils/notifier-wrapper.js";
+import notifier from "./utils/notifier-wrapper.js";
 
 export class BuildNotifier {
   constructor(
@@ -10,27 +10,27 @@ export class BuildNotifier {
       buildStart?: boolean;
       buildFailed?: boolean;
       buildSuccess?: boolean;
-    }
+    },
   ) {}
 
   async notifyBuildStart(target: string, projectName: string, targetName?: string): Promise<void> {
     if (
       !this.config.enabled ||
       !this.config.buildStart ||
-      process.env.POLTERGEIST_NOTIFICATIONS === 'false'
+      process.env.POLTERGEIST_NOTIFICATIONS === "false"
     ) {
       return;
     }
 
     const displayName = targetName || target;
     const title = `🔨 ${projectName} - ${displayName}`;
-    const message = 'Build started...';
+    const message = "Build started...";
 
     notifier.notify({
       title,
       message,
       sound: false, // No sound for build start
-      icon: '🔨',
+      icon: "🔨",
       timeout: 2,
     });
   }
@@ -39,7 +39,7 @@ export class BuildNotifier {
     if (
       !this.config.enabled ||
       !this.config.buildFailed ||
-      process.env.POLTERGEIST_NOTIFICATIONS === 'false'
+      process.env.POLTERGEIST_NOTIFICATIONS === "false"
     ) {
       return;
     }
@@ -49,7 +49,7 @@ export class BuildNotifier {
     const notificationOptions: NotificationOptions = {
       title,
       message,
-      sound: this.config.failureSound || 'Basso',
+      sound: this.config.failureSound || "Basso",
       timeout: 10,
     };
 
@@ -57,7 +57,7 @@ export class BuildNotifier {
     if (iconPath) {
       notificationOptions.appIcon = iconPath;
     } else {
-      notificationOptions.icon = '❌';
+      notificationOptions.icon = "❌";
     }
 
     notifier.notify(notificationOptions);
@@ -67,7 +67,7 @@ export class BuildNotifier {
     if (
       !this.config.enabled ||
       !this.config.buildSuccess ||
-      process.env.POLTERGEIST_NOTIFICATIONS === 'false'
+      process.env.POLTERGEIST_NOTIFICATIONS === "false"
     ) {
       return;
     }
@@ -77,7 +77,7 @@ export class BuildNotifier {
     const notificationOptions: NotificationOptions = {
       title,
       message,
-      sound: this.config.successSound || 'Glass',
+      sound: this.config.successSound || "Glass",
       timeout: 3,
     };
 
@@ -85,7 +85,7 @@ export class BuildNotifier {
     if (iconPath) {
       notificationOptions.appIcon = iconPath;
     } else {
-      notificationOptions.icon = '✅';
+      notificationOptions.icon = "✅";
     }
 
     notifier.notify(notificationOptions);
@@ -97,8 +97,8 @@ export class BuildNotifier {
     }
 
     notifier.notify({
-      title: '👻 Poltergeist Started',
-      message: `Watching ${targets.join(' and ')} for changes`,
+      title: "👻 Poltergeist Started",
+      message: `Watching ${targets.join(" and ")} for changes`,
       sound: false,
       timeout: 3,
     });
@@ -110,8 +110,8 @@ export class BuildNotifier {
     }
 
     notifier.notify({
-      title: '💤 Poltergeist Stopped',
-      message: 'File watching has been stopped',
+      title: "💤 Poltergeist Stopped",
+      message: "File watching has been stopped",
       sound: false,
       timeout: 3,
     });

@@ -1,5 +1,5 @@
-import type { PoltergeistConfig } from '../types.js';
-import type { TargetPanelEntry } from './types.js';
+import type { PoltergeistConfig } from "../types.js";
+import type { TargetPanelEntry } from "./types.js";
 
 export interface TargetDiff {
   added: string[];
@@ -8,7 +8,7 @@ export interface TargetDiff {
 
 export function diffTargets(
   currentTargets: TargetPanelEntry[],
-  nextTargets: PoltergeistConfig['targets']
+  nextTargets: PoltergeistConfig["targets"],
 ): TargetDiff {
   const currentNames = new Set(currentTargets.map((t) => t.name));
   const nextNames = new Set(nextTargets.map((t) => t.name));

@@ -1,29 +1,29 @@
-import chalk from 'chalk';
-import type { Command } from 'commander';
-import { createPoltergeist } from '../../factories.js';
-import { createLogger } from '../../logger.js';
-import { runStatusPanel } from '../../panel/run-panel.js';
-import type { StatusObject } from '../../status/types.js';
-import type { PoltergeistConfig } from '../../types.js';
-import { ghost, poltergeistMessage } from '../../utils/ghost.js';
-import { DEFAULT_LOG_CHANNEL, sanitizeLogChannel } from '../../utils/log-channels.js';
-import { validateTarget } from '../../utils/target-validator.js';
-import { resolveLogPath } from '../log-path-resolver.js';
-import { displayLogs } from '../logging.js';
-import { applyConfigOption } from '../options.js';
-import { ensureOrExit, exitWithError, loadConfigOrExit, parseGitModeOrExit } from '../shared.js';
-import { formatTargetStatus } from '../status-formatters.js';
+import chalk from "chalk";
+import type { Command } from "commander";
+import { createPoltergeist } from "../../factories.js";
+import { createLogger } from "../../logger.js";
+import { runStatusPanel } from "../../panel/run-panel.js";
+import type { StatusObject } from "../../status/types.js";
+import type { PoltergeistConfig } from "../../types.js";
+import { ghost, poltergeistMessage } from "../../utils/ghost.js";
+import { DEFAULT_LOG_CHANNEL, sanitizeLogChannel } from "../../utils/log-channels.js";
+import { validateTarget } from "../../utils/target-validator.js";
+import { resolveLogPath } from "../log-path-resolver.js";
+import { displayLogs } from "../logging.js";
+import { applyConfigOption } from "../options.js";
+import { ensureOrExit, exitWithError, loadConfigOrExit, parseGitModeOrExit } from "../shared.js";
+import { formatTargetStatus } from "../status-formatters.js";
 
 export const registerStatusCommands = (program: Command): void => {
   const panelCmd = program
-    .command('panel')
-    .description('Open the interactive status panel')
-    .option('--verbose', 'Enable verbose logging (same as --log-level debug)')
-    .option('--git-mode <mode>', 'Git summary mode (ai | list)', 'ai')
-    .option('--script-events', 'Stream script events to stdout as JSONL')
+    .command("panel")
+    .description("Open the interactive status panel")
+    .option("--verbose", "Enable verbose logging (same as --log-level debug)")
+    .option("--git-mode <mode>", "Git summary mode (ai | list)", "ai")
+    .option("--script-events", "Stream script events to stdout as JSONL")
     .action(async (options) => {
       const { config, projectRoot, configPath } = await loadConfigOrExit(options.config);
-      const logger = createLogger(options.verbose ? 'debug' : config.logging?.level || 'info');
+      const logger = createLogger(options.verbose ? "debug" : config.logging?.level || "info");
       const gitSummaryMode = parseGitModeOrExit(options.gitMode);
       await runStatusPanel({
         config,
@@ -38,21 +38,21 @@ export const registerStatusCommands = (program: Command): void => {
   applyConfigOption(panelCmd);
 
   const statusCmd = program
-    .command('status [view]')
-    .description('Check Poltergeist status')
-    .option('-t, --target <name>', 'Check specific target status')
-    .option('--verbose', 'Show detailed status information')
-    .option('--json', 'Output status as JSON')
-    .option('--git-mode <mode>', 'Git summary mode (ai | list)', 'ai')
+    .command("status [view]")
+    .description("Check Poltergeist status")
+    .option("-t, --target <name>", "Check specific target status")
+    .option("--verbose", "Show detailed status information")
+    .option("--json", "Output status as JSON")
+    .option("--git-mode <mode>", "Git summary mode (ai | list)", "ai")
     .action(async (view: string | undefined, options) => {
       const { config, projectRoot, configPath } = await loadConfigOrExit(options.config);
 
       try {
-        const logger = createLogger(config.logging?.level || 'info');
+        const logger = createLogger(config.logging?.level || "info");
 
-        if (view === 'panel') {
+        if (view === "panel") {
           if (options.json) {
-            exitWithError('--json is not compatible with the panel view.');
+            exitWithError("--json is not compatible with the panel view.");
           }
           const gitSummaryMode = parseGitModeOrExit(options.gitMode);
 
@@ -66,7 +66,7 @@ export const registerStatusCommands = (program: Command): void => {
           return;
         }
 
-        const effectiveTarget = options.target ?? (view && view !== 'panel' ? view : undefined);
+        const effectiveTarget = options.target ?? (view && view !== "panel" ? view : undefined);
         const poltergeist = createPoltergeist(config, projectRoot, logger, configPath);
         const status = await poltergeist.getStatus(effectiveTarget);
 
@@ -74,7 +74,7 @@ export const registerStatusCommands = (program: Command): void => {
           console.log(JSON.stringify(status, null, 2));
         } else {
           console.log(chalk.cyan(`${ghost.brand()} Poltergeist Status`));
-          console.log(chalk.gray('═'.repeat(50)));
+          console.log(chalk.gray("═".repeat(50)));
 
           if (effectiveTarget) {
             const targetStatus = status[effectiveTarget];
@@ -84,9 +84,9 @@ export const registerStatusCommands = (program: Command): void => {
               formatTargetStatus(effectiveTarget, targetStatus, options.verbose);
             }
           } else {
-            const targets = Object.keys(status).filter((key) => !key.startsWith('_'));
+            const targets = Object.keys(status).filter((key) => !key.startsWith("_"));
             if (targets.length === 0) {
-              console.log(chalk.gray('No targets configured'));
+              console.log(chalk.gray("No targets configured"));
             } else {
               targets.forEach((name) => {
                 formatTargetStatus(name, status[name], options.verbose);
@@ -95,24 +95,24 @@ export const registerStatusCommands = (program: Command): void => {
             }
 
             console.log(
-              chalk.gray('Tip: run "poltergeist status panel" to open the live dashboard.')
+              chalk.gray('Tip: run "poltergeist status panel" to open the live dashboard.'),
             );
           }
         }
       } catch (error) {
-        exitWithError(poltergeistMessage('error', `Failed to get status: ${error}`));
+        exitWithError(poltergeistMessage("error", `Failed to get status: ${error}`));
       }
     });
 
   applyConfigOption(statusCmd);
 
   const logsCmd = program
-    .command('logs [target]')
-    .description('Show Poltergeist logs')
-    .option('-t, --tail <number>', 'Number of lines to show (default: 100)')
-    .option('-f, --follow', 'Follow log output')
-    .option('-C, --channel <name>', 'Log channel to display (default: build)')
-    .option('--json', 'Output logs in JSON format')
+    .command("logs [target]")
+    .description("Show Poltergeist logs")
+    .option("-t, --tail <number>", "Number of lines to show (default: 100)")
+    .option("-f, --follow", "Follow log output")
+    .option("-C, --channel <name>", "Log channel to display (default: build)")
+    .option("--json", "Output logs in JSON format")
     .action(async (targetName, options) => {
       const { config, projectRoot, configPath } = await loadConfigOrExit(options.config, {
         allowMissing: true,
@@ -124,21 +124,21 @@ export const registerStatusCommands = (program: Command): void => {
   applyConfigOption(logsCmd);
 
   const waitCmd = program
-    .command('wait [target]')
-    .description('Wait for a build to complete')
-    .option('-t, --timeout <seconds>', 'Maximum time to wait in seconds', '300')
-    .option('--json', 'Output result as JSON')
+    .command("wait [target]")
+    .description("Wait for a build to complete")
+    .option("-t, --timeout <seconds>", "Maximum time to wait in seconds", "300")
+    .option("--json", "Output result as JSON")
     .action(async (targetName, options) => {
       const { config, projectRoot } = await loadConfigOrExit(options.config);
-      const logger = createLogger(config.logging?.level || 'info');
-      const poltergeist = createPoltergeist(config, projectRoot, logger, options.config || '');
+      const logger = createLogger(config.logging?.level || "info");
+      const poltergeist = createPoltergeist(config, projectRoot, logger, options.config || "");
 
       const status = await poltergeist.getStatus();
 
       const activeBuilds = Object.entries(status)
         .filter(
           ([name, s]) =>
-            !name.startsWith('_') && (s as StatusObject).lastBuild?.status === 'building'
+            !name.startsWith("_") && (s as StatusObject).lastBuild?.status === "building",
         )
         .map(([name, s]) => ({ name, status: s as StatusObject }));
 
@@ -153,14 +153,14 @@ export const registerStatusCommands = (program: Command): void => {
           validateTarget(targetName, config);
         }
 
-        if (!statusObj?.lastBuild || statusObj.lastBuild.status !== 'building') {
+        if (!statusObj?.lastBuild || statusObj.lastBuild.status !== "building") {
           console.log(chalk.yellow(`Target '${targetName}' is not currently building`));
           exitWithError(`Target '${targetName}' is not currently building`, 0);
         }
         targetToWait = targetName;
         targetStatus = statusObj;
       } else if (activeBuilds.length === 0) {
-        console.log(chalk.yellow('No builds currently active'));
+        console.log(chalk.yellow("No builds currently active"));
         return;
       } else if (activeBuilds.length === 1) {
         targetToWait = activeBuilds[0].name;
@@ -168,16 +168,16 @@ export const registerStatusCommands = (program: Command): void => {
       } else {
         const list = activeBuilds
           .map(({ name, status }) => {
-            const buildCommand = status.buildCommand || 'build command unknown';
+            const buildCommand = status.buildCommand || "build command unknown";
             return `   ${chalk.cyan(name)}: ${chalk.gray(buildCommand)}`;
           })
-          .join('\n');
+          .join("\n");
         exitWithError(
-          `❌ Multiple targets building. Please specify:\n${list}\n   Usage: poltergeist wait <target>`
+          `❌ Multiple targets building. Please specify:\n${list}\n   Usage: poltergeist wait <target>`,
         );
       }
 
-      ensureOrExit(targetToWait && targetStatus, 'No target selected to wait for.');
+      ensureOrExit(targetToWait && targetStatus, "No target selected to wait for.");
       const resolvedTarget = targetToWait as string;
       const resolvedStatus = targetStatus as StatusObject;
 
@@ -186,7 +186,7 @@ export const registerStatusCommands = (program: Command): void => {
       const printNonTtyIntro = (): void => {
         if (isJson) return;
         const lines = buildNonTtyWaitIntro(resolvedTarget, resolvedStatus);
-        console.log(lines.join('\n'));
+        console.log(lines.join("\n"));
       };
 
       if (!process.stdout.isTTY) {
@@ -207,43 +207,43 @@ export const registerStatusCommands = (program: Command): void => {
         const targetUpdate = updatedStatus[resolvedTarget] as StatusObject | undefined;
 
         if (!targetUpdate) {
-          console.log('❌ Build failed');
-          console.log('Target disappeared');
-          exitWithError('❌ Build failed\nError: Target disappeared');
+          console.log("❌ Build failed");
+          console.log("Target disappeared");
+          exitWithError("❌ Build failed\nError: Target disappeared");
         }
 
         const tu = targetUpdate as StatusObject;
         const buildStatus = tu.lastBuild?.status;
 
-        if (buildStatus === 'success') {
+        if (buildStatus === "success") {
           const durationMs = tu.lastBuild?.duration;
           if (isJson) {
             console.log(
               JSON.stringify(
                 {
                   target: resolvedTarget,
-                  status: 'success',
+                  status: "success",
                   durationMs,
                   startedAt: resolvedStatus.lastBuild?.timestamp,
                   finishedAt: tu.lastBuild?.timestamp,
                 },
                 null,
-                2
-              )
+                2,
+              ),
             );
           } else if (!process.stdout.isTTY) {
-            console.log('✅ Build completed successfully');
+            console.log("✅ Build completed successfully");
             if (durationMs) {
               const durSec = Math.round(durationMs / 1000);
               console.log(`Duration: ${durSec}s`);
             }
           } else {
-            console.log(chalk.green('✅ Build completed successfully'));
+            console.log(chalk.green("✅ Build completed successfully"));
           }
           return;
-        } else if (buildStatus === 'failure') {
-          const summary = tu.lastBuild?.errorSummary ? `\nError: ${tu.lastBuild.errorSummary}` : '';
-          console.log('❌ Build failed');
+        } else if (buildStatus === "failure") {
+          const summary = tu.lastBuild?.errorSummary ? `\nError: ${tu.lastBuild.errorSummary}` : "";
+          console.log("❌ Build failed");
           if (summary) {
             console.log(summary.trim());
           }
@@ -252,37 +252,37 @@ export const registerStatusCommands = (program: Command): void => {
               JSON.stringify(
                 {
                   target: resolvedTarget,
-                  status: 'failure',
-                  error: tu.lastBuild?.errorSummary ?? 'unknown',
+                  status: "failure",
+                  error: tu.lastBuild?.errorSummary ?? "unknown",
                   startedAt: resolvedStatus.lastBuild?.timestamp,
                   finishedAt: tu.lastBuild?.timestamp,
                 },
                 null,
-                2
-              )
+                2,
+              ),
             );
           }
           if (process.env.VITEST && !isJson) {
             process.exit(1);
           }
           exitWithError(`❌ Build failed${summary}`);
-        } else if (buildStatus !== 'building') {
+        } else if (buildStatus !== "building") {
           const summary =
-            buildStatus === undefined ? 'unknown' : `Build ended with status: ${buildStatus}`;
-          console.log('❌ Build failed');
+            buildStatus === undefined ? "unknown" : `Build ended with status: ${buildStatus}`;
+          console.log("❌ Build failed");
           console.log(summary);
           if (isJson) {
             console.log(
               JSON.stringify(
                 {
                   target: resolvedTarget,
-                  status: buildStatus ?? 'unknown',
+                  status: buildStatus ?? "unknown",
                   startedAt: resolvedStatus.lastBuild?.timestamp,
                   finishedAt: tu.lastBuild?.timestamp,
                 },
                 null,
-                2
-              )
+                2,
+              ),
             );
           }
           exitWithError(`❌ Build failed\nError: ${summary}`);
@@ -293,9 +293,9 @@ export const registerStatusCommands = (program: Command): void => {
             ? polls * simulatedInterval
             : Date.now() - startTime;
         if (elapsed > timeout && polls >= (process.env.VITEST ? 2 : 0)) {
-          console.log('❌ Build failed');
-          console.log('Timeout exceeded');
-          exitWithError('❌ Build failed\nError: Timeout exceeded');
+          console.log("❌ Build failed");
+          console.log("Timeout exceeded");
+          exitWithError("❌ Build failed\nError: Timeout exceeded");
         }
 
         if (pollInterval > 0) {
@@ -334,28 +334,28 @@ async function showLogs(
   projectRoot: string,
   configPath: string | undefined,
   targetName: string | undefined,
-  options: { channel?: string; config?: string; tail?: string; follow?: boolean; json?: boolean }
+  options: { channel?: string; config?: string; tail?: string; follow?: boolean; json?: boolean },
 ): Promise<void> {
   const logChannel = sanitizeLogChannel(options.channel ?? DEFAULT_LOG_CHANNEL);
 
-  const logger = createLogger(config.logging?.level || 'info');
-  const poltergeist = createPoltergeist(config, projectRoot, logger, configPath || '');
+  const logger = createLogger(config.logging?.level || "info");
+  const poltergeist = createPoltergeist(config, projectRoot, logger, configPath || "");
   const status = await poltergeist.getStatus();
 
   const enabledTargets = config.targets.filter((t) => t.enabled);
   if (!targetName) {
     const buildingTargets = Object.entries(status).filter(
-      ([name, s]) => !name.startsWith('_') && (s as StatusObject).lastBuild?.status === 'building'
+      ([name, s]) => !name.startsWith("_") && (s as StatusObject).lastBuild?.status === "building",
     );
 
     if (buildingTargets.length === 1) {
       targetName = buildingTargets[0]?.[0];
     } else if (enabledTargets.length === 0) {
-      exitWithError('No targets configured; specify a target with --target');
+      exitWithError("No targets configured; specify a target with --target");
     } else if (enabledTargets.length === 1) {
       targetName = enabledTargets[0]?.name;
     } else {
-      const list = enabledTargets.map((t) => `  • ${t.name}`).join('\n');
+      const list = enabledTargets.map((t) => `  • ${t.name}`).join("\n");
       exitWithError(`❌ Multiple targets building. Please specify:\n${list}`);
     }
   }
@@ -369,12 +369,12 @@ async function showLogs(
 
   if (!resolved.logFile) {
     exitWithError(
-      `No log file found for target: ${resolved.target ?? 'unknown'}\n💡 Start Poltergeist to generate logs: poltergeist start`
+      `No log file found for target: ${resolved.target ?? "unknown"}\n💡 Start Poltergeist to generate logs: poltergeist start`,
     );
   }
 
   try {
-    const lines = options.tail || '100';
+    const lines = options.tail || "100";
     await displayLogs(resolved.logFile as string, {
       target: resolved.target,
       lines,

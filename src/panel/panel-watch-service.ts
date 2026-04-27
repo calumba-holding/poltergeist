@@ -1,5 +1,5 @@
-import type { FSWatcher } from 'fs';
-import { watch } from 'fs';
+import type { FSWatcher } from "fs";
+import { watch } from "fs";
 
 export type WatchFactory = typeof watch;
 
@@ -38,7 +38,7 @@ export class PanelWatchService {
     if (this.options.configPath) {
       try {
         this.configWatcher = this.watchFactory(this.options.configPath, () =>
-          this.options.onConfigChange()
+          this.options.onConfigChange(),
         );
       } catch (error) {
         this.options.logger.warn(`Config watcher disabled: ${error}`);

@@ -1,66 +1,66 @@
 // Builder for NPM/Node.js/TypeScript projects
-import { execSync } from 'child_process';
-import { existsSync } from 'fs';
-import { join } from 'path';
-import type { NPMTarget } from '../types.js';
-import { BaseBuilder } from './base-builder.js';
+import { execSync } from "child_process";
+import { existsSync } from "fs";
+import { join } from "path";
+import type { NPMTarget } from "../types.js";
+import { BaseBuilder } from "./base-builder.js";
 
 export class NPMBuilder extends BaseBuilder<NPMTarget> {
-  protected packageManager: 'npm' | 'yarn' | 'pnpm' | 'bun';
+  protected packageManager: "npm" | "yarn" | "pnpm" | "bun";
   protected buildScript: string;
 
   constructor(target: NPMTarget, projectRoot: string, logger: any, stateManager: any) {
     super(target, projectRoot, logger, stateManager);
     this.packageManager = this.detectPackageManager();
-    this.buildScript = target.buildScript || 'build';
+    this.buildScript = target.buildScript || "build";
     // Surface the resolved command to the BaseBuilder so it can stream logs.
-    const runCommand = this.packageManager === 'npm' ? 'npm run' : `${this.packageManager} run`;
+    const runCommand = this.packageManager === "npm" ? "npm run" : `${this.packageManager} run`;
     this.target.buildCommand = `${runCommand} ${this.buildScript}`;
   }
 
-  protected detectPackageManager(): 'npm' | 'yarn' | 'pnpm' | 'bun' {
+  protected detectPackageManager(): "npm" | "yarn" | "pnpm" | "bun" {
     // If explicitly specified and not 'auto', use that
-    if (this.target.packageManager && this.target.packageManager !== 'auto') {
+    if (this.target.packageManager && this.target.packageManager !== "auto") {
       return this.target.packageManager;
     }
 
     // Auto-detect from lockfiles (order matters - prefer faster tools)
-    if (existsSync(join(this.projectRoot, 'bun.lockb'))) {
+    if (existsSync(join(this.projectRoot, "bun.lockb"))) {
       this.logger.info(`[${this.target.name}] Detected Bun from bun.lockb`);
-      return 'bun';
+      return "bun";
     }
-    if (existsSync(join(this.projectRoot, 'pnpm-lock.yaml'))) {
+    if (existsSync(join(this.projectRoot, "pnpm-lock.yaml"))) {
       this.logger.info(`[${this.target.name}] Detected pnpm from pnpm-lock.yaml`);
-      return 'pnpm';
+      return "pnpm";
     }
-    if (existsSync(join(this.projectRoot, 'yarn.lock'))) {
+    if (existsSync(join(this.projectRoot, "yarn.lock"))) {
       this.logger.info(`[${this.target.name}] Detected Yarn from yarn.lock`);
-      return 'yarn';
+      return "yarn";
     }
-    if (existsSync(join(this.projectRoot, 'package-lock.json'))) {
+    if (existsSync(join(this.projectRoot, "package-lock.json"))) {
       this.logger.info(`[${this.target.name}] Detected npm from package-lock.json`);
-      return 'npm';
+      return "npm";
     }
 
     // Default to npm
     this.logger.info(`[${this.target.name}] No lockfile found, defaulting to npm`);
-    return 'npm';
+    return "npm";
   }
 
   public async validate(): Promise<void> {
     // Check if package.json exists
-    const packageJsonPath = join(this.projectRoot, 'package.json');
+    const packageJsonPath = join(this.projectRoot, "package.json");
     if (!existsSync(packageJsonPath)) {
       throw new Error(`Target ${this.target.name}: package.json not found in ${this.projectRoot}`);
     }
 
     // Check if package manager is available
     try {
-      execSync(`${this.packageManager} --version`, { stdio: 'ignore' });
+      execSync(`${this.packageManager} --version`, { stdio: "ignore" });
     } catch {
       throw new Error(
         `Target ${this.target.name}: ${this.packageManager} is not installed. ` +
-          `Install via: ${this.getInstallInstructions()}`
+          `Install via: ${this.getInstallInstructions()}`,
       );
     }
 
@@ -69,26 +69,26 @@ export class NPMBuilder extends BaseBuilder<NPMTarget> {
 
   private getInstallInstructions(): string {
     switch (this.packageManager) {
-      case 'bun':
-        return 'brew install oven-sh/bun/bun or curl -fsSL https://bun.sh/install | bash';
-      case 'pnpm':
-        return 'npm install -g pnpm or brew install pnpm';
-      case 'yarn':
-        return 'npm install -g yarn or brew install yarn';
+      case "bun":
+        return "brew install oven-sh/bun/bun or curl -fsSL https://bun.sh/install | bash";
+      case "pnpm":
+        return "npm install -g pnpm or brew install pnpm";
+      case "yarn":
+        return "npm install -g yarn or brew install yarn";
       default:
-        return 'Download from https://nodejs.org or brew install node';
+        return "Download from https://nodejs.org or brew install node";
     }
   }
 
   protected async preBuild(changedFiles: string[]): Promise<void> {
     // Check if package.json changed and auto-install is enabled
-    const packageJsonChanged = changedFiles.some((f) => f.endsWith('package.json'));
+    const packageJsonChanged = changedFiles.some((f) => f.endsWith("package.json"));
     const lockfileChanged = changedFiles.some(
       (f) =>
-        f.endsWith('package-lock.json') ||
-        f.endsWith('yarn.lock') ||
-        f.endsWith('pnpm-lock.yaml') ||
-        f.endsWith('bun.lockb')
+        f.endsWith("package-lock.json") ||
+        f.endsWith("yarn.lock") ||
+        f.endsWith("pnpm-lock.yaml") ||
+        f.endsWith("bun.lockb"),
     );
 
     if ((packageJsonChanged || lockfileChanged) && this.target.installOnChange !== false) {
@@ -106,7 +106,7 @@ export class NPMBuilder extends BaseBuilder<NPMTarget> {
       try {
         execSync(command, {
           cwd: this.projectRoot,
-          stdio: 'inherit',
+          stdio: "inherit",
           env: { ...process.env, ...this.target.environment },
         });
         this.logger.info(`[${this.target.name}] Install completed`);
@@ -139,6 +139,6 @@ export class NPMBuilder extends BaseBuilder<NPMTarget> {
     if (this.target.outputPaths && this.target.outputPaths.length > 0) {
       return join(this.projectRoot, this.target.outputPaths[0]);
     }
-    return '';
+    return "";
   }
 }

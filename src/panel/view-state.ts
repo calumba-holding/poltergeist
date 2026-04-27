@@ -1,4 +1,4 @@
-import type { SummaryModeOption } from './panel-state.js';
+import type { SummaryModeOption } from "./panel-state.js";
 import {
   findSummaryByMode,
   getRowSummaries,
@@ -6,7 +6,7 @@ import {
   getSummaryModes,
   hasSummaryRow,
   resolveSummaryMode,
-} from './panel-state.js';
+} from "./panel-state.js";
 import {
   colors,
   formatAiSummary,
@@ -16,10 +16,10 @@ import {
   formatTargets,
   renderControlsLine,
   splitStatusScripts,
-} from './render-utils.js';
-import { buildTargetRows, type TargetRow } from './target-tree.js';
-import { countWrappedLines } from './text-utils.js';
-import type { PanelSnapshot, PanelSummaryScriptResult } from './types.js';
+} from "./render-utils.js";
+import { buildTargetRows, type TargetRow } from "./target-tree.js";
+import { countWrappedLines } from "./text-utils.js";
+import type { PanelSnapshot, PanelSummaryScriptResult } from "./types.js";
 
 export interface SummaryRenderInfo {
   headerLines: number;
@@ -46,7 +46,7 @@ export interface PanelViewState {
   summaryInfo: SummaryRenderInfo;
   logLimit: number;
   logChannel: string;
-  logViewMode: 'all' | 'tests';
+  logViewMode: "all" | "tests";
   summaryMode: string;
 }
 
@@ -57,7 +57,7 @@ export interface BuildViewStateInput {
   logLines: string[];
   logBanner?: string;
   scriptBanner?: string;
-  logViewMode: 'all' | 'tests';
+  logViewMode: "all" | "tests";
   summaryMode: string;
   logChannelLabel: string;
   width: number;
@@ -97,7 +97,7 @@ export const buildPanelViewState = (input: BuildViewStateInput): PanelViewState 
   const controlsLine = renderControlsLine(
     width,
     snapshot.paused ?? false,
-    (snapshot.summary?.running ?? 0) > 0
+    (snapshot.summary?.running ?? 0) > 0,
   );
   const resolvedCustomSummary =
     viewingCustomRow ?? findSummaryByMode(summaryModes, resolvedSummaryMode) ?? undefined;
@@ -106,7 +106,7 @@ export const buildPanelViewState = (input: BuildViewStateInput): PanelViewState 
     viewingSummary || Boolean(viewingCustomRow),
     resolvedSummaryMode,
     resolvedCustomSummary,
-    width
+    width,
   );
 
   const logDisplayLimit = computeLogDisplayLimit({
@@ -200,9 +200,9 @@ function computeLogDisplayLimit({
     summaryModes,
     summaryMode,
     snapshot,
-    scriptsSplit.globalScripts
+    scriptsSplit.globalScripts,
   );
-  const globalScriptsText = scriptBanner ?? '';
+  const globalScriptsText = scriptBanner ?? "";
   const footerText = formatFooter(controlsLine, width); // Always render as the last block.
 
   const nonLogLines =
@@ -227,29 +227,29 @@ function computeSummaryLines(
   viewingSummary: boolean,
   summaryMode: string,
   customSummary: PanelSummaryScriptResult | null | undefined,
-  width: number
+  width: number,
 ): SummaryRenderInfo {
   if (!viewingSummary) {
     return { headerLines: 0, bodyLines: 0, totalLines: 0 };
   }
 
   if (customSummary) {
-    const body = customSummary.lines.join('\n').trim();
+    const body = customSummary.lines.join("\n").trim();
     const headerLines = body ? countWrappedLines(`\n${customSummary.label}:`, width) : 0;
     const bodyLines = body ? countWrappedLines(body, width) : 0;
     return { headerLines, bodyLines, totalLines: headerLines + bodyLines };
   }
 
-  if (summaryMode === 'ai') {
+  if (summaryMode === "ai") {
     const aiSummary = formatAiSummary(snapshot.git.summary ?? []);
     if (aiSummary && aiSummary.body.trim().length > 0) {
-      const headerText = aiSummary.header ?? colors.header('AI Summary of changed files:');
+      const headerText = aiSummary.header ?? colors.header("AI Summary of changed files:");
       const headerLines = countWrappedLines(`\n${headerText}`, width);
       const bodyLines = countWrappedLines(aiSummary.body.trim(), width);
       return { headerLines, bodyLines, totalLines: headerLines + bodyLines };
     }
     // AI selected but not loaded yet: show loading placeholder centered in summary area.
-    const placeholder = colors.muted('AI summary loading…');
+    const placeholder = colors.muted("AI summary loading…");
     const lines = countWrappedLines(placeholder, width);
     return { headerLines: 0, bodyLines: lines, totalLines: lines };
   }

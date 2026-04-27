@@ -1,16 +1,16 @@
-import { describe, expect, it, vi } from 'vitest';
-import { StatusPanelController } from '../../src/panel/panel-controller.js';
-import type { PoltergeistConfig } from '../../src/types.js';
+import { describe, expect, it, vi } from "vitest";
+import { StatusPanelController } from "../../src/panel/panel-controller.js";
+import type { PoltergeistConfig } from "../../src/types.js";
 
-describe('panel-controller script events', () => {
-  it('emits script-event on status script failure', async () => {
+describe("panel-controller script events", () => {
+  it("emits script-event on status script failure", async () => {
     const config: PoltergeistConfig = {
-      version: '1.0',
-      projectType: 'custom',
-      targets: [{ name: 'app', type: 'custom', enabled: true }],
+      version: "1.0",
+      projectType: "custom",
+      targets: [{ name: "app", type: "custom", enabled: true }],
       statusScripts: [
         {
-          label: 'fail',
+          label: "fail",
           command: 'node -e "process.exit(2)"',
           cooldownSeconds: 0,
         },
@@ -30,6 +30,6 @@ describe('panel-controller script events', () => {
 
     await (controller as any).refreshStatusScripts(true);
     expect(events.length).toBe(1);
-    expect(events[0]).toMatchObject({ kind: 'status', label: 'fail', exitCode: 2 });
+    expect(events[0]).toMatchObject({ kind: "status", label: "fail", exitCode: 2 });
   });
 });

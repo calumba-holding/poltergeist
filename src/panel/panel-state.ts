@@ -1,10 +1,10 @@
-import { DEFAULT_LOG_CHANNEL, normalizeLogChannels } from '../utils/log-channels.js';
-import type { PanelSnapshot, PanelSummaryScriptResult, TargetPanelEntry } from './types.js';
+import { DEFAULT_LOG_CHANNEL, normalizeLogChannels } from "../utils/log-channels.js";
+import type { PanelSnapshot, PanelSummaryScriptResult, TargetPanelEntry } from "./types.js";
 
 export interface SummaryModeOption {
   key: string;
   label: string;
-  type: 'ai' | 'git' | 'custom';
+  type: "ai" | "git" | "custom";
   summary?: PanelSummaryScriptResult;
   hasData: boolean;
 }
@@ -20,7 +20,7 @@ export const getLogChannels = (target: TargetPanelEntry | undefined): string[] =
  */
 export const syncLogChannelState = (
   targets: TargetPanelEntry[],
-  previous: Map<string, number>
+  previous: Map<string, number>,
 ): Map<string, number> => {
   const next = new Map<string, number>();
   for (const target of targets) {
@@ -34,31 +34,31 @@ export const syncLogChannelState = (
 
 export const getSelectedChannel = (
   logChannelIndex: Map<string, number>,
-  target: TargetPanelEntry | undefined
+  target: TargetPanelEntry | undefined,
 ): string => {
   const channels = getLogChannels(target);
   if (channels.length === 0) return DEFAULT_LOG_CHANNEL;
-  const index = logChannelIndex.get(target?.name ?? '') ?? 0;
+  const index = logChannelIndex.get(target?.name ?? "") ?? 0;
   return channels[Math.min(Math.max(index, 0), channels.length - 1)];
 };
 
 export const getSummaryModes = (snapshot: PanelSnapshot): SummaryModeOption[] => {
   const modes: SummaryModeOption[] = [];
   if (hasAiSummary(snapshot)) {
-    modes.push({ key: 'ai', label: 'AI', type: 'ai', hasData: true });
+    modes.push({ key: "ai", label: "AI", type: "ai", hasData: true });
   } else {
-    modes.push({ key: 'ai', label: 'AI', type: 'ai', hasData: false });
+    modes.push({ key: "ai", label: "AI", type: "ai", hasData: false });
   }
   if (hasDirtySummary(snapshot)) {
-    modes.push({ key: 'git', label: 'Git', type: 'git', hasData: true });
+    modes.push({ key: "git", label: "Git", type: "git", hasData: true });
   } else {
-    modes.push({ key: 'git', label: 'Git', type: 'git', hasData: false });
+    modes.push({ key: "git", label: "Git", type: "git", hasData: false });
   }
   for (const summary of getSummarySummaries(snapshot)) {
     modes.push({
       key: `custom:${summary.label}`,
-      label: summary.label ?? 'Custom',
-      type: 'custom',
+      label: summary.label ?? "Custom",
+      type: "custom",
       summary,
       hasData:
         (summary.lines ?? []).some((line) => line.trim().length > 0) ||
@@ -81,14 +81,14 @@ export const resolveSummaryMode = (modes: SummaryModeOption[], desired: string):
 export const getDefaultSummaryMode = (snapshot: PanelSnapshot): string => {
   const modes = getSummaryModes(snapshot);
   const withData = modes.find((mode) => mode.hasData);
-  return withData?.key ?? modes[0]?.key ?? 'ai';
+  return withData?.key ?? modes[0]?.key ?? "ai";
 };
 
 export const findSummaryByMode = (
   modes: SummaryModeOption[],
-  key: string
+  key: string,
 ): PanelSummaryScriptResult | null => {
-  const match = modes.find((mode) => mode.key === key && mode.type === 'custom');
+  const match = modes.find((mode) => mode.key === key && mode.type === "custom");
   return match?.summary ?? null;
 };
 
@@ -96,10 +96,10 @@ export const hasSummaryRow = (snapshot: PanelSnapshot): boolean =>
   getSummaryModes(snapshot).length > 0;
 
 export const getRowSummaries = (snapshot: PanelSnapshot): PanelSummaryScriptResult[] =>
-  (snapshot.summaryScripts ?? []).filter((summary) => summary.placement === 'row');
+  (snapshot.summaryScripts ?? []).filter((summary) => summary.placement === "row");
 
 export const getSummarySummaries = (snapshot: PanelSnapshot): PanelSummaryScriptResult[] =>
-  (snapshot.summaryScripts ?? []).filter((summary) => summary.placement === 'summary');
+  (snapshot.summaryScripts ?? []).filter((summary) => summary.placement === "summary");
 
 const hasAiSummary = (snapshot: PanelSnapshot): boolean =>
   (snapshot.git.summary ?? []).some((line) => line.trim().length > 0);

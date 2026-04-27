@@ -1,15 +1,15 @@
 // Logger implementation using LogTape for zero-dependency compilation
 // Falls back to SimpleLogger if LogTape is not available
 
-import chalk from 'chalk';
-import { createWriteStream, existsSync, mkdirSync } from 'fs';
-import { dirname } from 'path';
+import chalk from "chalk";
+import { createWriteStream, existsSync, mkdirSync } from "fs";
+import { dirname } from "path";
 
 // Try to import LogTape statically with optional dependency pattern
 let logtape: any = null;
 try {
   // Static import that bundler can analyze
-  logtape = require('@logtape/logtape');
+  logtape = require("@logtape/logtape");
 } catch {
   // LogTape not available - will use SimpleLogger
   // This is expected in Bun compiled binaries where optional deps might not be bundled
@@ -34,8 +34,8 @@ class LogTapeLogger implements Logger {
   }
 
   private formatMessage(message: string): string {
-    const ghost = '👻';
-    const target = this.targetName ? `${chalk.blue(`[${this.targetName}]`)} ` : '';
+    const ghost = "👻";
+    const target = this.targetName ? `${chalk.blue(`[${this.targetName}]`)} ` : "";
     return `${ghost} ${target}${message}`;
   }
 
@@ -66,7 +66,7 @@ export class SimpleLogger implements Logger {
   private logLevel: string;
   private logStream?: any;
 
-  constructor(targetName?: string, logLevel: string = 'info', logFile?: string) {
+  constructor(targetName?: string, logLevel: string = "info", logFile?: string) {
     this.targetName = targetName;
     this.logLevel = logLevel;
 
@@ -77,11 +77,11 @@ export class SimpleLogger implements Logger {
           mkdirSync(dir, { recursive: true });
         }
         // Clear the log file for this target (one build = one log)
-        this.logStream = createWriteStream(logFile, { flags: 'w' });
-        this.logStream.on('error', (error: unknown) => {
+        this.logStream = createWriteStream(logFile, { flags: "w" });
+        this.logStream.on("error", (error: unknown) => {
           // Swallow stream errors (e.g., when temp directories are cleaned up in tests)
-          if (process.env.POLTERGEIST_DEBUG_LOGGER === 'true') {
-            console.error('Logger stream error:', error);
+          if (process.env.POLTERGEIST_DEBUG_LOGGER === "true") {
+            console.error("Logger stream error:", error);
           }
         });
       } catch {
@@ -91,16 +91,16 @@ export class SimpleLogger implements Logger {
   }
 
   private shouldLog(level: string): boolean {
-    const levels = ['debug', 'info', 'warn', 'error'];
+    const levels = ["debug", "info", "warn", "error"];
     const currentIndex = levels.indexOf(this.logLevel);
     const messageIndex = levels.indexOf(level);
     return messageIndex >= currentIndex;
   }
 
   private formatMessage(level: string, message: string): string {
-    const ghost = '👻';
-    const time = new Date().toLocaleTimeString('en-US', { hour12: false });
-    const target = this.targetName ? ` [${this.targetName}]` : '';
+    const ghost = "👻";
+    const time = new Date().toLocaleTimeString("en-US", { hour12: false });
+    const target = this.targetName ? ` [${this.targetName}]` : "";
     return `${ghost} [${time}] ${level.toUpperCase()}:${target} ${message}`;
   }
 
@@ -108,7 +108,7 @@ export class SimpleLogger implements Logger {
     if (this.logStream) {
       const timestamp = new Date().toISOString();
       const levelStr = level.toUpperCase().padEnd(5);
-      const target = this.targetName ? `[${this.targetName}] ` : '';
+      const target = this.targetName ? `[${this.targetName}] ` : "";
       // Simple plain text format: timestamp level: [target] message
       this.logStream.write(`${timestamp} ${levelStr}: ${target}${message}\n`);
     }
@@ -116,70 +116,70 @@ export class SimpleLogger implements Logger {
 
   // Method to flush the stream (useful for tests)
   public flush(): void {
-    if (this.logStream && typeof this.logStream.end === 'function') {
+    if (this.logStream && typeof this.logStream.end === "function") {
       this.logStream.end();
     }
   }
 
   info(message: string, metadata?: unknown): void {
-    if (this.shouldLog('info')) {
-      const formatted = this.formatMessage('info', message);
+    if (this.shouldLog("info")) {
+      const formatted = this.formatMessage("info", message);
       console.log(formatted);
       if (metadata) console.log(metadata);
-      this.writeToFile('info', message);
+      this.writeToFile("info", message);
     }
   }
 
   error(message: string, metadata?: unknown): void {
-    if (this.shouldLog('error')) {
-      const formatted = this.formatMessage('error', message);
+    if (this.shouldLog("error")) {
+      const formatted = this.formatMessage("error", message);
       console.error(chalk.red(formatted));
       if (metadata) console.error(metadata);
-      this.writeToFile('error', message);
+      this.writeToFile("error", message);
     }
   }
 
   warn(message: string, metadata?: unknown): void {
-    if (this.shouldLog('warn')) {
-      const formatted = this.formatMessage('warn', message);
+    if (this.shouldLog("warn")) {
+      const formatted = this.formatMessage("warn", message);
       console.warn(chalk.yellow(formatted));
       if (metadata) console.warn(metadata);
-      this.writeToFile('warn', message);
+      this.writeToFile("warn", message);
     }
   }
 
   debug(message: string, metadata?: unknown): void {
-    if (this.shouldLog('debug')) {
-      const formatted = this.formatMessage('debug', message);
+    if (this.shouldLog("debug")) {
+      const formatted = this.formatMessage("debug", message);
       console.log(chalk.gray(formatted));
       if (metadata) console.log(metadata);
-      this.writeToFile('debug', message);
+      this.writeToFile("debug", message);
     }
   }
 
   success(message: string, metadata?: unknown): void {
-    if (this.shouldLog('info')) {
-      const formatted = this.formatMessage('info', `✅ ${message}`);
+    if (this.shouldLog("info")) {
+      const formatted = this.formatMessage("info", `✅ ${message}`);
       console.log(chalk.green(formatted));
       if (metadata) console.log(metadata);
-      this.writeToFile('info', `✅ ${message}`);
+      this.writeToFile("info", `✅ ${message}`);
     }
   }
 }
 
 // Main logger factory
 export function createLogger(logFile?: string, logLevel?: string, targetName?: string): Logger {
-  const level = logLevel || 'info';
+  const level = logLevel || "info";
 
   // Try to use LogTape if available
   const isTestEnv =
-    process.env.NODE_ENV === 'test' ||
+    process.env.NODE_ENV === "test" ||
     Boolean(process.env.VITEST) ||
     Boolean(process.env.VITEST_POOL_ID) ||
     Boolean(process.env.VITEST_WORKER_ID) ||
-    (typeof process !== 'undefined' &&
+    (typeof process !== "undefined" &&
       Array.isArray(process.argv) &&
-      process.argv.some((arg) => arg.includes('vitest')));
+      process.argv.some((arg) => arg.includes("vitest")));
   const shouldUseLogTape = logtape && !isTestEnv;
   if (shouldUseLogTape) {
     try {
@@ -189,11 +189,11 @@ export function createLogger(logFile?: string, logLevel?: string, targetName?: s
       const sinks: any = {
         console: getConsoleSink({
           formatter: (record: any) => {
-            const ghost = '👻';
-            const time = new Date().toLocaleTimeString('en-US', { hour12: false });
+            const ghost = "👻";
+            const time = new Date().toLocaleTimeString("en-US", { hour12: false });
             const level = record.level.toUpperCase().padEnd(5);
-            const category = record.category.join('/');
-            return `${ghost} [${time}] ${level} [${category}] ${record.message.join('')}`;
+            const category = record.category.join("/");
+            return `${ghost} [${time}] ${level} [${category}] ${record.message.join("")}`;
           },
         }),
       };
@@ -208,7 +208,7 @@ export function createLogger(logFile?: string, logLevel?: string, targetName?: s
           formatter: (record: any) => {
             const timestamp = new Date().toISOString();
             const levelStr = record.level.toUpperCase().padEnd(5);
-            const message = record.message.join('');
+            const message = record.message.join("");
             return `${timestamp} ${levelStr}: ${message}`;
           },
         });
@@ -219,15 +219,15 @@ export function createLogger(logFile?: string, logLevel?: string, targetName?: s
         filters: {},
         loggers: [
           {
-            category: ['poltergeist'],
+            category: ["poltergeist"],
             level: level as any,
-            sinks: logFile ? ['console', 'file'] : ['console'],
+            sinks: logFile ? ["console", "file"] : ["console"],
           },
         ],
         reset: true, // Allow reconfiguration for tests
       });
 
-      const logger = getLogger(['poltergeist']);
+      const logger = getLogger(["poltergeist"]);
       return new LogTapeLogger(logger, targetName);
     } catch {
       // Fall back to SimpleLogger if LogTape configuration fails
@@ -249,7 +249,7 @@ export class TargetLogger implements Logger {
   }
 
   private formatMessage(message: string): string {
-    const target = this.targetName ? `[${this.targetName}] ` : '';
+    const target = this.targetName ? `[${this.targetName}] ` : "";
     return `${target}${message}`;
   }
 
@@ -286,13 +286,13 @@ export function createConsoleLogger(): {
   warn: (message: string) => void;
   success: (message: string) => void;
 } {
-  const ghost = '👻';
+  const ghost = "👻";
 
   return {
-    info: (message: string) => console.log(`${ghost} ${chalk.cyan('[Poltergeist]')} ${message}`),
-    error: (message: string) => console.error(`${ghost} ${chalk.red('[Poltergeist]')} ${message}`),
-    warn: (message: string) => console.warn(`${ghost} ${chalk.yellow('[Poltergeist]')} ${message}`),
+    info: (message: string) => console.log(`${ghost} ${chalk.cyan("[Poltergeist]")} ${message}`),
+    error: (message: string) => console.error(`${ghost} ${chalk.red("[Poltergeist]")} ${message}`),
+    warn: (message: string) => console.warn(`${ghost} ${chalk.yellow("[Poltergeist]")} ${message}`),
     success: (message: string) =>
-      console.log(`${ghost} ${chalk.green('[Poltergeist]')} ${message}`),
+      console.log(`${ghost} ${chalk.green("[Poltergeist]")} ${message}`),
   };
 }

@@ -3,9 +3,9 @@
  * Consolidates process lifecycle, PID management, heartbeat, and inter-process coordination
  */
 
-import { type ChildProcess, type SpawnOptions, spawn } from 'child_process';
-import { hostname } from 'os';
-import type { Logger } from '../logger.js';
+import { type ChildProcess, type SpawnOptions, spawn } from "child_process";
+import { hostname } from "os";
+import type { Logger } from "../logger.js";
 
 export interface ProcessInfo {
   pid: number;
@@ -43,7 +43,7 @@ export class ProcessManager {
   constructor(
     private updateHeartbeat: () => void,
     options: ProcessOptions = {},
-    logger?: Logger
+    logger?: Logger,
   ) {
     this.options = {
       heartbeatInterval: options.heartbeatInterval ?? 10000,
@@ -53,7 +53,7 @@ export class ProcessManager {
     this.logger = logger;
 
     // Increase max listeners in test environment to avoid warnings
-    if (process.env.NODE_ENV === 'test' || process.env.VITEST) {
+    if (process.env.NODE_ENV === "test" || process.env.VITEST) {
       process.setMaxListeners(20);
     }
   }
@@ -62,16 +62,16 @@ export class ProcessManager {
    * Check if a process is still alive by sending signal 0
    */
   public static isProcessAlive(pid: number): boolean {
-    if (process.platform === 'win32') {
+    if (process.platform === "win32") {
       // On Windows, process.kill(pid, 0) doesn't work reliably
       // Use a Windows-specific approach
       try {
-        const { execSync } = require('child_process');
+        const { execSync } = require("child_process");
         // Check if process exists using tasklist
         const output = execSync(`tasklist /FI "PID eq ${pid}" /FO CSV /NH`, {
-          encoding: 'utf8',
+          encoding: "utf8",
           windowsHide: true,
-          stdio: ['ignore', 'pipe', 'ignore'], // Suppress stderr
+          stdio: ["ignore", "pipe", "ignore"], // Suppress stderr
         });
         // If the output contains the PID, the process exists
         return output.includes(pid.toString());
@@ -148,7 +148,7 @@ export class ProcessManager {
       try {
         this.updateHeartbeat();
       } catch (error) {
-        this.logger?.error('Heartbeat update failed:', error);
+        this.logger?.error("Heartbeat update failed:", error);
       }
     }, this.options.heartbeatInterval);
 
@@ -162,7 +162,7 @@ export class ProcessManager {
     if (this.heartbeatInterval) {
       clearInterval(this.heartbeatInterval);
       this.heartbeatInterval = undefined;
-      this.logger?.debug('Heartbeat stopped');
+      this.logger?.debug("Heartbeat stopped");
     }
   }
 
@@ -173,11 +173,11 @@ export class ProcessManager {
     id: string,
     command: string,
     args: string[] = [],
-    options: SpawnOptions = {}
+    options: SpawnOptions = {},
   ): Promise<ManagedProcess> {
     return new Promise((resolve, reject) => {
       const childProcess = spawn(command, args, {
-        stdio: options.stdio || ['pipe', 'pipe', 'pipe'],
+        stdio: options.stdio || ["pipe", "pipe", "pipe"],
         env: options.env || process.env,
         cwd: options.cwd || process.cwd(),
         ...options,
@@ -195,19 +195,19 @@ export class ProcessManager {
         cleanup,
       };
 
-      childProcess.on('error', (error) => {
+      childProcess.on("error", (error) => {
         this.logger?.error(`Process ${id} error:`, error);
         cleanup();
         reject(error);
       });
 
-      childProcess.on('spawn', () => {
+      childProcess.on("spawn", () => {
         this.managedProcesses.set(id, managedProcess);
         this.logger?.debug(`Process ${id} spawned with PID ${childProcess.pid}`);
         resolve(managedProcess);
       });
 
-      childProcess.on('exit', (code, signal) => {
+      childProcess.on("exit", (code, signal) => {
         this.logger?.debug(`Process ${id} exited with code ${code}, signal ${signal}`);
         cleanup();
       });
@@ -220,31 +220,31 @@ export class ProcessManager {
    */
   public async terminateProcess(
     childProcess: ChildProcess,
-    timeoutMs: number = this.options.shutdownTimeout
+    timeoutMs: number = this.options.shutdownTimeout,
   ): Promise<void> {
     if (!childProcess.pid || childProcess.killed) {
       return;
     }
 
     // Windows taskkill is less graceful than Unix SIGTERM, use shorter timeout
-    const effectiveTimeout = process.platform === 'win32' ? Math.min(timeoutMs, 3000) : timeoutMs;
+    const effectiveTimeout = process.platform === "win32" ? Math.min(timeoutMs, 3000) : timeoutMs;
 
     return new Promise((resolve) => {
       const timeout = setTimeout(() => {
         if (!childProcess.killed) {
           this.logger?.warn(`Force killing process ${childProcess.pid} after timeout`);
-          childProcess.kill('SIGKILL');
+          childProcess.kill("SIGKILL");
         }
         resolve();
       }, effectiveTimeout);
 
-      childProcess.on('exit', () => {
+      childProcess.on("exit", () => {
         clearTimeout(timeout);
         resolve();
       });
 
       // Try graceful termination first
-      childProcess.kill('SIGTERM');
+      childProcess.kill("SIGTERM");
     });
   }
 
@@ -264,38 +264,38 @@ export class ProcessManager {
         await this.cleanupAllProcesses();
         this.stopHeartbeat();
         // Only exit if not in test environment
-        if (process.env.NODE_ENV !== 'test' && !process.env.VITEST) {
+        if (process.env.NODE_ENV !== "test" && !process.env.VITEST) {
           process.exit(0);
         }
       } catch (error) {
-        this.logger?.error('Error during shutdown:', error);
+        this.logger?.error("Error during shutdown:", error);
         // Only exit if not in test environment
-        if (process.env.NODE_ENV !== 'test' && !process.env.VITEST) {
+        if (process.env.NODE_ENV !== "test" && !process.env.VITEST) {
           process.exit(1);
         }
       }
     };
 
-    const sigintHandler = () => gracefulShutdown('SIGINT');
-    const sigtermHandler = () => gracefulShutdown('SIGTERM');
+    const sigintHandler = () => gracefulShutdown("SIGINT");
+    const sigtermHandler = () => gracefulShutdown("SIGTERM");
     const exitHandler = () => {
       this.stopHeartbeat();
       // Synchronous cleanup only
       for (const managed of this.managedProcesses.values()) {
         if (managed.process.pid && !managed.process.killed) {
-          managed.process.kill('SIGKILL');
+          managed.process.kill("SIGKILL");
         }
       }
     };
 
-    process.on('SIGINT', sigintHandler);
-    process.on('SIGTERM', sigtermHandler);
-    process.on('exit', exitHandler);
+    process.on("SIGINT", sigintHandler);
+    process.on("SIGTERM", sigtermHandler);
+    process.on("exit", exitHandler);
 
     this.shutdownHandlers = [
-      { signal: 'SIGINT', handler: sigintHandler },
-      { signal: 'SIGTERM', handler: sigtermHandler },
-      { signal: 'exit', handler: exitHandler },
+      { signal: "SIGINT", handler: sigintHandler },
+      { signal: "SIGTERM", handler: sigtermHandler },
+      { signal: "exit", handler: exitHandler },
     ];
 
     this.shutdownHandlersRegistered = true;
@@ -306,7 +306,7 @@ export class ProcessManager {
    */
   public async cleanupAllProcesses(): Promise<void> {
     const cleanupPromises = Array.from(this.managedProcesses.values()).map((managed) =>
-      managed.cleanup()
+      managed.cleanup(),
     );
 
     await Promise.allSettled(cleanupPromises);
@@ -318,8 +318,8 @@ export class ProcessManager {
    */
   public cleanupEventListeners(): void {
     for (const { signal, handler } of this.shutdownHandlers) {
-      if (signal === 'exit') {
-        process.removeListener('exit', handler);
+      if (signal === "exit") {
+        process.removeListener("exit", handler);
       } else {
         process.removeListener(signal as NodeJS.Signals, handler);
       }

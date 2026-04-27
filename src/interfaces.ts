@@ -1,10 +1,10 @@
 // Interfaces for dependency injection and better testability
 
-import type { BaseBuilder } from './builders/index.js';
-import type { Logger } from './logger.js';
-import type { BuildNotifier } from './notifier.js';
-import type { PoltergeistState, PostBuildResult } from './state.js';
-import type { BuildStatus, PoltergeistConfig, Target } from './types.js';
+import type { BaseBuilder } from "./builders/index.js";
+import type { Logger } from "./logger.js";
+import type { BuildNotifier } from "./notifier.js";
+import type { PoltergeistState, PostBuildResult } from "./state.js";
+import type { BuildStatus, PoltergeistConfig, Target } from "./types.js";
 
 /**
  * Interface for Watchman client operations.
@@ -23,7 +23,7 @@ export interface IWatchmanClient {
       fields: string[];
     },
     callback: (files: Array<{ name: string; exists: boolean; type?: string }>) => void,
-    exclusionExpressions?: Array<[string, string[]]>
+    exclusionExpressions?: Array<[string, string[]]>,
   ): Promise<void>;
   unsubscribe(subscriptionName: string): Promise<void>;
   isConnected(): boolean;
@@ -42,7 +42,7 @@ export interface IStateManager {
   updatePostBuildResult(
     targetName: string,
     hookName: string,
-    updates: Partial<PostBuildResult>
+    updates: Partial<PostBuildResult>,
   ): Promise<void>;
   forceUnlock(targetName: string): Promise<boolean>;
   removeState(targetName: string): Promise<void>;
@@ -63,7 +63,7 @@ export interface IBuilderFactory {
     target: Target,
     projectRoot: string,
     logger: Logger,
-    stateManager?: IStateManager
+    stateManager?: IStateManager,
   ): BaseBuilder;
 }
 

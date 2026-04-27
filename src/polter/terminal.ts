@@ -1,4 +1,4 @@
-import type { WriteStream } from 'tty';
+import type { WriteStream } from "tty";
 
 export interface TerminalStreams {
   stdout?: WriteStream | null;
@@ -15,11 +15,11 @@ export function envFlagEnabled(value: string | undefined): boolean {
     return false;
   }
 
-  return normalized !== '0' && normalized !== 'false' && normalized !== 'no';
+  return normalized !== "0" && normalized !== "false" && normalized !== "no";
 }
 
 export function hasPositiveDimension(value: number | undefined): boolean {
-  if (typeof value === 'number') {
+  if (typeof value === "number") {
     return value > 0;
   }
   return true;
@@ -34,7 +34,7 @@ export function hasRichTTY(
     stdout: process.stdout as WriteStream,
     stderr: process.stderr as WriteStream,
   },
-  env: NodeJS.ProcessEnv = process.env
+  env: NodeJS.ProcessEnv = process.env,
 ): boolean {
   if (envFlagEnabled(env.POLTER_FORCE_TTY)) {
     return true;
@@ -56,7 +56,7 @@ export function hasRichTTY(
   }
 
   const term = env.TERM?.toLowerCase();
-  if (!term || term === 'dumb') {
+  if (!term || term === "dumb") {
     return false;
   }
 
@@ -66,7 +66,7 @@ export function hasRichTTY(
     return false;
   }
 
-  if (typeof stdoutStream.getColorDepth === 'function' && stdoutStream.getColorDepth() <= 1) {
+  if (typeof stdoutStream.getColorDepth === "function" && stdoutStream.getColorDepth() <= 1) {
     return false;
   }
 

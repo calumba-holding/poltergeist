@@ -1,13 +1,13 @@
-import { spawn } from 'child_process';
-import { createHash } from 'crypto';
-import { existsSync, openSync } from 'fs';
-import { mkdir, readFile, unlink, writeFile } from 'fs/promises';
-import { dirname, join, sep } from 'path';
-import type { Logger } from '../logger.js';
-import type { PoltergeistConfig } from '../types.js';
-import { FileSystemUtils } from '../utils/filesystem.js';
-import { ProcessManager } from '../utils/process-manager.js';
-import { spawnBunDaemon } from './daemon-manager-bun.js';
+import { spawn } from "child_process";
+import { createHash } from "crypto";
+import { existsSync, openSync } from "fs";
+import { mkdir, readFile, unlink, writeFile } from "fs/promises";
+import { dirname, join, sep } from "path";
+import type { Logger } from "../logger.js";
+import type { PoltergeistConfig } from "../types.js";
+import { FileSystemUtils } from "../utils/filesystem.js";
+import { ProcessManager } from "../utils/process-manager.js";
+import { spawnBunDaemon } from "./daemon-manager-bun.js";
 
 const realSetTimeout = globalThis.setTimeout;
 
@@ -28,7 +28,7 @@ export interface DaemonOptions {
 }
 
 interface DaemonMessage {
-  type: 'started' | 'error';
+  type: "started" | "error";
   pid?: number;
   error?: string;
 }
@@ -49,8 +49,8 @@ export class DaemonManager {
    * Get the daemon info file path for a project
    */
   private getDaemonInfoPath(projectPath: string): string {
-    const projectName = projectPath.split(sep).pop() || 'unknown';
-    const hash = createHash('sha256').update(projectPath).digest('hex').substring(0, 8);
+    const projectName = projectPath.split(sep).pop() || "unknown";
+    const hash = createHash("sha256").update(projectPath).digest("hex").substring(0, 8);
     return join(FileSystemUtils.getStateDirectory(), `${projectName}-${hash}-daemon.json`);
   }
 
@@ -63,8 +63,8 @@ export class DaemonManager {
       return FileSystemUtils.getLogFilePath(projectPath, targetName);
     }
     // Otherwise use general daemon log
-    const projectName = projectPath.split(sep).pop() || 'unknown';
-    const hash = createHash('sha256').update(projectPath).digest('hex').substring(0, 8);
+    const projectName = projectPath.split(sep).pop() || "unknown";
+    const hash = createHash("sha256").update(projectPath).digest("hex").substring(0, 8);
     return join(FileSystemUtils.getStateDirectory(), `${projectName}-${hash}-daemon.log`);
   }
 
@@ -79,7 +79,7 @@ export class DaemonManager {
     }
 
     try {
-      const content = await readFile(infoPath, 'utf-8');
+      const content = await readFile(infoPath, "utf-8");
       const info: DaemonInfo = JSON.parse(content);
 
       // Check if process is actually running
@@ -91,7 +91,7 @@ export class DaemonManager {
         return false;
       }
     } catch (error) {
-      this.logger.error('Failed to read daemon info:', error);
+      this.logger.error("Failed to read daemon info:", error);
       return false;
     }
   }
@@ -107,7 +107,7 @@ export class DaemonManager {
     }
 
     try {
-      const content = await readFile(infoPath, 'utf-8');
+      const content = await readFile(infoPath, "utf-8");
       const info: DaemonInfo = JSON.parse(content);
 
       // Verify process is running
@@ -128,7 +128,7 @@ export class DaemonManager {
   async startDaemonWithRetry(
     config: PoltergeistConfig,
     options: DaemonOptions,
-    maxRetries = 3
+    maxRetries = 3,
   ): Promise<number> {
     let lastError: Error | undefined;
 
@@ -140,9 +140,9 @@ export class DaemonManager {
         return result;
       } catch (error) {
         lastError = error as Error;
-        if (lastError.message?.includes('Daemon startup timeout')) throw lastError;
+        if (lastError.message?.includes("Daemon startup timeout")) throw lastError;
         this.logger.warn(
-          `Daemon startup failed (attempt ${attempt}/${maxRetries}): ${lastError.message}`
+          `Daemon startup failed (attempt ${attempt}/${maxRetries}): ${lastError.message}`,
         );
 
         if (attempt < maxRetries) {
@@ -155,7 +155,7 @@ export class DaemonManager {
     }
 
     throw new Error(
-      `Failed to start daemon after ${maxRetries} attempts: ${lastError?.message || 'Unknown error'}`
+      `Failed to start daemon after ${maxRetries} attempts: ${lastError?.message || "Unknown error"}`,
     );
   }
 
@@ -165,13 +165,13 @@ export class DaemonManager {
   private async startDaemon(
     config: PoltergeistConfig,
     options: DaemonOptions,
-    timeoutMsOverride?: number
+    timeoutMsOverride?: number,
   ): Promise<number> {
     const { projectRoot, configPath, target, verbose, logLevel } = options;
 
     // Check if already running
     if (await this.isDaemonRunning(projectRoot)) {
-      throw new Error('Daemon already running for this project');
+      throw new Error("Daemon already running for this project");
     }
 
     // Ensure state directory exists
@@ -181,24 +181,24 @@ export class DaemonManager {
     const logFile = this.getLogFilePath(projectRoot, target);
     // daemon-worker lives next to this file; prefer built .js, fall back to .ts with tsx loader
     let daemonDir: string;
-    if (typeof __dirname !== 'undefined') {
+    if (typeof __dirname !== "undefined") {
       daemonDir = __dirname;
     } else {
       const currentFileUrl = new URL(import.meta.url);
       daemonDir = dirname(currentFileUrl.pathname);
     }
 
-    const daemonWorkerJs = join(daemonDir, 'daemon-worker.js');
-    const daemonWorkerTs = join(daemonDir, 'daemon-worker.ts');
+    const daemonWorkerJs = join(daemonDir, "daemon-worker.js");
+    const daemonWorkerTs = join(daemonDir, "daemon-worker.ts");
     const tsxLoader = join(
       daemonDir,
-      '..',
-      '..',
-      'node_modules',
-      'tsx',
-      'dist',
-      'esm',
-      'index.mjs'
+      "..",
+      "..",
+      "node_modules",
+      "tsx",
+      "dist",
+      "esm",
+      "index.mjs",
     );
 
     let daemonWorkerPath = daemonWorkerJs;
@@ -207,12 +207,12 @@ export class DaemonManager {
     if (!existsSync(daemonWorkerJs) && existsSync(daemonWorkerTs)) {
       if (!existsSync(tsxLoader)) {
         throw new Error(
-          'daemon-worker.js not found and tsx runtime missing. ' +
-            'Run pnpm install in the poltergeist repo or build the JS output.'
+          "daemon-worker.js not found and tsx runtime missing. " +
+            "Run pnpm install in the poltergeist repo or build the JS output.",
         );
       }
       daemonWorkerPath = daemonWorkerTs;
-      spawnArgs.push('--import', tsxLoader);
+      spawnArgs.push("--import", tsxLoader);
       this.logger.debug(`Using TS daemon worker via tsx import at ${tsxLoader}`);
     }
 
@@ -231,11 +231,11 @@ export class DaemonManager {
     let child: any;
 
     // Check if we're running as Bun standalone binary
-    const isBunStandalone = !!process.versions.bun && process.execPath !== 'bun';
+    const isBunStandalone = !!process.versions.bun && process.execPath !== "bun";
 
     if (isBunStandalone) {
       // For Bun standalone binaries, check if we can use Bun.spawn with IPC
-      const hasBunSpawn = typeof (globalThis as any).Bun?.spawn === 'function';
+      const hasBunSpawn = typeof (globalThis as any).Bun?.spawn === "function";
       const execPath = process.execPath;
 
       // Write daemon args to file for cleaner passing
@@ -290,13 +290,13 @@ export class DaemonManager {
       const debugOut = join(stateDir, `daemon-debug-${Date.now()}.out`);
       const debugErr = join(stateDir, `daemon-debug-${Date.now()}.err`);
 
-      const { spawn } = await import('child_process');
-      const child = spawn(execPath, ['--daemon-mode', argsFile], {
+      const { spawn } = await import("child_process");
+      const child = spawn(execPath, ["--daemon-mode", argsFile], {
         detached: true,
         stdio: [
-          'ignore',
-          logFile ? openSync(logFile, 'a') : openSync(debugOut, 'w'),
-          logFile ? openSync(logFile, 'a') : openSync(debugErr, 'w'),
+          "ignore",
+          logFile ? openSync(logFile, "a") : openSync(debugOut, "w"),
+          logFile ? openSync(logFile, "a") : openSync(debugErr, "w"),
         ],
         cwd: projectRoot,
         env: process.env,
@@ -305,7 +305,7 @@ export class DaemonManager {
       const pid = child.pid;
 
       if (!pid) {
-        throw new Error('Failed to start daemon process - no PID returned');
+        throw new Error("Failed to start daemon process - no PID returned");
       }
 
       // Detach from parent
@@ -337,21 +337,21 @@ export class DaemonManager {
 
         return pid;
       } else {
-        throw new Error('Daemon process exited immediately after starting');
+        throw new Error("Daemon process exited immediately after starting");
       }
     } else {
       // For Node.js runtime, spawn a detached process with IPC support
-      this.logger.debug('Spawning daemon with args:', {
+      this.logger.debug("Spawning daemon with args:", {
         daemonWorkerPath,
         configPath,
         projectRoot,
       });
-      const captureOutput = process.env.POLTERGEIST_DEBUG_DAEMON === 'true';
-      const stdio: Array<number | 'ignore' | 'pipe' | 'ipc'> = [
-        'ignore',
-        captureOutput ? 'pipe' : 'ignore',
-        captureOutput ? 'pipe' : 'ignore',
-        'ipc',
+      const captureOutput = process.env.POLTERGEIST_DEBUG_DAEMON === "true";
+      const stdio: Array<number | "ignore" | "pipe" | "ipc"> = [
+        "ignore",
+        captureOutput ? "pipe" : "ignore",
+        captureOutput ? "pipe" : "ignore",
+        "ipc",
       ];
 
       child = spawn(process.execPath, [...spawnArgs, daemonWorkerPath, daemonArgs], {
@@ -363,13 +363,13 @@ export class DaemonManager {
 
       // Log output for debugging when explicitly requested
       if (captureOutput && child.stdout) {
-        child.stdout.on('data', (data: Buffer) => {
-          this.logger.debug('Daemon stdout:', data.toString());
+        child.stdout.on("data", (data: Buffer) => {
+          this.logger.debug("Daemon stdout:", data.toString());
         });
       }
       if (captureOutput && child.stderr) {
-        child.stderr.on('data', (data: Buffer) => {
-          this.logger.error('Daemon stderr:', data.toString());
+        child.stderr.on("data", (data: Buffer) => {
+          this.logger.error("Daemon stderr:", data.toString());
         });
       }
     }
@@ -391,15 +391,15 @@ export class DaemonManager {
         let timeout: NodeJS.Timeout | null = null;
 
         const triggerTimeout = () => {
-          if (process.env.POLTERGEIST_DEBUG_DAEMON === 'true') {
+          if (process.env.POLTERGEIST_DEBUG_DAEMON === "true") {
             this.logger.debug(`[DaemonManager] timeout fired after ${timeoutMs}ms`);
           }
           child.kill();
           reject(
             new Error(
               `Daemon startup timeout after ${timeoutMs}ms. ` +
-                'Try setting POLTERGEIST_DAEMON_TIMEOUT environment variable to a higher value.'
-            )
+                "Try setting POLTERGEIST_DAEMON_TIMEOUT environment variable to a higher value.",
+            ),
           );
         };
 
@@ -411,16 +411,16 @@ export class DaemonManager {
         }
 
         // Add error handler first
-        child.once('error', (error: any) => {
+        child.once("error", (error: any) => {
           if (timeout) {
             clearTimeout(timeout);
           }
-          this.logger.error('Child process error:', error);
+          this.logger.error("Child process error:", error);
           reject(new Error(`Failed to spawn daemon: ${error.message}`));
         });
 
         // Add exit handler
-        child.once('exit', (code: any, signal: any) => {
+        child.once("exit", (code: any, signal: any) => {
           if (timeout) {
             clearTimeout(timeout);
           }
@@ -430,13 +430,13 @@ export class DaemonManager {
           }
         });
 
-        child.once('message', async (message: DaemonMessage) => {
+        child.once("message", async (message: DaemonMessage) => {
           if (timeout) {
             clearTimeout(timeout);
           }
-          this.logger.debug('Received IPC message:', message);
+          this.logger.debug("Received IPC message:", message);
 
-          if (message.type === 'started' && message.pid) {
+          if (message.type === "started" && message.pid) {
             // Save daemon info
             const daemonInfo: DaemonInfo = {
               pid: message.pid,
@@ -463,15 +463,15 @@ export class DaemonManager {
             child.unref();
 
             resolve(message.pid);
-          } else if (message.type === 'error') {
-            reject(new Error(message.error || 'Daemon startup failed'));
+          } else if (message.type === "error") {
+            reject(new Error(message.error || "Daemon startup failed"));
           }
         });
       });
     }
 
     // Should never reach here - standalone returns early
-    throw new Error('Unexpected code path');
+    throw new Error("Unexpected code path");
   }
 
   /**
@@ -481,12 +481,12 @@ export class DaemonManager {
     const info = await this.getDaemonInfo(projectPath);
 
     if (!info) {
-      throw new Error('No daemon running for this project');
+      throw new Error("No daemon running for this project");
     }
 
     try {
       // Send graceful shutdown signal
-      process.kill(info.pid, 'SIGTERM');
+      process.kill(info.pid, "SIGTERM");
 
       // Wait for process to exit (with timeout)
       await this.waitForProcessExit(info.pid, 5000);
@@ -496,7 +496,7 @@ export class DaemonManager {
     } catch (error) {
       // Force kill if graceful shutdown failed
       try {
-        process.kill(info.pid, 'SIGKILL');
+        process.kill(info.pid, "SIGKILL");
       } catch {
         // Process already dead
       }
@@ -544,7 +544,7 @@ export class DaemonManager {
       }
     }
 
-    throw new Error('Process exit timeout');
+    throw new Error("Process exit timeout");
   }
 
   /**
@@ -558,8 +558,8 @@ export class DaemonManager {
     }
 
     try {
-      const content = await readFile(logFile, 'utf-8');
-      const allLines = content.split('\n').filter((line) => line.trim());
+      const content = await readFile(logFile, "utf-8");
+      const allLines = content.split("\n").filter((line) => line.trim());
 
       if (lines && lines > 0) {
         return allLines.slice(-lines);
@@ -567,7 +567,7 @@ export class DaemonManager {
 
       return allLines;
     } catch (error) {
-      this.logger.error('Failed to read log file:', error);
+      this.logger.error("Failed to read log file:", error);
       return [];
     }
   }

@@ -1,14 +1,14 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from "vitest";
 
-import { PanelApp } from '../../src/panel/panel-app.js';
-import type { PanelSnapshot } from '../../src/panel/types.js';
+import { PanelApp } from "../../src/panel/panel-app.js";
+import type { PanelSnapshot } from "../../src/panel/types.js";
 
 const snapshot: PanelSnapshot = {
   targets: [],
   summary: { totalTargets: 0, building: 0, failures: 0, running: 0 },
-  git: { branch: 'main', hasRepo: true, dirtyFiles: 0, insertions: 0, deletions: 0 },
-  projectName: 'app',
-  projectRoot: '/tmp/app',
+  git: { branch: "main", hasRepo: true, dirtyFiles: 0, insertions: 0, deletions: 0 },
+  projectName: "app",
+  projectRoot: "/tmp/app",
   preferredIndex: 0,
   lastUpdated: Date.now(),
   statusScripts: [],
@@ -16,8 +16,8 @@ const snapshot: PanelSnapshot = {
   paused: true,
 };
 
-describe('PanelApp input handling', () => {
-  it('pressing r while paused resumes immediately (optimistic)', async () => {
+describe("PanelApp input handling", () => {
+  it("pressing r while paused resumes immediately (optimistic)", async () => {
     const resume = vi.fn(async () => {});
     const controller = {
       getSnapshot: () => snapshot,
@@ -36,7 +36,7 @@ describe('PanelApp input handling', () => {
     });
 
     // Call the private handler directly for simplicity.
-    (app as any).handleInput('r');
+    (app as any).handleInput("r");
     await Promise.resolve(); // allow resume().then(...) to run
     expect(resume).toHaveBeenCalledTimes(1);
     expect((app as any).snapshot.paused).toBe(false);

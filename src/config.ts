@@ -1,14 +1,14 @@
 // Configuration parser for the new generic target system
-import { existsSync, readFileSync } from 'fs';
-import { dirname, resolve } from 'path';
-import { ZodError } from 'zod';
-import { type PoltergeistConfig, PoltergeistConfigSchema } from './types.js';
+import { existsSync, readFileSync } from "fs";
+import { dirname, resolve } from "path";
+import { ZodError } from "zod";
+import { type PoltergeistConfig, PoltergeistConfigSchema } from "./types.js";
 // import { Logger } from './logger.js';
 
 export class ConfigurationError extends Error {
   constructor(message: string) {
     super(message);
-    this.name = 'ConfigurationError';
+    this.name = "ConfigurationError";
   }
 }
 
@@ -38,7 +38,7 @@ export class ConfigLoader {
 
   private readConfigFile(): unknown {
     try {
-      const content = readFileSync(this.configPath, 'utf-8');
+      const content = readFileSync(this.configPath, "utf-8");
       // Support both JSON and JSONC (with comments)
       const jsonWithoutComments = this.stripJSONComments(content);
       return JSON.parse(jsonWithoutComments);
@@ -51,7 +51,7 @@ export class ConfigLoader {
   }
 
   private stripJSONComments(content: string): string {
-    let result = '';
+    let result = "";
     let inString = false;
     let inSingleLineComment = false;
     let inMultiLineComment = false;
@@ -62,7 +62,7 @@ export class ConfigLoader {
       const nextChar = content[i + 1];
 
       if (inSingleLineComment) {
-        if (char === '\n') {
+        if (char === "\n") {
           inSingleLineComment = false;
           result += char;
         }
@@ -70,7 +70,7 @@ export class ConfigLoader {
       }
 
       if (inMultiLineComment) {
-        if (char === '*' && nextChar === '/') {
+        if (char === "*" && nextChar === "/") {
           inMultiLineComment = false;
           i++; // Skip the '/'
         }
@@ -81,7 +81,7 @@ export class ConfigLoader {
         result += char;
         if (escaped) {
           escaped = false;
-        } else if (char === '\\') {
+        } else if (char === "\\") {
           escaped = true;
         } else if (char === '"') {
           inString = false;
@@ -92,10 +92,10 @@ export class ConfigLoader {
       if (char === '"') {
         inString = true;
         result += char;
-      } else if (char === '/' && nextChar === '/') {
+      } else if (char === "/" && nextChar === "/") {
         inSingleLineComment = true;
         i++; // Skip the second '/'
-      } else if (char === '/' && nextChar === '*') {
+      } else if (char === "/" && nextChar === "*") {
         inMultiLineComment = true;
         i++; // Skip the '*'
       } else {
@@ -108,31 +108,31 @@ export class ConfigLoader {
 
   private checkForOldFormat(config: unknown): void {
     const configObj = config as Record<string, unknown>;
-    if ('cli' in configObj || 'macApp' in configObj) {
+    if ("cli" in configObj || "macApp" in configObj) {
       throw new ConfigurationError(
-        '❌ Old configuration format detected!\n\n' +
+        "❌ Old configuration format detected!\n\n" +
           'Poltergeist now uses a "targets" array instead of "cli" and "macApp" sections.\n\n' +
-          'Please update your poltergeist.config.json to the new format:\n\n' +
-          '{\n' +
+          "Please update your poltergeist.config.json to the new format:\n\n" +
+          "{\n" +
           '  "targets": [\n' +
-          '    {\n' +
+          "    {\n" +
           '      "name": "my-cli",\n' +
           '      "type": "executable",\n' +
           '      "buildCommand": "./build.sh",\n' +
           '      "outputPath": "./bin/myapp",\n' +
           '      "watchPaths": ["src/**/*.ts"]\n' +
-          '    },\n' +
-          '    {\n' +
+          "    },\n" +
+          "    {\n" +
           '      "name": "my-app",\n' +
           '      "type": "app-bundle",\n' +
           '      "platform": "macos",\n' +
           '      "buildCommand": "./build-app.sh",\n' +
           '      "bundleId": "com.example.myapp",\n' +
           '      "watchPaths": ["app/**/*.swift"]\n' +
-          '    }\n' +
-          '  ]\n' +
-          '}\n\n' +
-          'See: https://github.com/steipete/poltergeist#migration'
+          "    }\n" +
+          "  ]\n" +
+          "}\n\n" +
+          "See: https://github.com/steipete/poltergeist#migration",
       );
     }
   }
@@ -157,7 +157,7 @@ export class ConfigLoader {
       return validated;
     } catch (error) {
       if (error instanceof ZodError) {
-        const issues = error.issues.map((e) => `  - ${e.path.join('.')}: ${e.message}`).join('\n');
+        const issues = error.issues.map((e) => `  - ${e.path.join(".")}: ${e.message}`).join("\n");
         throw new ConfigurationError(`Configuration validation failed:\n${issues}`);
       }
       throw error;
@@ -170,8 +170,8 @@ export class ConfigLoader {
 
     if (duplicates.length > 0) {
       throw new ConfigurationError(
-        `Duplicate target names found: ${duplicates.join(', ')}\n` +
-          'Each target must have a unique name.'
+        `Duplicate target names found: ${duplicates.join(", ")}\n` +
+          "Each target must have a unique name.",
       );
     }
 
@@ -179,8 +179,8 @@ export class ConfigLoader {
     const invalidNames = names.filter((name) => !/^[a-zA-Z0-9-_]+$/.test(name));
     if (invalidNames.length > 0) {
       throw new ConfigurationError(
-        `Invalid target names: ${invalidNames.join(', ')}\n` +
-          'Target names must contain only letters, numbers, hyphens, and underscores.'
+        `Invalid target names: ${invalidNames.join(", ")}\n` +
+          "Target names must contain only letters, numbers, hyphens, and underscores.",
       );
     }
   }
@@ -193,8 +193,8 @@ export class ConfigLoader {
       // Resolve build command if it's a relative path
       if (
         resolvedTarget.buildCommand &&
-        (resolvedTarget.buildCommand.startsWith('./') ||
-          resolvedTarget.buildCommand.startsWith('../'))
+        (resolvedTarget.buildCommand.startsWith("./") ||
+          resolvedTarget.buildCommand.startsWith("../"))
       ) {
         resolvedTarget.buildCommand = resolve(this.projectRoot, resolvedTarget.buildCommand);
       }
@@ -203,7 +203,7 @@ export class ConfigLoader {
       // The builders will resolve it relative to project root as needed
 
       // Resolve docker context
-      if (target.type === 'docker' && 'context' in resolvedTarget && resolvedTarget.context) {
+      if (target.type === "docker" && "context" in resolvedTarget && resolvedTarget.context) {
         resolvedTarget.context = resolve(this.projectRoot, resolvedTarget.context);
       }
 
@@ -211,7 +211,7 @@ export class ConfigLoader {
     });
 
     // Resolve logging file path
-    if (config.logging?.file && !config.logging.file.startsWith('/')) {
+    if (config.logging?.file && !config.logging.file.startsWith("/")) {
       config.logging.file = resolve(this.projectRoot, config.logging.file);
     }
 
@@ -245,18 +245,18 @@ interface OldConfig {
     statusFile?: string;
     lockFile?: string;
   };
-  notifications?: PoltergeistConfig['notifications'];
-  logging?: PoltergeistConfig['logging'];
+  notifications?: PoltergeistConfig["notifications"];
+  logging?: PoltergeistConfig["logging"];
   settlingDelay?: number;
 }
 
 export function migrateOldConfig(oldConfig: OldConfig): PoltergeistConfig {
-  const targets: PoltergeistConfig['targets'] = [];
+  const targets: PoltergeistConfig["targets"] = [];
 
   if (oldConfig.cli) {
     targets.push({
-      name: 'cli',
-      type: 'executable',
+      name: "cli",
+      type: "executable",
       enabled: oldConfig.cli.enabled ?? true,
       buildCommand: oldConfig.cli.buildCommand,
       outputPath: oldConfig.cli.outputPath,
@@ -266,9 +266,9 @@ export function migrateOldConfig(oldConfig: OldConfig): PoltergeistConfig {
 
   if (oldConfig.macApp) {
     targets.push({
-      name: 'mac-app',
-      type: 'app-bundle',
-      platform: 'macos',
+      name: "mac-app",
+      type: "app-bundle",
+      platform: "macos",
       enabled: oldConfig.macApp.enabled ?? true,
       buildCommand: oldConfig.macApp.buildCommand,
       bundleId: oldConfig.macApp.bundleId,
@@ -278,15 +278,15 @@ export function migrateOldConfig(oldConfig: OldConfig): PoltergeistConfig {
   }
 
   return {
-    version: '1.0',
-    projectType: 'swift', // Default for legacy configs
+    version: "1.0",
+    projectType: "swift", // Default for legacy configs
     targets,
     notifications: oldConfig.notifications,
     logging: oldConfig.logging,
     watchman: {
       useDefaultExclusions: true,
       excludeDirs: [],
-      projectType: 'swift', // Default for legacy configs
+      projectType: "swift", // Default for legacy configs
       maxFileEvents: 10000,
       recrawlThreshold: 5,
       settlingDelay: oldConfig.settlingDelay || 1000,

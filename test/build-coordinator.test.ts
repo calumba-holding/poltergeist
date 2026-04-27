@@ -1,8 +1,8 @@
-import { describe, expect, it, vi } from 'vitest';
-import { BuildCoordinator } from '../src/core/build-coordinator.js';
-import type { TargetState } from '../src/core/target-state.js';
-import type { BuildSchedulingConfig, Target } from '../src/types.js';
-import { createMockLogger, createMockStateManager, createTestConfig } from './helpers.js';
+import { describe, expect, it, vi } from "vitest";
+import { BuildCoordinator } from "../src/core/build-coordinator.js";
+import type { TargetState } from "../src/core/target-state.js";
+import type { BuildSchedulingConfig, Target } from "../src/types.js";
+import { createMockLogger, createMockStateManager, createTestConfig } from "./helpers.js";
 
 const baseScheduling: BuildSchedulingConfig = {
   parallelization: 2,
@@ -17,20 +17,20 @@ const baseScheduling: BuildSchedulingConfig = {
 function createSuccessState(target: Target): TargetState {
   const builder = {
     build: vi.fn().mockResolvedValue({
-      status: 'success',
+      status: "success",
       targetName: target.name,
       timestamp: new Date().toISOString(),
     }),
     validate: vi.fn(),
     stop: vi.fn(),
     getOutputInfo: vi.fn(),
-    describeBuilder: vi.fn().mockReturnValue('mock'),
+    describeBuilder: vi.fn().mockReturnValue("mock"),
   };
 
   return {
     target,
     builder,
-    pendingFiles: new Set(['src/index.ts']),
+    pendingFiles: new Set(["src/index.ts"]),
     watching: true,
     runner: {
       onBuildSuccess: vi.fn().mockResolvedValue(undefined),
@@ -44,24 +44,24 @@ function createSuccessState(target: Target): TargetState {
   };
 }
 
-describe('BuildCoordinator', () => {
-  it('invokes runner and notifier on successful build', async () => {
+describe("BuildCoordinator", () => {
+  it("invokes runner and notifier on successful build", async () => {
     const config = createTestConfig();
     const target = config.targets[0];
     if (!target) {
-      throw new Error('Test config missing target');
+      throw new Error("Test config missing target");
     }
     const state = createSuccessState(target);
     const notifier: Pick<
-      Parameters<typeof BuildCoordinator>[0]['notifier'],
-      'notifyBuildComplete' | 'notifyBuildFailed'
+      Parameters<typeof BuildCoordinator>[0]["notifier"],
+      "notifyBuildComplete" | "notifyBuildFailed"
     > = {
       notifyBuildComplete: vi.fn(),
       notifyBuildFailed: vi.fn(),
     };
 
     const coordinator = new BuildCoordinator({
-      projectRoot: '/project',
+      projectRoot: "/project",
       logger: createMockLogger(),
       stateManager: createMockStateManager(),
       notifier,
@@ -74,13 +74,13 @@ describe('BuildCoordinator', () => {
     expect(notifier.notifyBuildComplete).toHaveBeenCalledTimes(1);
   });
 
-  it('records failures when build throws', async () => {
+  it("records failures when build throws", async () => {
     const config = createTestConfig();
     const target = config.targets[0];
     if (!target) {
-      throw new Error('Test config missing target');
+      throw new Error("Test config missing target");
     }
-    const builderError = new Error('boom');
+    const builderError = new Error("boom");
 
     const state: TargetState = {
       target,
@@ -89,20 +89,20 @@ describe('BuildCoordinator', () => {
         validate: vi.fn(),
         stop: vi.fn(),
         getOutputInfo: vi.fn(),
-        describeBuilder: vi.fn().mockReturnValue('mock'),
+        describeBuilder: vi.fn().mockReturnValue("mock"),
       },
-      pendingFiles: new Set(['src/index.ts']),
+      pendingFiles: new Set(["src/index.ts"]),
       watching: true,
     };
 
     const stateManager = createMockStateManager();
-    const notifier: Pick<Parameters<typeof BuildCoordinator>[0]['notifier'], 'notifyBuildFailed'> =
+    const notifier: Pick<Parameters<typeof BuildCoordinator>[0]["notifier"], "notifyBuildFailed"> =
       {
         notifyBuildFailed: vi.fn(),
       };
 
     const coordinator = new BuildCoordinator({
-      projectRoot: '/project',
+      projectRoot: "/project",
       logger: createMockLogger(),
       stateManager,
       notifier,

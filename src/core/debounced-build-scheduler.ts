@@ -1,4 +1,4 @@
-import type { TargetState } from './target-state.js';
+import type { TargetState } from "./target-state.js";
 
 interface DebouncedBuildSchedulerOpts {
   defaultDelayMs: number;
@@ -20,7 +20,7 @@ export class DebouncedBuildScheduler {
   public schedule(
     changedFiles: string[],
     targetNames: string[],
-    targetStates: Map<string, TargetState>
+    targetStates: Map<string, TargetState>,
   ): void {
     for (const targetName of targetNames) {
       const state = targetStates.get(targetName);
