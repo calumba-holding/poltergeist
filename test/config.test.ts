@@ -1,6 +1,6 @@
 // Comprehensive tests for configuration loading and validation
 
-import { mkdirSync, rmSync, writeFileSync } from "fs";
+import { mkdtempSync, rmSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
@@ -34,8 +34,7 @@ describe("ConfigLoader", () => {
 
   beforeEach(() => {
     // Create a temporary directory for test configs
-    tempDir = join(tmpdir(), `poltergeist-test-${Date.now()}`);
-    mkdirSync(tempDir, { recursive: true });
+    tempDir = mkdtempSync(join(tmpdir(), "poltergeist-test-"));
     configPath = join(tempDir, ".poltergeist.json");
   });
 
