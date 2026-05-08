@@ -98,9 +98,63 @@ jobs:
           path: |
             apps/mac/*.zip
 
+  build-homebrew:
+    name: Build Homebrew CLI Asset
+    runs-on: macos-15
+    env:
+      POLTERGEIST_TEST_MODE: "true"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Enable pnpm
+        run: corepack enable pnpm
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build CLI
+        run: pnpm run build
+
+      - name: Package universal Homebrew binaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="${GITHUB_REF_NAME#v}"
+          mkdir -p dist-homebrew
+
+          bun build src/cli.ts --compile --target=bun-darwin-arm64 --outfile dist-homebrew/poltergeist-arm64 --minify
+          bun build src/cli.ts --compile --target=bun-darwin-x64 --outfile dist-homebrew/poltergeist-x64 --minify
+          bun build src/polter.ts --compile --target=bun-darwin-arm64 --outfile dist-homebrew/polter-arm64 --minify
+          bun build src/polter.ts --compile --target=bun-darwin-x64 --outfile dist-homebrew/polter-x64 --minify
+
+          lipo -create dist-homebrew/poltergeist-arm64 dist-homebrew/poltergeist-x64 -output dist-homebrew/poltergeist
+          lipo -create dist-homebrew/polter-arm64 dist-homebrew/polter-x64 -output dist-homebrew/polter
+          chmod +x dist-homebrew/poltergeist dist-homebrew/polter
+
+          tar -C dist-homebrew -czf "poltergeist-macos-universal-v${version}.tar.gz" poltergeist polter
+          shasum -a 256 "poltergeist-macos-universal-v${version}.tar.gz" > "poltergeist-macos-universal-v${version}.tar.gz.sha256"
+
+      - name: Upload Homebrew artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: poltergeist-homebrew
+          path: |
+            poltergeist-macos-universal-*.tar.gz
+            poltergeist-macos-universal-*.sha256
+
   release:
     name: Create GitHub Release
-    needs: [build-cli, build-macos]
+    needs: [build-cli, build-macos, build-homebrew]
     runs-on: ubuntu-latest
 
     steps:
@@ -119,12 +173,20 @@ jobs:
           name: poltergeist-macos
           path: ./macos/
 
+      - name: Download Homebrew artifacts
+        uses: actions/download-artifact@v7
+        with:
+          name: poltergeist-homebrew
+          path: ./homebrew/
+
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
             cli/*.tgz
             macos/*.zip
+            homebrew/*.tar.gz
+            homebrew/*.sha256
           generate_release_notes: true
           body: |
             ## 🚀 Poltergeist ${{ github.ref_name }}
@@ -147,3 +209,53 @@ jobs:
 
             ### ✨ What's New
             See the full changelog in [CHANGELOG.md](https://github.com/steipete/poltergeist/blob/main/CHANGELOG.md)
+
+  update-homebrew-tap:
+    name: Update Homebrew Tap
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve release tag
+        id: release
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="${GITHUB_REF_NAME}"
+          if [[ -z "$tag" ]]; then
+            echo "Missing release tag." >&2
+            exit 1
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "request_id=poltergeist-${tag}-${GITHUB_RUN_ID}" >> "$GITHUB_OUTPUT"
+
+      - name: Dispatch tap update
+        env:
+          GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$GH_TOKEN"
+          gh workflow run update-formula.yml \
+            --repo steipete/homebrew-tap \
+            -f formula=poltergeist \
+            -f tag="${{ steps.release.outputs.tag }}" \
+            -f repository=steipete/poltergeist \
+            -f macos_artifact="poltergeist-macos-universal-${{ steps.release.outputs.tag }}.tar.gz" \
+            -f request_id="${{ steps.release.outputs.request_id }}"
+
+      - name: Wait for tap update
+        env:
+          GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          for _ in {1..20}; do
+            run_id="$(gh run list --repo steipete/homebrew-tap --workflow update-formula.yml --json databaseId,displayTitle --jq '.[] | select(.displayTitle | contains("${{ steps.release.outputs.request_id }}")) | .databaseId' | head -n1)"
+            if [[ -n "$run_id" ]]; then
+              gh run watch "$run_id" --repo steipete/homebrew-tap --exit-status
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "Timed out waiting for tap workflow to appear." >&2
+          exit 1
