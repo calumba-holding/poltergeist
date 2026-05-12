@@ -7,6 +7,61 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 const skipLongRuns =
   process.env.CI === 'true' || process.env.POLTERGEIST_COVERAGE_MODE === 'true';
 
+async function waitForDaemonStarted(
+  daemonProcess: ReturnType<typeof spawn>,
+  timeoutMs = 15_000
+) {
+  await new Promise<void>((resolve, reject) => {
+    let stdout = '';
+    let stderr = '';
+
+    const cleanup = () => {
+      clearTimeout(timeout);
+      daemonProcess.stdout?.off('data', onStdout);
+      daemonProcess.stderr?.off('data', onStderr);
+      daemonProcess.off('error', onError);
+      daemonProcess.off('exit', onExit);
+    };
+
+    const fail = (message: string) => {
+      cleanup();
+      reject(new Error(`${message}\nstdout:\n${stdout}\nstderr:\n${stderr}`));
+    };
+
+    const timeout = setTimeout(() => {
+      fail(`Daemon failed to start within ${timeoutMs}ms`);
+    }, timeoutMs);
+
+    const onStdout = (data: Buffer) => {
+      stdout += data.toString();
+      if (stdout.toLowerCase().includes('daemon started')) {
+        cleanup();
+        resolve();
+      }
+    };
+
+    const onStderr = (data: Buffer) => {
+      stderr += data.toString();
+    };
+
+    const onError = (err: Error) => {
+      cleanup();
+      reject(err);
+    };
+
+    const onExit = (code: number | null) => {
+      if (code !== 0 && code !== null) {
+        fail(`Daemon exited with code ${code}`);
+      }
+    };
+
+    daemonProcess.stdout?.on('data', onStdout);
+    daemonProcess.stderr?.on('data', onStderr);
+    daemonProcess.on('error', onError);
+    daemonProcess.on('exit', onExit);
+  });
+}
+
 describe.skipIf(skipLongRuns)('Daemon with no enabled targets', () => {
   let testDir: string;
   let daemonProcess: ReturnType<typeof spawn> | null = null;
@@ -56,36 +111,7 @@ describe.skipIf(skipLongRuns)('Daemon with no enabled targets', () => {
       stdio: 'pipe',
     });
 
-    // Wait for daemon to start
-    await new Promise<void>((resolve, reject) => {
-      const timeout = setTimeout(() => {
-        reject(new Error('Daemon failed to start within timeout'));
-      }, 5000);
-
-      daemonProcess!.stdout!.on('data', (data) => {
-        const output = data.toString();
-        if (output.includes('Daemon started') || output.includes('daemon started')) {
-          clearTimeout(timeout);
-          resolve();
-        }
-      });
-
-      daemonProcess!.stderr!.on('data', (data) => {
-        console.error('Daemon stderr:', data.toString());
-      });
-
-      daemonProcess!.on('error', (err) => {
-        clearTimeout(timeout);
-        reject(err);
-      });
-
-      daemonProcess!.on('exit', (code) => {
-        clearTimeout(timeout);
-        if (code !== 0 && code !== null) {
-          reject(new Error(`Daemon exited with code ${code}`));
-        }
-      });
-    });
+    await waitForDaemonStarted(daemonProcess);
 
     // Verify daemon is still running after a short delay
     await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -131,17 +157,7 @@ describe.skipIf(skipLongRuns)('Daemon with no enabled targets', () => {
       stdio: 'pipe',
     });
 
-    // Wait for daemon to start
-    await new Promise<void>((resolve) => {
-      const timeout = setTimeout(resolve, 3000);
-      daemonProcess!.stdout!.on('data', (data) => {
-        const output = data.toString();
-        if (output.includes('Daemon started') || output.includes('daemon started')) {
-          clearTimeout(timeout);
-          resolve();
-        }
-      });
-    });
+    await waitForDaemonStarted(daemonProcess);
 
     // Verify daemon is running
     expect([null, 0]).toContain(daemonProcess!.exitCode);
