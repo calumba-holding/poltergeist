@@ -1,5 +1,7 @@
 # Changelog
 
+## [Unreleased]
+
 ## [2.1.6] - 2026-08-08
 
 - Removed the obsolete scoped-commit helper and allowed standard Git commands in isolated worktrees.
